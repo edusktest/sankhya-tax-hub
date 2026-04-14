@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { BIAChat } from "@/components/BIAChat";
 import { Landmark, HelpCircle, Bell, User } from "lucide-react";
 
 interface AppLayoutProps {
@@ -35,6 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
           <main className="flex-1 p-6 bg-background">{children}</main>
+          <BIAChat />
         </div>
       </div>
     </SidebarProvider>
