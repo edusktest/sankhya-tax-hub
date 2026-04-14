@@ -27,6 +27,14 @@ const App = () => (
             <Route path="/gestao-eventos" element={<PlaceholderPage />} />
             <Route path="/processos" element={<PlaceholderPage />} />
             <Route path="/financeiro" element={<PlaceholderPage />} />
+            <Route
+              path="/tributacao-integral"
+              element={<PlaceholderPage />}
+            />
+            <Route
+              path="/tributacao-personalizada"
+              element={<PlaceholderPage />}
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

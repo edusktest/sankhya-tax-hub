@@ -48,6 +48,21 @@ const menuItems = [
       { title: "Financeiro", url: "/financeiro", icon: DollarSign },
     ],
   },
+  {
+    group: "Configurações",
+    items: [
+      {
+        title: "Tributação Integral",
+        url: "/tributacao-integral",
+        icon: Settings,
+      },
+      {
+        title: "Tributação Personalizada",
+        url: "/tributacao-personalizada",
+        icon: Settings,
+      },
+    ],
+  },
 ];
 
 export function AppSidebar() {
