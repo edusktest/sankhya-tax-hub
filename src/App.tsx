@@ -1,10 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { AppLayout } from "@/components/AppLayout";
+import ApuracaoCBS from "./pages/ApuracaoCBS";
+import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
+import PlaceholderPage from "./pages/PlaceholderPage";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +17,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppLayout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/apuracao-cbs" replace />} />
+            <Route path="/apuracao-cbs" element={<ApuracaoCBS />} />
+            <Route path="/apuracao-cbs/:id" element={<ApuracaoDetalhe />} />
+            <Route path="/apuracao-ibs" element={<PlaceholderPage />} />
+            <Route path="/apuracao-is" element={<PlaceholderPage />} />
+            <Route path="/gestao-eventos" element={<PlaceholderPage />} />
+            <Route path="/processos" element={<PlaceholderPage />} />
+            <Route path="/financeiro" element={<PlaceholderPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AppLayout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
