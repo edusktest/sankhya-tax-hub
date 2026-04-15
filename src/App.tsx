@@ -24,6 +24,7 @@ const App = () => (
             <Route path="/apuracao-cbs/:id" element={<ApuracaoDetalhe />} />
             <Route path="/apuracao-ibs" element={<PlaceholderPage />} />
             <Route path="/apuracao-is" element={<PlaceholderPage />} />
+            <Route path="/apuracao-dere" element={<PlaceholderPage />} />
             <Route path="/gestao-eventos" element={<PlaceholderPage />} />
             <Route path="/processos" element={<PlaceholderPage />} />
             <Route path="/financeiro" element={<PlaceholderPage />} />

@@ -33,6 +33,7 @@ const menuItems = [
       { title: "Apuração CBS", url: "/apuracao-cbs", icon: Calculator },
       { title: "Apuração IBS", url: "/apuracao-ibs", icon: Calculator },
       { title: "Apuração IS", url: "/apuracao-is", icon: Calculator },
+      { title: "DeRE", url: "/apuracao-dere", icon: Calculator },
     ],
   },
   {
