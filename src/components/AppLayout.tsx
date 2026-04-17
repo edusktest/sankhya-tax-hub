@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BIAChat } from "@/components/BIAChat";
-import { Landmark, HelpCircle, Bell, User } from "lucide-react";
+import { HelpCircle, Bell, ChevronDown } from "lucide-react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,30 +12,39 @@ export function AppLayout({ children }: AppLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center justify-between border-b bg-primary px-4">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-14 flex items-center justify-between border-b bg-primary px-4 shrink-0">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-primary-foreground hover:bg-white/10 rounded transition-colors" />
               <div className="flex items-center gap-2">
-                <Landmark className="h-5 w-5 text-primary-foreground" />
-                <span className="text-sm font-semibold text-primary-foreground">
-                  Portal da Reforma Tributária
-                </span>
+                <span className="text-primary-foreground font-bold text-sm tracking-tight">Sankhya</span>
+                <span className="text-primary-foreground/30 text-sm select-none">|</span>
+                <span className="text-primary-foreground/90 text-sm">Portal da Reforma Tributária</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button className="text-primary-foreground/80 hover:text-primary-foreground">
-                <HelpCircle className="h-4 w-4" />
+
+            <div className="flex items-center gap-0.5">
+              <button className="relative text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10 rounded p-2 transition-colors">
+                <Bell className="h-[18px] w-[18px]" />
+                <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-warning border border-primary" />
               </button>
-              <button className="text-primary-foreground/80 hover:text-primary-foreground">
-                <Bell className="h-4 w-4" />
+              <button className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10 rounded p-2 transition-colors">
+                <HelpCircle className="h-[18px] w-[18px]" />
               </button>
-              <button className="text-primary-foreground/80 hover:text-primary-foreground">
-                <User className="h-4 w-4" />
+
+              <div className="w-px h-5 bg-white/20 mx-1.5" />
+
+              <button className="flex items-center gap-2 hover:bg-white/10 rounded-full pl-1 pr-3 py-1 transition-colors">
+                <div className="h-7 w-7 rounded-full bg-white/25 border border-white/30 flex items-center justify-center">
+                  <span className="text-primary-foreground font-semibold text-xs">EL</span>
+                </div>
+                <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Eduardo Lino</span>
+                <ChevronDown className="h-3 w-3 text-primary-foreground/50 hidden sm:block" />
               </button>
             </div>
           </header>
-          <main className="flex-1 p-6 bg-background">{children}</main>
+
+          <main className="flex-1 p-6 bg-background overflow-auto">{children}</main>
           <BIAChat />
         </div>
       </div>
