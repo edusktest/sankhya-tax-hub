@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import ApuracaoCBS from "./pages/ApuracaoCBS";
 import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
+import ApuracaoDere from "./pages/ApuracaoDere";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -24,7 +25,7 @@ const App = () => (
             <Route path="/apuracao-cbs/:id" element={<ApuracaoDetalhe />} />
             <Route path="/apuracao-ibs" element={<PlaceholderPage />} />
             <Route path="/apuracao-is" element={<PlaceholderPage />} />
-            <Route path="/apuracao-dere" element={<PlaceholderPage />} />
+            <Route path="/apuracao-dere" element={<ApuracaoDere />} />
             <Route path="/gestao-eventos" element={<PlaceholderPage />} />
             <Route path="/processos" element={<PlaceholderPage />} />
             <Route path="/financeiro" element={<PlaceholderPage />} />
