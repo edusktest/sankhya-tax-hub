@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/AppLayout";
 import ApuracaoCBS from "./pages/ApuracaoCBS";
 import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
 import ApuracaoDere from "./pages/ApuracaoDere";
+import ConfigEmpresasPage from "./pages/ConfigEmpresasPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
               path="/tributacao-personalizada"
               element={<PlaceholderPage />}
             />
+            <Route path="/configuracoes/empresas" element={<ConfigEmpresasPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

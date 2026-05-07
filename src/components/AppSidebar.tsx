@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Calculator,
   FileText,
-  DollarSign,
   ChevronDown,
   Calendar,
   Settings2,
   SlidersHorizontal,
   Shield,
   Banknote,
+  Search,
+  X,
+  Building2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -45,7 +47,7 @@ interface MenuItem {
 
 const menuItems: { group: string; items: MenuItem[] }[] = [
   {
-    group: "Apuração",
+    group: "Operações",
     items: [
       { title: "Apuração CBS", url: "/apuracao-cbs", icon: Calculator },
       { title: "Apuração IBS", url: "/apuracao-ibs", icon: Calculator },
@@ -61,26 +63,17 @@ const menuItems: { group: string; items: MenuItem[] }[] = [
           { title: "Histórico de Eventos", url: "/apuracao-dere/historico" },
         ],
       },
-    ],
-  },
-  {
-    group: "Documentos",
-    items: [
       { title: "Gestão Eventos", url: "/gestao-eventos", icon: Calendar },
-    ],
-  },
-  {
-    group: "Operações",
-    items: [
       { title: "Processos", url: "/processos", icon: Settings2 },
       { title: "Financeiro", url: "/financeiro", icon: Banknote },
+      { title: "Tributação Integral", url: "/tributacao-integral", icon: Shield },
+      { title: "Tributação Personalizada", url: "/tributacao-personalizada", icon: SlidersHorizontal },
     ],
   },
   {
     group: "Configurações",
     items: [
-      { title: "Tributação Integral", url: "/tributacao-integral", icon: Shield },
-      { title: "Tributação Personalizada", url: "/tributacao-personalizada", icon: SlidersHorizontal },
+      { title: "Empresas", url: "/configuracoes/empresas", icon: Building2 },
     ],
   },
 ];
@@ -89,6 +82,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [openSubMenus, setOpenSubMenus] = useState<Set<string>>(() => {
     const open = new Set<string>();
@@ -110,6 +104,11 @@ export function AppSidebar() {
     );
   }, [location.pathname]);
 
+  // Clear search when sidebar collapses
+  useEffect(() => {
+    if (collapsed) setSearchQuery("");
+  }, [collapsed]);
+
   function toggleSubMenu(url: string) {
     setOpenSubMenus((prev) => {
       const next = new Set(prev);
@@ -117,6 +116,43 @@ export function AppSidebar() {
       return next;
     });
   }
+
+  const q = searchQuery.toLowerCase().trim();
+
+  // Items whose sub-items partially match → force open them
+  const forceOpenUrls = useMemo(() => {
+    const urls = new Set<string>();
+    if (!q) return urls;
+    menuItems.forEach((group) =>
+      group.items.forEach((item) => {
+        if (item.subItems?.some((s) => s.title.toLowerCase().includes(q)))
+          urls.add(item.url);
+      })
+    );
+    return urls;
+  }, [q]);
+
+  // Filtered menu: keep items/sub-items that match the query
+  const filteredMenu = useMemo(() => {
+    if (!q) return menuItems;
+    return menuItems
+      .map((group) => {
+        const filteredItems = group.items
+          .map((item) => {
+            if (item.title.toLowerCase().includes(q)) return item;
+            if (item.subItems) {
+              const subs = item.subItems.filter((s) =>
+                s.title.toLowerCase().includes(q)
+              );
+              if (subs.length) return { ...item, subItems: subs };
+            }
+            return null;
+          })
+          .filter(Boolean) as MenuItem[];
+        return filteredItems.length ? { ...group, items: filteredItems } : null;
+      })
+      .filter(Boolean) as typeof menuItems;
+  }, [q]);
 
   return (
     <Sidebar collapsible="icon">
@@ -136,85 +172,140 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {menuItems.map((group) => {
+        {/* Search input — only in expanded mode */}
+        {!collapsed && (
+          <div className="px-3 py-2 border-b border-sidebar-border">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Digite um filtro"
+                className="w-full h-8 rounded-md border border-input bg-background pl-8 pr-7 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {filteredMenu.length === 0 && !collapsed && (
+          <p className="px-4 py-6 text-[12px] text-muted-foreground text-center">
+            Nenhum item encontrado.
+          </p>
+        )}
+
+        {filteredMenu.map((group) => {
           const isGroupActive = group.items.some((i) =>
             location.pathname.startsWith(i.url)
           );
+          const forceGroupOpen = q.length > 0;
+
           return (
-            <Collapsible key={group.group} defaultOpen={isGroupActive || true}>
-              <SidebarGroup>
-                <CollapsibleTrigger className="w-full">
-                  <SidebarGroupLabel className="flex items-center justify-between cursor-pointer uppercase tracking-wider text-[10px] font-semibold">
-                    {!collapsed && group.group}
-                    {!collapsed && <ChevronDown className="h-3 w-3" />}
+            <Collapsible
+              key={group.group}
+              open={forceGroupOpen ? true : undefined}
+              defaultOpen={isGroupActive || true}
+            >
+              <SidebarGroup className="py-0">
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel
+                    className={cn(
+                      "flex items-center gap-1.5 cursor-pointer px-3 py-2 text-[13px] font-semibold text-foreground hover:bg-accent/40 rounded-md transition-colors select-none",
+                      collapsed && "justify-center px-0"
+                    )}
+                  >
+                    {!collapsed && (
+                      <>
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=closed]:-rotate-90" />
+                        <span>{group.group}</span>
+                      </>
+                    )}
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
+
                 <CollapsibleContent>
                   <SidebarGroupContent>
-                    <SidebarMenu>
+                    <SidebarMenu className={cn(!collapsed && "pl-3")}>
                       {group.items.map((item) => {
                         if (item.subItems) {
                           const isParentActive = location.pathname.startsWith(item.url);
-                          const isOpen = openSubMenus.has(item.url);
+                          const isOpen = openSubMenus.has(item.url) || forceOpenUrls.has(item.url);
+
                           return (
                             <SidebarMenuItem key={item.title}>
                               <SidebarMenuButton
                                 onClick={() => toggleSubMenu(item.url)}
                                 className={cn(
-                                  "hover:bg-accent/60 border-l-[3px] transition-colors",
+                                  "rounded-md transition-colors hover:bg-accent/60 h-8",
                                   isParentActive
-                                    ? "bg-accent text-accent-foreground font-semibold border-l-primary"
-                                    : "border-transparent"
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-foreground/80"
                                 )}
                               >
-                                <item.icon className="h-4 w-4 shrink-0" />
-                                {!collapsed && (
+                                {collapsed ? (
+                                  <item.icon className="h-4 w-4 shrink-0" />
+                                ) : (
                                   <>
-                                    <span className="flex-1 ml-2">{item.title}</span>
+                                    <span className="flex-1 text-[13px]">{item.title}</span>
                                     <ChevronDown
                                       className={cn(
-                                        "h-3 w-3 transition-transform duration-200",
+                                        "h-3 w-3 shrink-0 transition-transform duration-200",
                                         isOpen && "rotate-180"
                                       )}
                                     />
                                   </>
                                 )}
                               </SidebarMenuButton>
+
                               {isOpen && !collapsed && (
-                                <SidebarMenuSub>
-                                  {item.subItems.map((sub) => (
-                                    <SidebarMenuSubItem key={sub.title}>
-                                      <SidebarMenuSubButton
-                                        asChild
-                                        className="h-auto whitespace-normal py-1.5 leading-snug items-start"
-                                      >
-                                        <NavLink
-                                          to={sub.url}
-                                          end
-                                          className="transition-colors"
-                                          activeClassName="text-primary font-semibold bg-sidebar-accent"
+                                <div className="ml-3 border-l-2 border-border/50 pl-2 mt-0.5 mb-0.5">
+                                  <SidebarMenuSub className="border-none ml-0 px-0">
+                                    {item.subItems.map((sub) => (
+                                      <SidebarMenuSubItem key={sub.title}>
+                                        <SidebarMenuSubButton
+                                          asChild
+                                          className="h-auto whitespace-normal py-1.5 leading-snug items-start rounded-md"
                                         >
-                                          {sub.title}
-                                        </NavLink>
-                                      </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                  ))}
-                                </SidebarMenuSub>
+                                          <NavLink
+                                            to={sub.url}
+                                            end
+                                            className="text-[12px] text-foreground/60 transition-colors hover:text-foreground hover:bg-accent/50 block w-full px-2 py-1 rounded-md"
+                                            activeClassName="text-primary font-semibold bg-primary/10"
+                                          >
+                                            {sub.title}
+                                          </NavLink>
+                                        </SidebarMenuSubButton>
+                                      </SidebarMenuSubItem>
+                                    ))}
+                                  </SidebarMenuSub>
+                                </div>
                               )}
                             </SidebarMenuItem>
                           );
                         }
+
                         return (
                           <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton asChild className="h-8">
                               <NavLink
                                 to={item.url}
                                 end
-                                className="hover:bg-accent/60 border-l-[3px] border-transparent transition-colors"
-                                activeClassName="bg-accent text-accent-foreground font-semibold border-l-[3px] border-primary"
+                                className="rounded-md text-[13px] text-foreground/80 transition-colors hover:bg-accent/60 hover:text-foreground"
+                                activeClassName="bg-primary/10 text-primary font-semibold"
                               >
-                                <item.icon className="h-4 w-4 shrink-0" />
-                                {!collapsed && <span className="ml-2">{item.title}</span>}
+                                {collapsed ? (
+                                  <item.icon className="h-4 w-4 shrink-0" />
+                                ) : (
+                                  <span>{item.title}</span>
+                                )}
                               </NavLink>
                             </SidebarMenuButton>
                           </SidebarMenuItem>

@@ -58,6 +58,7 @@ interface EventoHistorico {
   dtGeracao: string;
   protocolo: string | null;
   nrRecibo: string | null;
+  nrRetificacao?: number;
   idUnico: string | null;
   ocorrencias: Ocorrencia;
   dtUltimaConsulta: string | null;
@@ -135,6 +136,7 @@ const EVENTOS_HISTORICO: EventoHistorico[] = [
     dtGeracao: "15/04/2026 09:32",
     protocolo: "PROT-2026-0041",
     nrRecibo: "2026-000041-ALPHA0000000000001",
+    nrRetificacao: 0,
     idUnico: "DeRE20251112345678SANKHYA0000000000000000041",
     ocorrencias: "aviso",
     dtUltimaConsulta: "15/04/2026 09:33",
@@ -149,9 +151,25 @@ const EVENTOS_HISTORICO: EventoHistorico[] = [
     dtGeracao: "10/04/2026 14:10",
     protocolo: "PROT-2026-0039",
     nrRecibo: "2026-000039-GAMMA0000000000001",
+    nrRetificacao: 0,
     idUnico: "DeRE20251155444333SANKHYA0000000000000000039",
     ocorrencias: null,
     dtUltimaConsulta: "10/04/2026 14:11",
+  },
+  {
+    cnpjRaiz: "55.444.333",
+    cnpj: "55.444.333/0001-55",
+    razao: "Gamma Seguros S.A.",
+    evento: "D-1001",
+    operacao: "Alteração",
+    status: "enviado",
+    dtGeracao: "22/04/2026 10:45",
+    protocolo: "PROT-2026-0048",
+    nrRecibo: "1001-202604-00000000000000048",
+    nrRetificacao: 2,
+    idUnico: "DeRE10011155444333000155202604221045000001",
+    ocorrencias: null,
+    dtUltimaConsulta: "22/04/2026 10:46",
   },
   {
     cnpjRaiz: "55.444.333",
@@ -163,9 +181,25 @@ const EVENTOS_HISTORICO: EventoHistorico[] = [
     dtGeracao: "30/04/2026 16:00",
     protocolo: "PROT-2026-0055",
     nrRecibo: null,
-    idUnico: "DeRE20261155444333SANKHYA0000000000000000055",
+    nrRetificacao: 0,
+    idUnico: "DeRE10011155444333000155202604301600000001",
     ocorrencias: null,
     dtUltimaConsulta: "30/04/2026 16:01",
+  },
+  {
+    cnpjRaiz: "12.345.678",
+    cnpj: "12.345.678/0001-99",
+    razao: "Financeira Alpha S.A.",
+    evento: "D-1001",
+    operacao: "Exclusão",
+    status: "enviado",
+    dtGeracao: "02/05/2026 11:15",
+    protocolo: "PROT-2026-0061",
+    nrRecibo: "1001-202605-00000000000000061",
+    nrRetificacao: 0,
+    idUnico: "DeRE10011123456780001992026050211150000001",
+    ocorrencias: null,
+    dtUltimaConsulta: "02/05/2026 11:16",
   },
   {
     cnpjRaiz: "98.765.432",
@@ -1116,7 +1150,6 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
   const [regTribPrinc, setRegTribPrinc] = useState("");
   const [regTribSecund, setRegTribSecund] = useState<string[]>([]);
   const [indNatTrib, setIndNatTrib] = useState("");
-  const [planoCtaRef, setPlanoCtaRef] = useState("");
   const [atividadesFinanc, setAtividadesFinanc] = useState<string[]>([]);
   const [atividadesSaude, setAtividadesSaude] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
@@ -1157,7 +1190,7 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
 
   const canAdvance =
     step === 1 ? true :
-    step === 2 ? regTribPrinc !== "" && indNatTrib !== "" && planoCtaRef !== "" :
+    step === 2 ? regTribPrinc !== "" && indNatTrib !== "" :
     true;
 
   if (sent) {
@@ -1250,7 +1283,7 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
                       <SelectValue placeholder="Selecione o regime tributário principal do contribuinte" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0">0 – Normas Gerais de Tributação</SelectItem>
+                      <SelectItem value="9">9 – Normas Gerais de Tributação</SelectItem>
                       <SelectItem value="1">1 – Regime Específico de Serviços Financeiros</SelectItem>
                       <SelectItem value="2">2 – Regime Específico de Plano de Assistência à Saúde</SelectItem>
                     </SelectContent>
@@ -1279,39 +1312,19 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {/* indNatTrib */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                      Natureza Tributária
-                    </label>
-                    <Select value={indNatTrib} onValueChange={setIndNatTrib}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Selecione a natureza tributária" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">0 – Tributação regular</SelectItem>
-                        <SelectItem value="1">1 – Imunidade ou não incidência</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* planoCtaRef */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                      Plano de Contas Referencial
-                    </label>
-                    <Select value={planoCtaRef} onValueChange={setPlanoCtaRef}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Selecione o plano de contas referencial" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 – COSIF (Banco Central)</SelectItem>
-                        <SelectItem value="2">2 – ANS (Planos de Saúde)</SelectItem>
-                        <SelectItem value="3">3 – SUSEP (Seguradoras)</SelectItem>
-                        <SelectItem value="4">4 – SPED (Receita Federal)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Natureza Tributária
+                  </label>
+                  <Select value={indNatTrib} onValueChange={setIndNatTrib}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Selecione a natureza tributária" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0 – Tributação regular</SelectItem>
+                      <SelectItem value="1">1 – Imunidade ou não incidência</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             ))}
@@ -1664,7 +1677,9 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
   const [search, setSearch] = useState("");
   const [filtroEvento, setFiltroEvento] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
+  const [filtroOperacao, setFiltroOperacao] = useState<TipoOp[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [motExcl, setMotExcl] = useState("");
   const [eventos, setEventos] = useState<EventoHistorico[]>(EVENTOS_HISTORICO);
 
   const filtered = eventos.filter((e) => {
@@ -1677,7 +1692,8 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
       (e.idUnico ?? "").includes(search);
     const matchEvento = filtroEvento === "todos" || e.evento === filtroEvento;
     const matchStatus = filtroStatus.length === 0 || filtroStatus.includes(e.status);
-    return matchSearch && matchEvento && matchStatus;
+    const matchOperacao = filtroOperacao.length === 0 || filtroOperacao.includes(e.operacao);
+    return matchSearch && matchEvento && matchStatus && matchOperacao;
   });
 
   const allSelected = filtered.length > 0 && filtered.every((_, i) => selected.includes(i));
@@ -1690,10 +1706,35 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
   function toggleStatusFilter(v: string) {
     setFiltroStatus((p) => p.includes(v) ? p.filter((x) => x !== v) : [...p, v]);
   }
+  function toggleOperacaoFilter(v: TipoOp) {
+    setFiltroOperacao((p) => p.includes(v) ? p.filter((x) => x !== v) : [...p, v]);
+  }
   function handleDelete(i: number) {
-    setEventos((prev) => prev.filter((_, idx) => idx !== i));
+    const evento = filtered[i];
+    if (!evento) return;
+
     setDeleteConfirm(null);
+    setMotExcl("");
     setSelected((s) => s.filter((x) => x !== i).map((x) => x > i ? x - 1 : x));
+
+    if (!evento.nrRecibo) {
+      setEventos((prev) => prev.filter((ev) => ev !== evento));
+      return;
+    }
+
+    // Com recibo: transmite exclusão → processando → Exclusão/enviado
+    setEventos((prev) =>
+      prev.map((ev) => ev === evento ? { ...ev, status: "processando" as StatusDeRE } : ev)
+    );
+    setTimeout(() => {
+      setEventos((prev) =>
+        prev.map((ev) =>
+          ev === evento
+            ? { ...ev, status: "enviado" as StatusDeRE, operacao: "Exclusão" as TipoOp }
+            : ev
+        )
+      );
+    }, 2500);
   }
 
   const temProcessando = selected.some((i) => filtered[i]?.status === "processando");
@@ -1785,6 +1826,23 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
               </button>
             ))}
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Operação:</span>
+            {(["Inclusão", "Alteração", "Exclusão"] as TipoOp[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => toggleOperacaoFilter(v)}
+                className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                  filtroOperacao.includes(v)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1804,6 +1862,7 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
               <TableHead className={TH}>ID Único</TableHead>
               <TableHead className={TH}>Protocolo</TableHead>
               <TableHead className={TH}>Recibo</TableHead>
+              <TableHead className={TH}>Retificação</TableHead>
               <TableHead className={TH}>Ocorrências</TableHead>
               <TableHead className={TH}>Última Consulta</TableHead>
               <TableHead className={TH}>Ações</TableHead>
@@ -1826,9 +1885,14 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
                   <TableCell><OpBadge tipo={e.operacao} /></TableCell>
                   <TableCell><StatusBadge status={e.status} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{e.dtGeracao}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">{e.idUnico ? e.idUnico.substring(0, 13) + "…" : "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap" title={e.idUnico ?? undefined}>{e.idUnico ? e.idUnico.substring(0, 13) + "…" : "—"}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">{e.protocolo ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{e.nrRecibo ?? "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {(e.nrRetificacao ?? 0) > 0
+                      ? <Badge variant="outline" className="border-warning/60 text-warning bg-warning/10 text-xs">{e.nrRetificacao}</Badge>
+                      : <span className="text-muted-foreground/40">—</span>}
+                  </TableCell>
                   <TableCell><OcorrenciaBadge ocorrencia={e.ocorrencias} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{e.dtUltimaConsulta ?? "—"}</TableCell>
                   <TableCell>
@@ -1848,7 +1912,7 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
                         variant="ghost" size="sm"
                         className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                         title="Excluir"
-                        onClick={() => setDeleteConfirm(deleteConfirm === i ? null : i)}
+                        onClick={() => { setDeleteConfirm(deleteConfirm === i ? null : i); setMotExcl(""); }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -1857,18 +1921,45 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
                 </TableRow>
                 {deleteConfirm === i && (
                   <TableRow key={`confirm-${i}`} className="bg-destructive/5">
-                    <TableCell colSpan={13} className="py-2 px-4">
+                    <TableCell colSpan={14} className="py-3 px-4">
                       <div className="flex items-center justify-between gap-4">
-                        <p className="text-sm text-destructive">
-                          {e.nrRecibo
-                            ? "Esse evento tem recibo de entrega. Essa ação vai transmitir o evento de exclusão e remover o registro enviado. Deseja enviar a exclusão?"
-                            : "Esse evento não tem recibo de entrega. Essa ação vai apenas apagar o evento no sistema. Deseja excluir?"}
-                        </p>
+                        {e.nrRecibo ? (
+                          <div className="flex flex-col gap-2 flex-1">
+                            <p className="text-sm text-destructive">
+                              Esse evento tem recibo de entrega. Esta ação transmitirá o evento de exclusão à RFB. Selecione o motivo:
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+                                Motivo de exclusão
+                              </label>
+                              <Select value={motExcl} onValueChange={setMotExcl}>
+                                <SelectTrigger className="h-8 text-xs max-w-xs">
+                                  <SelectValue placeholder="Selecione o motivo..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="01">01 – Determinação judicial ou administrativa</SelectItem>
+                                  <SelectItem value="02">02 – Envio indevido (fato inexistente)</SelectItem>
+                                  <SelectItem value="03">03 – Erro na identificação (CNPJ/período incorretos)</SelectItem>
+                                  <SelectItem value="09">09 – Outro</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-destructive">
+                            Esse evento não tem recibo de entrega. Essa ação vai apenas apagar o evento no sistema. Deseja excluir?
+                          </p>
+                        )}
                         <div className="flex gap-2 shrink-0">
-                          <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>
+                          <Button size="sm" variant="outline" onClick={() => { setDeleteConfirm(null); setMotExcl(""); }}>
                             Cancelar
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(i)}>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(i)}
+                            disabled={e.nrRecibo ? motExcl === "" : false}
+                          >
                             {e.nrRecibo ? "Enviar exclusão" : "Excluir"}
                           </Button>
                         </div>
@@ -1880,7 +1971,7 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={13} className="text-center py-8 text-sm text-muted-foreground">
+                <TableCell colSpan={14} className="text-center py-8 text-sm text-muted-foreground">
                   Nenhum evento encontrado
                 </TableCell>
               </TableRow>
