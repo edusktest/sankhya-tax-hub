@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -10,8 +11,14 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, Download, ChevronRight,
-  Loader2, Send,
+  Loader2, Send, Search, Upload, RefreshCw, Trash2, X, ChevronsUpDown,
 } from "lucide-react";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -24,9 +31,10 @@ type Screen =
   | "d1011-depara"
   | "historico";
 
-type StatusDeRE = "enviado" | "nao-enviado" | "alteracao-pendente" | "erro";
+type StatusDeRE = "enviado" | "processando" | "nao_enviado";
 type StatusPlano = "configurado" | "nao-configurado";
 type TipoOp = "Inclusão" | "Alteração" | "Exclusão";
+type Ocorrencia = "erro" | "aviso" | null;
 
 interface EmpresaDeRE {
   raiz: string;
@@ -37,11 +45,26 @@ interface EmpresaDeRE {
   d1011: StatusDeRE;
   plano: StatusPlano;
   regTrib: string;
+  ocorrencia: Ocorrencia;
+}
+
+interface EventoHistorico {
+  cnpjRaiz: string;
+  cnpj: string;
+  razao: string;
+  evento: "D-1001" | "D-1011";
+  operacao: TipoOp;
+  status: StatusDeRE;
+  dtGeracao: string;
+  protocolo: string | null;
+  nrRecibo: string | null;
+  idUnico: string | null;
+  ocorrencias: Ocorrencia;
+  dtUltimaConsulta: string | null;
 }
 
 interface Batch {
   indices: number[];
-  forcedOp?: TipoOp;
 }
 
 // ── Mock Data ─────────────────────────────────────────────────────
@@ -52,29 +75,32 @@ const EMPRESAS: EmpresaDeRE[] = [
     razao: "Financeira Alpha S.A.",
     filiais: 2,
     d1001: "enviado",
-    d1011: "nao-enviado",
+    d1011: "nao_enviado",
     plano: "configurado",
-    regTrib: "1 – Simples",
+    regTrib: "1 – Serviços Financeiros",
+    ocorrencia: "aviso",
   },
   {
     raiz: "98.765.432",
     cnpj: "98.765.432/0001-01",
     razao: "Beta Factoring Ltda.",
     filiais: 0,
-    d1001: "nao-enviado",
-    d1011: "nao-enviado",
+    d1001: "nao_enviado",
+    d1011: "nao_enviado",
     plano: "nao-configurado",
-    regTrib: "3 – Lucro Real",
+    regTrib: "9 – Normas Gerais",
+    ocorrencia: "erro",
   },
   {
     raiz: "55.444.333",
     cnpj: "55.444.333/0001-55",
     razao: "Gamma Seguros S.A.",
     filiais: 4,
-    d1001: "alteracao-pendente",
-    d1011: "erro",
+    d1001: "processando",
+    d1011: "nao_enviado",
     plano: "configurado",
-    regTrib: "3 – Lucro Real",
+    regTrib: "2 – Plano de Saúde",
+    ocorrencia: null,
   },
 ];
 
@@ -98,58 +124,89 @@ const CONTAS_REF = [
   "4001 – Receitas da Intermediação",
 ];
 
-const EVENTOS_HISTORICO = [
+const EVENTOS_HISTORICO: EventoHistorico[] = [
   {
+    cnpjRaiz: "12.345.678",
     cnpj: "12.345.678/0001-99",
-    razao: "Financeira Alpha",
-    evento: "D1001" as const,
-    status: "enviado" as StatusDeRE,
-    data: "15/04/2026 09:32",
-    nrRecibo: "REC-2026-0041",
+    razao: "Financeira Alpha S.A.",
+    evento: "D-1001",
+    operacao: "Inclusão",
+    status: "enviado",
+    dtGeracao: "15/04/2026 09:32",
+    protocolo: "PROT-2026-0041",
+    nrRecibo: "2026-000041-ALPHA0000000000001",
+    idUnico: "DeRE20251112345678SANKHYA0000000000000000041",
+    ocorrencias: "aviso",
+    dtUltimaConsulta: "15/04/2026 09:33",
   },
   {
-    cnpj: "12.345.678/0001-99",
-    razao: "Financeira Alpha",
-    evento: "D1011" as const,
-    status: "erro" as StatusDeRE,
-    data: "15/04/2026 09:45",
-    nrRecibo: "REC-2026-0042",
-  },
-  {
+    cnpjRaiz: "55.444.333",
     cnpj: "55.444.333/0001-55",
-    razao: "Gamma Seguros",
-    evento: "D1001" as const,
-    status: "enviado" as StatusDeRE,
-    data: "10/04/2026 14:10",
-    nrRecibo: "REC-2026-0039",
+    razao: "Gamma Seguros S.A.",
+    evento: "D-1001",
+    operacao: "Inclusão",
+    status: "enviado",
+    dtGeracao: "10/04/2026 14:10",
+    protocolo: "PROT-2026-0039",
+    nrRecibo: "2026-000039-GAMMA0000000000001",
+    idUnico: "DeRE20251155444333SANKHYA0000000000000000039",
+    ocorrencias: null,
+    dtUltimaConsulta: "10/04/2026 14:11",
   },
   {
+    cnpjRaiz: "55.444.333",
     cnpj: "55.444.333/0001-55",
-    razao: "Gamma Seguros",
-    evento: "D1011" as const,
-    status: "alteracao-pendente" as StatusDeRE,
-    data: "10/04/2026 14:22",
-    nrRecibo: "REC-2026-0040",
+    razao: "Gamma Seguros S.A.",
+    evento: "D-1001",
+    operacao: "Alteração",
+    status: "processando",
+    dtGeracao: "30/04/2026 16:00",
+    protocolo: "PROT-2026-0055",
+    nrRecibo: null,
+    idUnico: "DeRE20261155444333SANKHYA0000000000000000055",
+    ocorrencias: null,
+    dtUltimaConsulta: "30/04/2026 16:01",
+  },
+  {
+    cnpjRaiz: "98.765.432",
+    cnpj: "98.765.432/0001-01",
+    razao: "Beta Factoring Ltda.",
+    evento: "D-1001",
+    operacao: "Inclusão",
+    status: "nao_enviado",
+    dtGeracao: "05/05/2026 10:00",
+    protocolo: null,
+    nrRecibo: null,
+    idUnico: null,
+    ocorrencias: null,
+    dtUltimaConsulta: null,
   },
 ];
 
 // ── Shared Components ─────────────────────────────────────────────
 function StatusBadge({ status }: { status: StatusDeRE | StatusPlano }) {
   const map: Record<string, [string, string]> = {
-    enviado: ["border-success/50 text-success bg-success/10", "Enviado"],
-    "nao-enviado": ["border-border text-muted-foreground bg-muted/50", "Não enviado"],
-    "alteracao-pendente": [
-      "border-warning/60 text-warning bg-warning/10",
-      "Alteração pendente",
-    ],
-    erro: ["border-destructive/50 text-destructive bg-destructive/10", "Erro"],
-    configurado: ["border-success/50 text-success bg-success/10", "Configurado"],
-    "nao-configurado": [
-      "border-border text-muted-foreground bg-muted/50",
-      "Não configurado",
-    ],
+    enviado:        ["border-success/50 text-success bg-success/10", "Enviado"],
+    processando:    ["border-warning/60 text-warning bg-warning/10", "Processando"],
+    nao_enviado:    ["border-border text-muted-foreground bg-muted/50", "Não enviado"],
+    configurado:    ["border-success/50 text-success bg-success/10", "Configurado"],
+    "nao-configurado": ["border-border text-muted-foreground bg-muted/50", "Não configurado"],
   };
   const [cls, label] = map[status] || ["border-border text-muted-foreground", status];
+  return (
+    <Badge variant="outline" className={cn("text-xs font-medium", cls)}>
+      {label}
+    </Badge>
+  );
+}
+
+function OcorrenciaBadge({ ocorrencia }: { ocorrencia: Ocorrencia }) {
+  if (!ocorrencia) return <span className="text-muted-foreground/40 text-xs">—</span>;
+  const map: Record<string, [string, string]> = {
+    erro:  ["border-destructive/50 text-destructive bg-destructive/10", "Erro"],
+    aviso: ["border-warning/60 text-warning bg-warning/10", "Aviso"],
+  };
+  const [cls, label] = map[ocorrencia];
   return (
     <Badge variant="outline" className={cn("text-xs font-medium", cls)}>
       {label}
@@ -193,6 +250,111 @@ function DangerAlert({ children }: { children: React.ReactNode }) {
     <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive mb-4">
       <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
       <div>{children}</div>
+    </div>
+  );
+}
+
+// ── MultiSelectField ──────────────────────────────────────────────
+interface MultiSelectFieldProps {
+  label: string;
+  options: { value: string; label: string }[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+}
+
+function MultiSelectField({
+  label,
+  options,
+  selected,
+  onChange,
+  placeholder = "Selecione as atividades...",
+}: MultiSelectFieldProps) {
+  const [open, setOpen] = useState(false);
+
+  const unselected = options.filter((o) => !selected.includes(o.value));
+  const selectedOptions = options.filter((o) => selected.includes(o.value));
+
+  function add(value: string) {
+    onChange([...selected, value]);
+  }
+
+  function remove(value: string) {
+    onChange(selected.filter((v) => v !== value));
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+        {label}
+      </label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="h-9 w-full justify-between text-sm font-normal"
+          >
+            <span className={cn(!selected.length && "text-muted-foreground")}>
+              {selected.length === 0
+                ? placeholder
+                : `${selected.length} atividade${selected.length > 1 ? "s" : ""} selecionada${selected.length > 1 ? "s" : ""}`}
+            </span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[480px] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar atividade..." className="h-9" />
+            <CommandList>
+              <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">
+                Nenhuma atividade encontrada.
+              </CommandEmpty>
+              <CommandGroup>
+                {unselected.map((opt) => (
+                  <CommandItem
+                    key={opt.value}
+                    value={opt.label}
+                    onSelect={() => add(opt.value)}
+                    className="text-sm cursor-pointer"
+                  >
+                    {opt.label}
+                  </CommandItem>
+                ))}
+                {unselected.length === 0 && (
+                  <div className="py-3 px-2 text-sm text-muted-foreground text-center">
+                    Todas as atividades foram selecionadas.
+                  </div>
+                )}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {selectedOptions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {selectedOptions.map((opt) => (
+            <Badge
+              key={opt.value}
+              variant="secondary"
+              className="flex items-center gap-1 pr-1 text-xs max-w-full"
+            >
+              <span className="truncate max-w-[360px]" title={opt.label}>
+                {opt.label}
+              </span>
+              <button
+                type="button"
+                onClick={() => remove(opt.value)}
+                className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5 shrink-0"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -508,13 +670,13 @@ function HomeScreen({ navigate }: HomeScreenProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {e.d1001 !== "enviado" && (
+                    {(e.d1001 === "nao_enviado" || e.d1001 === "enviado") && (
                       <Button
                         size="sm"
                         className="h-7 text-xs px-3"
-                        onClick={() => navigate("d1001-wiz")}
+                        onClick={() => navigate("d1001-list")}
                       >
-                        Iniciar D1001
+                        {e.d1001 === "nao_enviado" ? "Iniciar D1001" : "Alterar D1001"}
                       </Button>
                     )}
                     {e.d1001 === "enviado" && e.plano === "configurado" && (
@@ -727,46 +889,136 @@ interface D1001ListScreenProps {
 }
 function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
   const [selected, setSelected] = useState<number[]>([]);
-  const allSelected = selected.length === EMPRESAS.length;
+  const [search, setSearch] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
+  const [filtroOcorrencia, setFiltroOcorrencia] = useState<string[]>([]);
+
+  const filtered = EMPRESAS.filter((e) => {
+    const matchSearch =
+      search === "" ||
+      e.raiz.includes(search) ||
+      e.razao.toLowerCase().includes(search.toLowerCase());
+    const matchStatus =
+      filtroStatus.length === 0 || filtroStatus.includes(e.d1001);
+    const matchOcorrencia =
+      filtroOcorrencia.length === 0 ||
+      (filtroOcorrencia.includes("vazio") && e.ocorrencia === null) ||
+      (e.ocorrencia !== null && filtroOcorrencia.includes(e.ocorrencia));
+    return matchSearch && matchStatus && matchOcorrencia;
+  });
+
+  const selectableIndices = filtered
+    .map((_, i) => i)
+    .filter((i) => filtered[i].d1001 !== "processando");
+  const allSelected =
+    selectableIndices.length > 0 &&
+    selectableIndices.every((i) => selected.includes(i));
 
   function toggleAll() {
-    setSelected(allSelected ? [] : EMPRESAS.map((_, i) => i));
+    setSelected(allSelected ? [] : selectableIndices);
   }
   function toggleOne(i: number) {
     setSelected((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i]));
   }
-  function startBatch(indices: number[], forcedOp?: TipoOp) {
-    setBatch({ indices, forcedOp });
+  function toggleFilter<T extends string>(
+    val: T,
+    state: T[],
+    setState: (v: T[]) => void
+  ) {
+    setState(state.includes(val) ? state.filter((x) => x !== val) : [...state, val]);
+  }
+
+  function startBatch(indices: number[]) {
+    setBatch({ indices });
     navigate("d1001-wiz");
   }
+
+  const STATUS_OPTS: { value: StatusDeRE; label: string }[] = [
+    { value: "enviado",     label: "Enviado" },
+    { value: "processando", label: "Processando" },
+    { value: "nao_enviado", label: "Não enviado" },
+  ];
+  const OCORR_OPTS = [
+    { value: "erro",  label: "Erro" },
+    { value: "aviso", label: "Aviso" },
+    { value: "vazio", label: "Sem ocorrência" },
+  ];
 
   return (
     <div>
       <div className="flex items-start justify-between mb-5">
         <div>
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1">
-            <button
-              onClick={() => navigate("home")}
-              className="hover:text-foreground transition-colors"
-            >
+            <button onClick={() => navigate("home")} className="hover:text-foreground transition-colors">
               DeRE
             </button>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground font-medium">D1001</span>
+            <span className="text-foreground font-medium">D-1001</span>
           </div>
           <h1 className="text-[20px] font-semibold text-foreground leading-tight">
-            Informações do Contribuinte – D1001
+            Informações do Contribuinte – D-1001
           </h1>
           <p className="text-[13px] text-muted-foreground mt-0.5">
             Selecione uma ou várias empresas para enviar em lote
           </p>
         </div>
-        <div className="flex items-center gap-2 mt-1">
-          {selected.length > 0 && (
-            <Button size="sm" onClick={() => startBatch(selected)} className="gap-1.5">
-              ▶ Iniciar selecionadas ({selected.length})
-            </Button>
-          )}
+        {selected.length > 0 && (
+          <Button size="sm" onClick={() => startBatch(selected)} className="gap-1.5 mt-1">
+            Iniciar ({selected.length})
+          </Button>
+        )}
+      </div>
+
+      {/* Filtros */}
+      <div className="flex flex-col gap-2.5 mb-4 px-3 py-2.5 bg-muted/40 rounded-lg border">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="CNPJ raiz ou Razão Social"
+            className="h-8 pl-8 text-sm"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Status:
+            </span>
+            {STATUS_OPTS.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => toggleFilter(o.value, filtroStatus, setFiltroStatus as (v: string[]) => void)}
+                className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                  filtroStatus.includes(o.value)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Ocorrência:
+            </span>
+            {OCORR_OPTS.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => toggleFilter(o.value, filtroOcorrencia, setFiltroOcorrencia)}
+                className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                  filtroOcorrencia.includes(o.value)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -775,74 +1027,46 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
               <TableHead className="w-10">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={toggleAll}
-                />
+                <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
               </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                CNPJ Raiz
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Razão Social
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                D1001 – Status
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Ações
-              </TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">CNPJ Raiz</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Razão Social</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ocorrência</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {EMPRESAS.map((e, i) => (
+            {filtered.map((e, i) => (
               <TableRow key={e.raiz} className="hover:bg-muted/30 transition-colors">
                 <TableCell>
                   <Checkbox
                     checked={selected.includes(i)}
                     onCheckedChange={() => toggleOne(i)}
+                    disabled={e.d1001 === "processando"}
                   />
                 </TableCell>
                 <TableCell>
                   <div className="font-semibold font-mono text-sm">{e.raiz}</div>
                   <div className="text-[11px] text-muted-foreground">{e.cnpj}</div>
                   {e.filiais > 0 && (
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] mt-0.5 border-border text-muted-foreground"
-                    >
+                    <Badge variant="outline" className="text-[10px] mt-0.5 border-border text-muted-foreground">
                       +{e.filiais} filiais
                     </Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{e.razao}</TableCell>
-                <TableCell>
-                  <StatusBadge status={e.d1001} />
-                </TableCell>
+                <TableCell><StatusBadge status={e.d1001} /></TableCell>
+                <TableCell><OcorrenciaBadge ocorrencia={e.ocorrencia} /></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {(e.d1001 === "nao-enviado" || e.d1001 === "alteracao-pendente") && (
+                    {e.d1001 !== "processando" && (
                       <Button
                         size="sm"
                         className="h-7 text-xs px-2"
-                        onClick={() =>
-                          startBatch(
-                            [i],
-                            e.d1001 === "nao-enviado" ? "Inclusão" : "Alteração"
-                          )
-                        }
+                        onClick={() => startBatch([i])}
                       >
                         Iniciar
-                      </Button>
-                    )}
-                    {(e.d1001 === "enviado" || e.d1001 === "alteracao-pendente") && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-xs px-2 border-destructive/40 text-destructive hover:bg-destructive/10"
-                        onClick={() => startBatch([i], "Exclusão")}
-                      >
-                        Excluir
                       </Button>
                     )}
                     <Button
@@ -857,17 +1081,24 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
                 </TableCell>
               </TableRow>
             ))}
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
+                  Nenhuma empresa encontrada
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
         <div className="flex items-center justify-between px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20">
           <span>
-            Tipo de operação:{" "}
-            <strong>Inclusão</strong> (Não enviado) ·{" "}
-            <strong>Alteração</strong> (Enviado / Alteração pendente) ·{" "}
-            <strong>Exclusão</strong> (Enviado)
+            <strong>Inclusão</strong> · Não enviado &nbsp;·&nbsp;
+            <strong>Alteração</strong> · Enviado &nbsp;·&nbsp;
+            <strong>Processando</strong> · sem ação disponível
           </span>
           <span>
-            {EMPRESAS.length} de {EMPRESAS.length} registros
+            Exibindo <span className="font-medium text-foreground">{filtered.length}</span> de{" "}
+            <span className="font-medium text-foreground">{EMPRESAS.length}</span> registros
           </span>
         </div>
       </div>
@@ -882,152 +1113,288 @@ interface D1001WizardScreenProps {
 }
 function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
   const [step, setStep] = useState(1);
-  const [regTrib, setRegTrib] = useState("");
-  const [natTrib, setNatTrib] = useState("");
+  const [regTribPrinc, setRegTribPrinc] = useState("");
+  const [regTribSecund, setRegTribSecund] = useState<string[]>([]);
+  const [indNatTrib, setIndNatTrib] = useState("");
+  const [planoCtaRef, setPlanoCtaRef] = useState("");
+  const [atividadesFinanc, setAtividadesFinanc] = useState<string[]>([]);
+  const [atividadesSaude, setAtividadesSaude] = useState<string[]>([]);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const indices = batch?.indices?.length ? batch.indices : [0];
   const isMulti = indices.length > 1;
-  const empresa = EMPRESAS[indices[0]] || EMPRESAS[0];
+  const empresas = indices.map((i) => EMPRESAS[i]).filter(Boolean);
+  const empresa = empresas[0] ?? EMPRESAS[0];
 
-  function opTypeFor(status: StatusDeRE, forced?: TipoOp): TipoOp {
-    if (forced) return forced;
-    if (status === "nao-enviado") return "Inclusão";
-    if (status === "alteracao-pendente") return "Alteração";
-    return "Alteração";
+  function getOpTipo(e: EmpresaDeRE): TipoOp {
+    return e.d1001 === "nao_enviado" ? "Inclusão" : "Alteração";
   }
-  const opTipo = opTypeFor(empresa.d1001, batch?.forcedOp);
 
-  const STEPS = ["Revisar dados ERP", "Completar campos", "Enviar"];
+  const needsActividades = ["1", "2"].some(
+    (r) => regTribPrinc === r || regTribSecund.includes(r)
+  );
+
+  const STEPS = ["Revisão", "Dados DeRE", "Atividades", "Envio"];
+
+  function handleNext() {
+    if (step === 2 && !needsActividades) setStep(4);
+    else if (step < 4) setStep((s) => s + 1);
+    else handleSend();
+  }
+  function handleBack() {
+    if (step === 4 && !needsActividades) setStep(2);
+    else if (step > 1) setStep((s) => s - 1);
+    else navigate("d1001-list");
+  }
+  function handleSend() {
+    setSending(true);
+    setTimeout(() => { setSending(false); setSent(true); }, 1500);
+  }
+  function toggleSecund(val: string) {
+    setRegTribSecund((p) => p.includes(val) ? p.filter((x) => x !== val) : [...p, val]);
+  }
+
+  const canAdvance =
+    step === 1 ? true :
+    step === 2 ? regTribPrinc !== "" && indNatTrib !== "" && planoCtaRef !== "" :
+    true;
+
+  if (sent) {
+    return (
+      <div className="flex flex-col items-center py-16 gap-4">
+        <div className="h-14 w-14 rounded-full bg-success/10 border border-success/30 flex items-center justify-center">
+          <CheckCircle2 className="h-7 w-7 text-success" />
+        </div>
+        <div className="text-center">
+          <p className="text-base font-semibold text-foreground">D-1001 enviado com sucesso!</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {empresas.length} evento{empresas.length > 1 ? "s" : ""} transmitido{empresas.length > 1 ? "s" : ""}
+          </p>
+        </div>
+        <div className="flex gap-2 mt-2">
+          <Button onClick={() => navigate("historico")}>Consultar histórico</Button>
+          <Button variant="outline" onClick={() => navigate("d1001-list")}>Voltar ao menu</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <WizardHeader
-        breadcrumb={[
-          "DeRE",
-          "D1001",
-          isMulti ? `Lote (${indices.length} empresas)` : empresa.razao,
-        ]}
-        title="Informações do Contribuinte – D1001"
-        titleBadge={<OpBadge tipo={opTipo} />}
+        breadcrumb={["DeRE", "D-1001", isMulti ? `Lote (${indices.length} empresas)` : empresa.razao]}
+        title="Informações do Contribuinte – D-1001"
+
         onCancel={() => navigate("d1001-list")}
-        onBack={
-          step > 1
-            ? () => setStep((s) => s - 1)
-            : () => navigate("d1001-list")
-        }
-        onNext={step < STEPS.length ? () => setStep((s) => s + 1) : undefined}
-        nextLabel="Avançar"
+        onBack={handleBack}
+        onNext={!sending ? handleNext : undefined}
+        nextLabel={step === 4 ? (sending ? "Enviando..." : "Concluir") : "Avançar"}
+        nextDisabled={!canAdvance || sending}
       />
 
       <div className="bg-card rounded-lg border p-6 card-shadow">
-        <div className="text-[11px] text-muted-foreground mb-1">
-          Etapa {step} de {STEPS.length}
-        </div>
+        <div className="text-[11px] text-muted-foreground mb-1">Etapa {step} de 4</div>
         <StepsBar steps={STEPS} current={step} />
 
+        {/* Etapa 1 – Revisão das Empresas */}
         {step === 1 && (
-          <>
-            {opTipo === "Exclusão" ? (
-              <DangerAlert>
-                Esta operação enviará um evento de <strong>Exclusão</strong> à RFB. A
-                declaração D1001 desta empresa será cancelada.
-              </DangerAlert>
-            ) : (
-              <InfoAlert>
-                Os campos abaixo foram pré-preenchidos com dados do cadastro da empresa no
-                ERP. Revise e confirme.
-              </InfoAlert>
-            )}
+          <div className="space-y-4">
+            <InfoAlert>
+              Revise os dados cadastrais abaixo. Nenhum campo é editável nesta etapa.
+            </InfoAlert>
             {isMulti && (
               <WarnAlert>
-                Lote com <strong>{indices.length} empresas</strong>. Cada uma será enviada
-                com seu próprio tipo de operação.
+                Lote com <strong>{indices.length} empresas</strong>. Cada empresa será enviada com seu próprio tipo de operação.
               </WarnAlert>
             )}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <Field label="CNPJ" value={empresa.cnpj} filled />
-              <Field label="Razão Social" value={empresa.razao} filled />
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <Field
-                label="Nome Fantasia"
-                value={empresa.razao.split(" ")[0]}
-                filled
-              />
-              <Field label="CNAE Principal" value="6491-3/00" filled />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="Logradouro" value="Av. Paulista, 1000" filled />
-              <Field label="Município" value="São Paulo – SP" filled />
-              <Field label="CEP" value="01310-100" filled />
-            </div>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <h3 className="text-sm font-semibold text-foreground mb-3">
-              Campos específicos DeRE
-            </h3>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                  regTribPrinc – Regime Tributário Principal
-                </label>
-                <Select value={regTrib} onValueChange={setRegTrib}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 – Simples Nacional</SelectItem>
-                    <SelectItem value="2">2 – Lucro Presumido</SelectItem>
-                    <SelectItem value="3">3 – Lucro Real</SelectItem>
-                    <SelectItem value="4">4 – Imune/Isento</SelectItem>
-                  </SelectContent>
-                </Select>
-                {regTrib && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Pré-preenchido pelo ERP – confirme
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                  indNatTrib – Natureza Tributária
-                </label>
-                <Select value={natTrib} onValueChange={setNatTrib}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 – Financeiro</SelectItem>
-                    <SelectItem value="2">2 – Seguradora</SelectItem>
-                    <SelectItem value="3">3 – Plano de Saúde</SelectItem>
-                    <SelectItem value="4">4 – Demais</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                  planoCtaRef – Plano de Contas Referencial
-                </label>
-                <div className="rounded-md border px-3 py-2 text-sm bg-muted/30 flex items-center gap-2">
-                  4 – SPED
-                  <span className="text-[11px] text-primary">(derivado de regTribPrinc)</span>
+            {empresas.map((e) => (
+              <div key={e.raiz} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-semibold text-sm">{e.raiz}</span>
+                  <OpBadge tipo={getOpTipo(e)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Razão Social" value={e.razao} filled />
+                  <Field label="CNAE Principal" value="6491-3/00" filled />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="Logradouro" value="Av. Paulista, 1000" filled />
+                  <Field label="Município" value="São Paulo – SP" filled />
+                  <Field label="CEP" value="01310-100" filled />
                 </div>
               </div>
-            </div>
-          </>
+            ))}
+          </div>
         )}
 
+        {/* Etapa 2 – Dados Específicos da DeRE */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Complete os campos específicos da DeRE</h3>
+            {empresas.map((e) => (
+              <div key={e.raiz} className="border rounded-lg p-4 space-y-4">
+                {isMulti && (
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <span className="font-mono font-semibold text-sm">{e.raiz}</span>
+                    <span className="text-xs text-muted-foreground">{e.razao}</span>
+                  </div>
+                )}
+                {/* regTribPrinc */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Regime Tributário Principal
+                  </label>
+                  <Select value={regTribPrinc} onValueChange={(v) => { setRegTribPrinc(v); setRegTribSecund((p) => p.filter((x) => x !== v)); }}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Selecione o regime tributário principal do contribuinte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0 – Normas Gerais de Tributação</SelectItem>
+                      <SelectItem value="1">1 – Regime Específico de Serviços Financeiros</SelectItem>
+                      <SelectItem value="2">2 – Regime Específico de Plano de Assistência à Saúde</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* regTribSecund */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Regimes Tributários Secundários (opcional)
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { value: "1", label: "1 – Serviços Financeiros" },
+                      { value: "2", label: "2 – Plano de Assistência à Saúde" },
+                    ].filter((o) => o.value !== regTribPrinc).map((opt) => (
+                      <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
+                        <Checkbox
+                          checked={regTribSecund.includes(opt.value)}
+                          onCheckedChange={() => toggleSecund(opt.value)}
+                        />
+                        <span className="text-sm">{opt.label}</span>
+                      </label>
+                    ))}
+                    {regTribPrinc === "" && (
+                      <span className="text-xs text-muted-foreground italic">Selecione o regime principal primeiro</span>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* indNatTrib */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                      Natureza Tributária
+                    </label>
+                    <Select value={indNatTrib} onValueChange={setIndNatTrib}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Selecione a natureza tributária" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">0 – Tributação regular</SelectItem>
+                        <SelectItem value="1">1 – Imunidade ou não incidência</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* planoCtaRef */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                      Plano de Contas Referencial
+                    </label>
+                    <Select value={planoCtaRef} onValueChange={setPlanoCtaRef}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Selecione o plano de contas referencial" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 – COSIF (Banco Central)</SelectItem>
+                        <SelectItem value="2">2 – ANS (Planos de Saúde)</SelectItem>
+                        <SelectItem value="3">3 – SUSEP (Seguradoras)</SelectItem>
+                        <SelectItem value="4">4 – SPED (Receita Federal)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Etapa 3 – Atividades Específicas */}
         {step === 3 && (
-          <SendStep
-            onDone={() => navigate("d1001-list")}
-            label="D1001"
-            opTipo={opTipo}
-          />
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Informe as atividades dos regimes específicos</h3>
+            {!needsActividades && (
+              <InfoAlert>
+                Nenhuma atividade específica é exigida para os regimes selecionados.
+              </InfoAlert>
+            )}
+            {(regTribPrinc === "1" || regTribSecund.includes("1")) && (
+              <div className="border rounded-lg p-4">
+                <MultiSelectField
+                  label="Tabela 21 – Atividades de Serviços Financeiros"
+                  options={[
+                    { value: "1", label: "1 – Operações de crédito (captação, repasse, empréstimo, financiamento)" },
+                    { value: "2", label: "2 – Operações de câmbio (inclusive por tarifa ou comissão)" },
+                    { value: "3", label: "3 – Operações com títulos e valores mobiliários (custódia, corretagem)" },
+                  ]}
+                  selected={atividadesFinanc}
+                  onChange={setAtividadesFinanc}
+                />
+              </div>
+            )}
+            {(regTribPrinc === "2" || regTribSecund.includes("2")) && (
+              <div className="border rounded-lg p-4">
+                <MultiSelectField
+                  label="Tabela 31 – Atividades de Planos de Assistência à Saúde"
+                  options={[
+                    { value: "1", label: "1 – Seguradoras de saúde" },
+                    { value: "2", label: "2 – Administradoras de benefícios" },
+                    { value: "3", label: "3 – Cooperativas operadoras de planos de saúde" },
+                  ]}
+                  selected={atividadesSaude}
+                  onChange={setAtividadesSaude}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Etapa 4 – Revisão Final e Envio */}
+        {step === 4 && !sending && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Revise as informações antes de enviar</h3>
+            <InfoAlert>
+              Serão enviados <strong>{empresas.length} evento{empresas.length > 1 ? "s" : ""} D-1001</strong>.
+              Esta ação pode ser desfeita enviando um evento de <strong>Alteração</strong> ou <strong>Exclusão</strong>.
+            </InfoAlert>
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground w-10">#</TableHead>
+                    <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Operação</TableHead>
+                    <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">CNPJ Raiz</TableHead>
+                    <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Razão Social</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {empresas.map((e, i) => (
+                    <TableRow key={e.raiz}>
+                      <TableCell className="text-sm text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell><OpBadge tipo={getOpTipo(e)} /></TableCell>
+                      <TableCell className="font-mono text-sm">{e.raiz}</TableCell>
+                      <TableCell className="text-sm">{e.razao}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+        {step === 4 && sending && (
+          <div className="flex flex-col items-center py-10 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Enviando...</p>
+          </div>
         )}
       </div>
     </div>
@@ -1294,89 +1661,130 @@ interface HistoricoScreenProps {
 }
 function HistoricoScreen({ navigate }: HistoricoScreenProps) {
   const [selected, setSelected] = useState<number[]>([]);
+  const [search, setSearch] = useState("");
   const [filtroEvento, setFiltroEvento] = useState("todos");
-  const [filtroEmpresa, setFiltroEmpresa] = useState("todas");
+  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [eventos, setEventos] = useState<EventoHistorico[]>(EVENTOS_HISTORICO);
 
-  const filtered = EVENTOS_HISTORICO.filter(
-    (e) =>
-      (filtroEvento === "todos" || e.evento === filtroEvento) &&
-      (filtroEmpresa === "todas" || e.cnpj.startsWith(filtroEmpresa))
-  );
+  const filtered = eventos.filter((e) => {
+    const matchSearch =
+      search === "" ||
+      e.cnpjRaiz.includes(search) ||
+      e.razao.toLowerCase().includes(search.toLowerCase()) ||
+      (e.protocolo ?? "").includes(search) ||
+      (e.nrRecibo ?? "").includes(search) ||
+      (e.idUnico ?? "").includes(search);
+    const matchEvento = filtroEvento === "todos" || e.evento === filtroEvento;
+    const matchStatus = filtroStatus.length === 0 || filtroStatus.includes(e.status);
+    return matchSearch && matchEvento && matchStatus;
+  });
 
-  const allSelected = selected.length === filtered.length && filtered.length > 0;
+  const allSelected = filtered.length > 0 && filtered.every((_, i) => selected.includes(i));
   function toggleAll() {
     setSelected(allSelected ? [] : filtered.map((_, i) => i));
   }
   function toggleOne(i: number) {
-    setSelected((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i]));
+    setSelected((s) => s.includes(i) ? s.filter((x) => x !== i) : [...s, i]);
   }
+  function toggleStatusFilter(v: string) {
+    setFiltroStatus((p) => p.includes(v) ? p.filter((x) => x !== v) : [...p, v]);
+  }
+  function handleDelete(i: number) {
+    setEventos((prev) => prev.filter((_, idx) => idx !== i));
+    setDeleteConfirm(null);
+    setSelected((s) => s.filter((x) => x !== i).map((x) => x > i ? x - 1 : x));
+  }
+
+  const temProcessando = selected.some((i) => filtered[i]?.status === "processando");
+
+  const TH = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
   return (
     <div>
       <div className="flex items-start justify-between mb-5">
         <div>
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1">
-            <button
-              onClick={() => navigate("home")}
-              className="hover:text-foreground transition-colors"
-            >
+            <button onClick={() => navigate("home")} className="hover:text-foreground transition-colors">
               DeRE
             </button>
             <ChevronRight className="h-3 w-3" />
             <span className="text-foreground font-medium">Histórico de Eventos</span>
           </div>
-          <h1 className="text-[20px] font-semibold text-foreground leading-tight">
-            Histórico de Eventos
-          </h1>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
-            Consulte todos os eventos transmitidos
-          </p>
+          <h1 className="text-[20px] font-semibold text-foreground leading-tight">Histórico de Eventos</h1>
+          <p className="text-[13px] text-muted-foreground mt-0.5">Consulte todos os eventos transmitidos</p>
         </div>
+        {/* Ações globais */}
         <div className="flex items-center gap-2 mt-1">
           <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "gap-1.5 text-muted-foreground hover:text-foreground",
-              selected.length > 0 && "text-foreground"
-            )}
+            variant="outline" size="sm"
+            className="gap-1.5"
             disabled={selected.length === 0}
           >
             <Download className="h-3.5 w-3.5" />
-            Baixar {selected.length > 1 ? "ZIP" : "XML"}
-            {selected.length > 0 && ` (${selected.length})`}
+            Baixar{selected.length > 0 ? ` (${selected.length})` : ""}
+          </Button>
+          <Button
+            variant="outline" size="sm"
+            className="gap-1.5"
+            disabled={!temProcessando}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Atualizar
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Upload className="h-3.5 w-3.5" />
+            Importar
           </Button>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-4 px-3 py-2.5 bg-muted/40 rounded-lg border flex-wrap">
-        <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
-          <SelectTrigger className="w-[220px] h-8 text-sm">
-            <SelectValue placeholder="Empresa" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas as empresas</SelectItem>
-            <SelectItem value="12.345.678">Financeira Alpha S.A.</SelectItem>
-            <SelectItem value="98.765.432">Beta Factoring Ltda.</SelectItem>
-            <SelectItem value="55.444.333">Gamma Seguros S.A.</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex items-center gap-1.5">
-          {["todos", "D1001", "D1011"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFiltroEvento(f)}
-              className={cn(
-                "px-3 py-1 rounded-full text-xs font-medium transition-colors border",
-                filtroEvento === f
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted"
-              )}
-            >
-              {f === "todos" ? "Todos eventos" : f}
-            </button>
-          ))}
+      {/* Filtros */}
+      <div className="flex flex-col gap-2.5 mb-4 px-3 py-2.5 bg-muted/40 rounded-lg border">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="CNPJ, razão social, protocolo ou recibo"
+            className="h-8 pl-8 text-sm"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Evento:</span>
+            {["todos", "D-1001", "D-1011"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFiltroEvento(f)}
+                className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                  filtroEvento === f
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {f === "todos" ? "Todos" : f}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Status:</span>
+            {(["enviado", "processando", "nao_enviado"] as StatusDeRE[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => toggleStatusFilter(v)}
+                className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                  filtroStatus.includes(v)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {v === "nao_enviado" ? "Não enviado" : v === "processando" ? "Processando" : "Enviado"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1387,82 +1795,102 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
               <TableHead className="w-10">
                 <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
               </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                CNPJ
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Razão Social
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Evento
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Status
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Data/Hora
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Recibo
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Ações
-              </TableHead>
+              <TableHead className={TH}>CNPJ Raiz</TableHead>
+              <TableHead className={TH}>Razão Social</TableHead>
+              <TableHead className={TH}>Evento</TableHead>
+              <TableHead className={TH}>Operação</TableHead>
+              <TableHead className={TH}>Status</TableHead>
+              <TableHead className={TH}>Data/Hora Geração</TableHead>
+              <TableHead className={TH}>ID Único</TableHead>
+              <TableHead className={TH}>Protocolo</TableHead>
+              <TableHead className={TH}>Recibo</TableHead>
+              <TableHead className={TH}>Ocorrências</TableHead>
+              <TableHead className={TH}>Última Consulta</TableHead>
+              <TableHead className={TH}>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.map((e, i) => (
-              <TableRow key={i} className="hover:bg-muted/30 transition-colors">
-                <TableCell>
-                  <Checkbox
-                    checked={selected.includes(i)}
-                    onCheckedChange={() => toggleOne(i)}
-                  />
-                </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  {e.cnpj}
-                </TableCell>
-                <TableCell className="text-sm">{e.razao}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className="border-blue-400/50 text-blue-600 bg-blue-50 text-xs"
-                  >
-                    {e.evento}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={e.status} />
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{e.data}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  {e.nrRecibo}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs px-2 text-primary hover:text-primary gap-1"
-                  >
-                    <Download className="h-3 w-3" /> XML
-                  </Button>
+              <>
+                <TableRow key={i} className="hover:bg-muted/30 transition-colors">
+                  <TableCell>
+                    <Checkbox checked={selected.includes(i)} onCheckedChange={() => toggleOne(i)} />
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{e.cnpjRaiz}</TableCell>
+                  <TableCell className="text-sm">{e.razao}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="border-blue-400/50 text-blue-600 bg-blue-50 text-xs">
+                      {e.evento}
+                    </Badge>
+                  </TableCell>
+                  <TableCell><OpBadge tipo={e.operacao} /></TableCell>
+                  <TableCell><StatusBadge status={e.status} /></TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{e.dtGeracao}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">{e.idUnico ? e.idUnico.substring(0, 13) + "…" : "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{e.protocolo ?? "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{e.nrRecibo ?? "—"}</TableCell>
+                  <TableCell><OcorrenciaBadge ocorrencia={e.ocorrencias} /></TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{e.dtUltimaConsulta ?? "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Baixar XML">
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                        title="Atualizar status"
+                        disabled={e.status !== "processando"}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        title="Excluir"
+                        onClick={() => setDeleteConfirm(deleteConfirm === i ? null : i)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                {deleteConfirm === i && (
+                  <TableRow key={`confirm-${i}`} className="bg-destructive/5">
+                    <TableCell colSpan={13} className="py-2 px-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm text-destructive">
+                          {e.nrRecibo
+                            ? "Esse evento tem recibo de entrega. Essa ação vai transmitir o evento de exclusão e remover o registro enviado. Deseja enviar a exclusão?"
+                            : "Esse evento não tem recibo de entrega. Essa ação vai apenas apagar o evento no sistema. Deseja excluir?"}
+                        </p>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => setDeleteConfirm(null)}>
+                            Cancelar
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDelete(i)}>
+                            {e.nrRecibo ? "Enviar exclusão" : "Excluir"}
+                          </Button>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
+            ))}
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={13} className="text-center py-8 text-sm text-muted-foreground">
+                  Nenhum evento encontrado
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
-        <div className="flex items-center justify-between px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20">
+        <div className="flex items-center justify-end px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20">
           <span>
-            Download: 1 selecionado → baixa .xml · 2+ selecionados → baixa .zip com todos
-            os XMLs
-          </span>
-          <span>
-            Exibindo{" "}
-            <span className="font-medium text-foreground">{filtered.length}</span> de{" "}
-            <span className="font-medium text-foreground">
-              {EVENTOS_HISTORICO.length}
-            </span>{" "}
-            registros
+            Exibindo <span className="font-medium text-foreground">{filtered.length}</span> de{" "}
+            <span className="font-medium text-foreground">{eventos.length}</span> registros
           </span>
         </div>
       </div>
@@ -1471,9 +1899,18 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────────
-export default function ApuracaoDere() {
-  const [screen, setScreen] = useState<Screen>("home");
+interface ApuracaoDereProps {
+  initialScreen?: Screen;
+}
+
+export default function ApuracaoDere({ initialScreen = "home" }: ApuracaoDereProps) {
+  const [screen, setScreen] = useState<Screen>(initialScreen);
   const [batch, setBatch] = useState<Batch | null>(null);
+
+  useEffect(() => {
+    setScreen(initialScreen);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [initialScreen]);
 
   function navigate(s: Screen) {
     setScreen(s);

@@ -26,6 +26,10 @@ const App = () => (
             <Route path="/apuracao-ibs" element={<PlaceholderPage />} />
             <Route path="/apuracao-is" element={<PlaceholderPage />} />
             <Route path="/apuracao-dere" element={<ApuracaoDere />} />
+            <Route path="/apuracao-dere/plano-ref" element={<ApuracaoDere initialScreen="plano-ref" />} />
+            <Route path="/apuracao-dere/d1001" element={<ApuracaoDere initialScreen="d1001-list" />} />
+            <Route path="/apuracao-dere/d1011" element={<ApuracaoDere initialScreen="d1011-list" />} />
+            <Route path="/apuracao-dere/historico" element={<ApuracaoDere initialScreen="historico" />} />
             <Route path="/gestao-eventos" element={<PlaceholderPage />} />
             <Route path="/processos" element={<PlaceholderPage />} />
             <Route path="/financeiro" element={<PlaceholderPage />} />
