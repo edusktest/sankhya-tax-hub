@@ -44,8 +44,10 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
 
-          <main className="flex-1 p-6 bg-background overflow-auto">{children}</main>
-          <BIAChat />
+          <div className="flex-1 flex overflow-hidden">
+            <main className="flex-1 p-6 bg-background overflow-auto">{children}</main>
+            <BIAChat />
+          </div>
         </div>
       </div>
     </SidebarProvider>

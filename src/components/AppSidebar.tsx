@@ -4,10 +4,7 @@ import {
   FileText,
   ChevronDown,
   Calendar,
-  Settings2,
   SlidersHorizontal,
-  Shield,
-  Banknote,
   Search,
   X,
   Building2,
@@ -64,16 +61,21 @@ const menuItems: { group: string; items: MenuItem[] }[] = [
         ],
       },
       { title: "Gestão Eventos", url: "/gestao-eventos", icon: Calendar },
-      { title: "Processos", url: "/processos", icon: Settings2 },
-      { title: "Financeiro", url: "/financeiro", icon: Banknote },
-      { title: "Tributação Integral", url: "/tributacao-integral", icon: Shield },
-      { title: "Tributação Personalizada", url: "/tributacao-personalizada", icon: SlidersHorizontal },
     ],
   },
   {
     group: "Configurações",
     items: [
       { title: "Empresas", url: "/configuracoes/empresas", icon: Building2 },
+      {
+        title: "Alíquotas IBS/CBS",
+        url: "/configuracoes/aliquotas",
+        icon: SlidersHorizontal,
+        subItems: [
+          { title: "Tributação Integral", url: "/tributacao-integral" },
+          { title: "Tributação Personalizada", url: "/tributacao-personalizada" },
+        ],
+      },
     ],
   },
 ];

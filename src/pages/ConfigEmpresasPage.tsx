@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Search, CheckCircle2, X, ChevronRight } from "lucide-react";
+import { Search, CheckCircle2, X, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -356,32 +356,38 @@ export default function ConfigEmpresasPage() {
           </p>
         </div>
 
-        {/* Action bar — aparece ao selecionar */}
-        {someSelected && (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[12px] text-muted-foreground">
-              {selected.length} selecionada{selected.length > 1 ? "s" : ""}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 border-success/50 text-success hover:bg-success/10"
-              onClick={() => openWizard("habilitar")}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Habilitar
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
-              onClick={() => openWizard("desabilitar")}
-            >
-              <X className="h-3.5 w-3.5" />
-              Desabilitar
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2 mt-1">
+          <Button size="sm" className="gap-1.5" disabled>
+            <Plus className="h-3.5 w-3.5" />
+            Cadastrar empresa
+          </Button>
+
+          {someSelected && (
+            <>
+              <span className="text-[12px] text-muted-foreground">
+                {selected.length} selecionada{selected.length > 1 ? "s" : ""}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-success/50 text-success hover:bg-success/10"
+                onClick={() => openWizard("habilitar")}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Habilitar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                onClick={() => openWizard("desabilitar")}
+              >
+                <X className="h-3.5 w-3.5" />
+                Desabilitar
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Filtro */}
