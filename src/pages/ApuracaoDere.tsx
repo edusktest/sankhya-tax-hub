@@ -11,7 +11,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, Download, ChevronRight,
-  Loader2, Send, Search, Upload, RefreshCw, Trash2, X, ChevronsUpDown,
+  Loader2, Send, Search, Upload, RefreshCw, Trash2, X, ChevronsUpDown, Info,
 } from "lucide-react";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -19,6 +19,12 @@ import {
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -218,6 +224,11 @@ const EVENTOS_HISTORICO: EventoHistorico[] = [
 ];
 
 // ── Shared Components ─────────────────────────────────────────────
+const STATUS_TOOLTIPS: Record<string, string> = {
+  enviado: "Evento registrado em ambiente de testes. Na Fase 2, será necessário reenviar para obter recibo real.",
+  processando: "Aguardando processamento no ambiente de testes. Recibo chega imediatamente (mock).",
+};
+
 function StatusBadge({ status }: { status: StatusDeRE | StatusPlano }) {
   const map: Record<string, [string, string]> = {
     enviado:        ["border-success/50 text-success bg-success/10", "Enviado"],
@@ -227,10 +238,23 @@ function StatusBadge({ status }: { status: StatusDeRE | StatusPlano }) {
     "nao-configurado": ["border-border text-muted-foreground bg-muted/50", "Não configurado"],
   };
   const [cls, label] = map[status] || ["border-border text-muted-foreground", status];
-  return (
+  const tooltip = STATUS_TOOLTIPS[status];
+
+  const badge = (
     <Badge variant="outline" className={cn("text-xs font-medium", cls)}>
       {label}
     </Badge>
+  );
+
+  if (!tooltip) return badge;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{badge}</TooltipTrigger>
+      <TooltipContent className="max-w-xs text-xs">
+        <p>{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -258,6 +282,28 @@ function OpBadge({ tipo }: { tipo: TipoOp }) {
     <Badge variant="outline" className={cn("text-xs font-medium", map[tipo])}>
       {tipo}
     </Badge>
+  );
+}
+
+function TestEnvBadge() {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge
+          variant="outline"
+          className="text-xs font-medium border-blue-400/50 text-blue-600 bg-blue-50 cursor-default"
+        >
+          🧪 Testes
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs text-xs">
+        <p>
+          A API da Receita Federal ainda não foi liberada. Estes eventos estão sendo
+          gerados em ambiente de testes da Sankhya. Quando a Receita Federal
+          disponibilizar a API, será necessário reenviar os eventos.
+        </p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -637,6 +683,16 @@ interface HomeScreenProps {
 function HomeScreen({ navigate }: HomeScreenProps) {
   return (
     <div>
+      {/* Banner MVP — Versão de Testes */}
+      <div className="flex items-start gap-2 rounded-lg border border-blue-300/40 bg-blue-50/60 px-4 py-2.5 text-sm text-foreground mb-4">
+        <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+        <span>
+          <strong>Versão de Testes</strong> — A API da Receita Federal ainda não foi
+          liberada. Os eventos são validados localmente e simulados em ambiente de
+          testes da Sankhya. Será necessário reenviar na Fase 2.
+        </span>
+      </div>
+
       <div className="flex items-start justify-between mb-5">
         <div>
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1">
@@ -1154,6 +1210,10 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
   const [atividadesSaude, setAtividadesSaude] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [testProtocolo] = useState(() => {
+    const seq = String(Math.floor(Math.random() * 99999)).padStart(5, "0");
+    return `ABC-20260513-${seq}`;
+  });
 
   const indices = batch?.indices?.length ? batch.indices : [0];
   const isMulti = indices.length > 1;
@@ -1195,14 +1255,25 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
 
   if (sent) {
     return (
-      <div className="flex flex-col items-center py-16 gap-4">
+      <div className="flex flex-col items-center py-16 gap-4 max-w-md mx-auto">
         <div className="h-14 w-14 rounded-full bg-success/10 border border-success/30 flex items-center justify-center">
           <CheckCircle2 className="h-7 w-7 text-success" />
         </div>
         <div className="text-center">
-          <p className="text-base font-semibold text-foreground">D-1001 enviado com sucesso!</p>
+          <p className="text-base font-semibold text-foreground">
+            Evento{empresas.length > 1 ? "s" : ""} validado{empresas.length > 1 ? "s" : ""} e
+            registrado{empresas.length > 1 ? "s" : ""} em ambiente de testes.
+          </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {empresas.length} evento{empresas.length > 1 ? "s" : ""} transmitido{empresas.length > 1 ? "s" : ""}
+            Protocolo de teste:{" "}
+            <span className="font-mono font-medium">{testProtocolo}</span>
+          </p>
+        </div>
+        <div className="w-full rounded-lg border border-orange-300/60 bg-orange-50 p-3 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-orange-800">
+            Quando a Receita Federal disponibilizar a API, será necessário reenviar
+            estes eventos para obter o recibo definitivo.
           </p>
         </div>
         <div className="flex gap-2 mt-2">
@@ -1375,6 +1446,19 @@ function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
         {step === 4 && !sending && (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Revise as informações antes de enviar</h3>
+            {/* Banner Ambiente de Testes */}
+            <div className="rounded-lg border border-blue-300/50 bg-[#E3F2FD] p-4 flex items-start gap-3">
+              <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-blue-800">Ambiente de Testes</p>
+                <p className="text-sm text-blue-800">
+                  A API da Receita Federal ainda não foi liberada. Estes eventos serão
+                  validados localmente e simulados em ambiente de testes da Sankhya.
+                  Quando a Receita Federal disponibilizar a API, será necessário
+                  reenviar os eventos para obter o recibo definitivo.
+                </p>
+              </div>
+            </div>
             <InfoAlert>
               Serão enviados <strong>{empresas.length} evento{empresas.length > 1 ? "s" : ""} D-1001</strong>.
               Esta ação pode ser desfeita enviando um evento de <strong>Alteração</strong> ou <strong>Exclusão</strong>.
@@ -1681,6 +1765,9 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [motExcl, setMotExcl] = useState("");
   const [eventos, setEventos] = useState<EventoHistorico[]>(EVENTOS_HISTORICO);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  const [filtroAmbiente, setFiltroAmbiente] = useState<string[]>([]);
 
   const filtered = eventos.filter((e) => {
     const matchSearch =
@@ -1693,7 +1780,10 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
     const matchEvento = filtroEvento === "todos" || e.evento === filtroEvento;
     const matchStatus = filtroStatus.length === 0 || filtroStatus.includes(e.status);
     const matchOperacao = filtroOperacao.length === 0 || filtroOperacao.includes(e.operacao);
-    return matchSearch && matchEvento && matchStatus && matchOperacao;
+    // MVP: todos os eventos são "Testes". Filtrar "Produção" exibe zero resultados.
+    const matchAmbiente =
+      filtroAmbiente.length === 0 || filtroAmbiente.includes("Testes");
+    return matchSearch && matchEvento && matchStatus && matchOperacao && matchAmbiente;
   });
 
   const allSelected = filtered.length > 0 && filtered.every((_, i) => selected.includes(i));
@@ -1734,7 +1824,17 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
             : ev
         )
       );
+      setShowDeleteSuccess(true);
     }, 2500);
+  }
+
+  function handleUpdateStatus(ev: EventoHistorico) {
+    const now = new Date().toLocaleString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+    setEventos((prev) => prev.map((e) => e === ev ? { ...e, dtUltimaConsulta: now } : e));
+    setShowUpdateModal(true);
   }
 
   const temProcessando = selected.some((i) => filtered[i]?.status === "processando");
@@ -1765,14 +1865,21 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
             <Download className="h-3.5 w-3.5" />
             Baixar{selected.length > 0 ? ` (${selected.length})` : ""}
           </Button>
-          <Button
-            variant="outline" size="sm"
-            className="gap-1.5"
-            disabled={!temProcessando}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Atualizar
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline" size="sm"
+                className="gap-1.5"
+                onClick={() => setShowUpdateModal(true)}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Atualizar
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-xs">
+              <p>⚠️ Ambiente de testes: não há polling real. O recibo de teste está registrado na tabela.</p>
+            </TooltipContent>
+          </Tooltip>
           <Button variant="outline" size="sm" className="gap-1.5">
             <Upload className="h-3.5 w-3.5" />
             Importar
@@ -1843,6 +1950,27 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
               </button>
             ))}
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Ambiente:</span>
+            {(["Testes", "Produção"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() =>
+                  setFiltroAmbiente((p) =>
+                    p.includes(v) ? p.filter((x) => x !== v) : [...p, v]
+                  )
+                }
+                className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                  filtroAmbiente.includes(v)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1858,10 +1986,43 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
               <TableHead className={TH}>Evento</TableHead>
               <TableHead className={TH}>Operação</TableHead>
               <TableHead className={TH}>Status</TableHead>
+              <TableHead className={TH}>
+                <Tooltip>
+                  <TooltipTrigger className="cursor-default underline decoration-dotted">
+                    Ambiente
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>
+                      A API da Receita Federal ainda não foi liberada. Estes eventos
+                      estão sendo gerados em ambiente de testes da Sankhya. Quando a
+                      Receita Federal disponibilizar a API, será necessário reenviar
+                      os eventos.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TableHead>
               <TableHead className={TH}>Data/Hora Geração</TableHead>
               <TableHead className={TH}>ID Único</TableHead>
-              <TableHead className={TH}>Protocolo</TableHead>
-              <TableHead className={TH}>Recibo</TableHead>
+              <TableHead className={TH}>
+                <Tooltip>
+                  <TooltipTrigger className="cursor-default underline decoration-dotted">
+                    Protocolo
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>Protocolo de teste (ambiente de testes; recibo definitivo na Fase 2).</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TableHead>
+              <TableHead className={TH}>
+                <Tooltip>
+                  <TooltipTrigger className="cursor-default underline decoration-dotted">
+                    Recibo
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>Recibo de teste (ambiente de testes; recibo definitivo na Fase 2).</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TableHead>
               <TableHead className={TH}>Retificação</TableHead>
               <TableHead className={TH}>Ocorrências</TableHead>
               <TableHead className={TH}>Última Consulta</TableHead>
@@ -1884,6 +2045,7 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
                   </TableCell>
                   <TableCell><OpBadge tipo={e.operacao} /></TableCell>
                   <TableCell><StatusBadge status={e.status} /></TableCell>
+                  <TableCell><TestEnvBadge /></TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{e.dtGeracao}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap" title={e.idUnico ?? undefined}>{e.idUnico ? e.idUnico.substring(0, 13) + "…" : "—"}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">{e.protocolo ?? "—"}</TableCell>
@@ -1900,14 +2062,20 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Baixar XML">
                         <Download className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost" size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                        title="Atualizar status"
-                        disabled={e.status !== "processando"}
-                      >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleUpdateStatus(e)}
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-xs">
+                          <p>⚠️ Ambiente de testes: não há polling real. O recibo de teste está registrado acima.</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <Button
                         variant="ghost" size="sm"
                         className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
@@ -1921,12 +2089,12 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
                 </TableRow>
                 {deleteConfirm === i && (
                   <TableRow key={`confirm-${i}`} className="bg-destructive/5">
-                    <TableCell colSpan={14} className="py-3 px-4">
+                    <TableCell colSpan={15} className="py-3 px-4">
                       <div className="flex items-center justify-between gap-4">
                         {e.nrRecibo ? (
                           <div className="flex flex-col gap-2 flex-1">
                             <p className="text-sm text-destructive">
-                              Esse evento tem recibo de entrega. Esta ação transmitirá o evento de exclusão à RFB. Selecione o motivo:
+                              Esse evento tem recibo de entrega. Esta ação transmitirá o evento de exclusão em ambiente de testes. Selecione o motivo:
                             </p>
                             <div className="flex items-center gap-3">
                               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap">
@@ -1971,7 +2139,7 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={14} className="text-center py-8 text-sm text-muted-foreground">
+                <TableCell colSpan={15} className="text-center py-8 text-sm text-muted-foreground">
                   Nenhum evento encontrado
                 </TableCell>
               </TableRow>
@@ -1985,6 +2153,53 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
           </span>
         </div>
       </div>
+
+      {/* Modal: Atualizar — Ambiente de Testes */}
+      <Dialog open={showUpdateModal} onOpenChange={setShowUpdateModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Ambiente de Testes
+            </DialogTitle>
+            <DialogDescription className="text-sm text-foreground pt-2">
+              Não há polling real para a API da RFB. O recibo de teste está registrado
+              na tabela acima.
+              <br /><br />
+              Quando a RFB disponibilizar a API, este botão fará consultas reais e
+              atualizará o status do evento.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button size="sm" onClick={() => setShowUpdateModal(false)}>
+              Entendi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Exclusão Registrada — Ambiente de Testes */}
+      <Dialog open={showDeleteSuccess} onOpenChange={setShowDeleteSuccess}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-success" />
+              Exclusão registrada
+            </DialogTitle>
+            <DialogDescription className="text-sm text-foreground pt-2">
+              O evento de exclusão foi registrado em ambiente de testes.
+              <br /><br />
+              Quando a Receita Federal disponibilizar a API, será necessário reenviar
+              este evento para obter o recibo definitivo.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button size="sm" onClick={() => setShowDeleteSuccess(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
