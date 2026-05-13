@@ -10,6 +10,18 @@ import ApuracaoDere from "./pages/ApuracaoDere";
 import ConfigEmpresasPage from "./pages/ConfigEmpresasPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
+import { ERoutes } from "@/routes/interface";
+
+// Para integrar ao Sankhya, substituir BrowserRouter por createMemoryRouter e
+// envolver o conteúdo com SnkApplication:
+//
+// import { useRef, useState } from "react";
+// import { setSnkApp } from "@/utils/getSnkApp";
+//
+// const appRef = useRef();
+// <SnkApplication ref={appRef} onApplicationLoaded={() => setSnkApp(appRef.current)}>
+//   ...
+// </SnkApplication>
 
 const queryClient = new QueryClient();
 
@@ -21,28 +33,22 @@ const App = () => (
       <BrowserRouter>
         <AppLayout>
           <Routes>
-            <Route path="/" element={<Navigate to="/apuracao-cbs" replace />} />
-            <Route path="/apuracao-cbs" element={<ApuracaoCBS />} />
-            <Route path="/apuracao-cbs/:id" element={<ApuracaoDetalhe />} />
-            <Route path="/apuracao-ibs" element={<PlaceholderPage />} />
-            <Route path="/apuracao-is" element={<PlaceholderPage />} />
-            <Route path="/apuracao-dere" element={<ApuracaoDere />} />
-            <Route path="/apuracao-dere/plano-ref" element={<ApuracaoDere initialScreen="plano-ref" />} />
-            <Route path="/apuracao-dere/d1001" element={<ApuracaoDere initialScreen="d1001-list" />} />
-            <Route path="/apuracao-dere/d1011" element={<ApuracaoDere initialScreen="d1011-list" />} />
-            <Route path="/apuracao-dere/historico" element={<ApuracaoDere initialScreen="historico" />} />
-            <Route path="/gestao-eventos" element={<PlaceholderPage />} />
-            <Route path="/processos" element={<PlaceholderPage />} />
-            <Route path="/financeiro" element={<PlaceholderPage />} />
-            <Route
-              path="/tributacao-integral"
-              element={<PlaceholderPage />}
-            />
-            <Route
-              path="/tributacao-personalizada"
-              element={<PlaceholderPage />}
-            />
-            <Route path="/configuracoes/empresas" element={<ConfigEmpresasPage />} />
+            <Route path={ERoutes.INDEX} element={<Navigate to={ERoutes.APURACAO_CBS} replace />} />
+            <Route path={ERoutes.APURACAO_CBS} element={<ApuracaoCBS />} />
+            <Route path={ERoutes.APURACAO_CBS_DETALHE} element={<ApuracaoDetalhe />} />
+            <Route path={ERoutes.APURACAO_IBS} element={<PlaceholderPage />} />
+            <Route path={ERoutes.APURACAO_IS} element={<PlaceholderPage />} />
+            <Route path={ERoutes.APURACAO_DERE} element={<ApuracaoDere />} />
+            <Route path={ERoutes.APURACAO_DERE_PLANO_REF} element={<ApuracaoDere initialScreen="plano-ref" />} />
+            <Route path={ERoutes.APURACAO_DERE_D1001} element={<ApuracaoDere initialScreen="d1001-list" />} />
+            <Route path={ERoutes.APURACAO_DERE_D1011} element={<ApuracaoDere initialScreen="d1011-list" />} />
+            <Route path={ERoutes.APURACAO_DERE_HISTORICO} element={<ApuracaoDere initialScreen="historico" />} />
+            <Route path={ERoutes.GESTAO_EVENTOS} element={<PlaceholderPage />} />
+            <Route path={ERoutes.PROCESSOS} element={<PlaceholderPage />} />
+            <Route path={ERoutes.FINANCEIRO} element={<PlaceholderPage />} />
+            <Route path={ERoutes.TRIBUTACAO_INTEGRAL} element={<PlaceholderPage />} />
+            <Route path={ERoutes.TRIBUTACAO_PERSONALIZADA} element={<PlaceholderPage />} />
+            <Route path={ERoutes.CONFIG_EMPRESAS} element={<ConfigEmpresasPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

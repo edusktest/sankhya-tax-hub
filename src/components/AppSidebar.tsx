@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { ERoutes } from "@/routes/interface";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
@@ -46,34 +47,34 @@ const menuItems: { group: string; items: MenuItem[] }[] = [
   {
     group: "Operações",
     items: [
-      { title: "Apuração CBS", url: "/apuracao-cbs", icon: Calculator },
-      { title: "Apuração IBS", url: "/apuracao-ibs", icon: Calculator },
-      { title: "Apuração IS", url: "/apuracao-is", icon: Calculator },
+      { title: "Apuração CBS", url: ERoutes.APURACAO_CBS, icon: Calculator },
+      { title: "Apuração IBS", url: ERoutes.APURACAO_IBS, icon: Calculator },
+      { title: "Apuração IS", url: ERoutes.APURACAO_IS, icon: Calculator },
       {
         title: "DeRE",
-        url: "/apuracao-dere",
+        url: ERoutes.APURACAO_DERE,
         icon: FileText,
         subItems: [
-          { title: "Plano Referencial", url: "/apuracao-dere/plano-ref" },
-          { title: "D1001 – Inf. Contribuinte", url: "/apuracao-dere/d1001" },
-          { title: "D1011 – Plano Geral de Contas Comentado", url: "/apuracao-dere/d1011" },
-          { title: "Histórico de Eventos", url: "/apuracao-dere/historico" },
+          { title: "Plano Referencial", url: ERoutes.APURACAO_DERE_PLANO_REF },
+          { title: "D1001 – Inf. Contribuinte", url: ERoutes.APURACAO_DERE_D1001 },
+          { title: "D1011 – Plano Geral de Contas Comentado", url: ERoutes.APURACAO_DERE_D1011 },
+          { title: "Histórico de Eventos", url: ERoutes.APURACAO_DERE_HISTORICO },
         ],
       },
-      { title: "Gestão Eventos", url: "/gestao-eventos", icon: Calendar },
+      { title: "Gestão Eventos", url: ERoutes.GESTAO_EVENTOS, icon: Calendar },
     ],
   },
   {
     group: "Configurações",
     items: [
-      { title: "Empresas", url: "/configuracoes/empresas", icon: Building2 },
+      { title: "Empresas", url: ERoutes.CONFIG_EMPRESAS, icon: Building2 },
       {
         title: "Alíquotas IBS/CBS",
-        url: "/configuracoes/aliquotas",
+        url: ERoutes.TRIBUTACAO_INTEGRAL,
         icon: SlidersHorizontal,
         subItems: [
-          { title: "Tributação Integral", url: "/tributacao-integral" },
-          { title: "Tributação Personalizada", url: "/tributacao-personalizada" },
+          { title: "Tributação Integral", url: ERoutes.TRIBUTACAO_INTEGRAL },
+          { title: "Tributação Personalizada", url: ERoutes.TRIBUTACAO_PERSONALIZADA },
         ],
       },
     ],
