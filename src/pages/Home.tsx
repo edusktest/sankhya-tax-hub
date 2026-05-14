@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useBIAChat } from "@/context/BIAChatContext";
 import { apuracoes } from "@/data/mockData";
-import { HomeQueryBox } from "@/components/HomeQueryBox";
 import { ERoutes } from "@/routes/interface";
 import { cn } from "@/lib/utils";
 
@@ -214,9 +213,6 @@ export default function Home() {
           Visão geral do Portal da Reforma Tributária
         </p>
       </div>
-
-      {/* ── Caixa de Consulta IA ─────────────────────────── */}
-      <HomeQueryBox />
 
       {/* ── Configuração ─────────────────────────────────── */}
       <section>

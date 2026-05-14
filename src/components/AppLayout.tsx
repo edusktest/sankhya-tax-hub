@@ -1,20 +1,42 @@
+import { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BIAChat } from "@/components/BIAChat";
 import { BIAChatProvider } from "@/context/BIAChatContext";
-import { HelpCircle, Bell, ChevronDown } from "lucide-react";
+import { HomeQueryBox } from "@/components/HomeQueryBox";
+import { HelpCircle, Bell, ChevronDown, Sparkles } from "lucide-react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+function getQueryBoxPref(): boolean {
+  try { return localStorage.getItem("bia-query-open") !== "0"; } catch { return true; }
+}
+
+function setQueryBoxPref(v: boolean) {
+  try { localStorage.setItem("bia-query-open", v ? "1" : "0"); } catch { /* noop */ }
+}
+
 export function AppLayout({ children }: AppLayoutProps) {
+  const [queryBoxOpen, setQueryBoxOpenState] = useState(getQueryBoxPref);
+
+  function handleCollapse() {
+    setQueryBoxOpenState(false);
+    setQueryBoxPref(false);
+  }
+
+  function handleExpand() {
+    setQueryBoxOpenState(true);
+    setQueryBoxPref(true);
+  }
+
   return (
     <BIAChatProvider>
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="h-screen flex w-full overflow-hidden">
         <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-14 flex items-center justify-between border-b bg-primary px-4 shrink-0">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-primary-foreground hover:bg-white/10 rounded transition-colors" />
@@ -46,8 +68,28 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
 
+          {/* BIA + main content side-by-side — BIA takes full height after header */}
           <div className="flex-1 flex overflow-hidden">
-            <main className="flex-1 p-6 bg-background overflow-auto">{children}</main>
+            <main className="flex-1 p-6 bg-background overflow-auto">
+              {/* Query box scrolls with page content */}
+              <div className="mb-6">
+                {queryBoxOpen ? (
+                  <HomeQueryBox onCollapse={handleCollapse} />
+                ) : (
+                  <button
+                    onClick={handleExpand}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors text-left"
+                  >
+                    <div className="h-5 w-5 rounded bg-primary/20 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="text-[13px] font-medium text-primary flex-1">O que você está pensando?</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-primary/60" />
+                  </button>
+                )}
+              </div>
+              {children}
+            </main>
             <BIAChat />
           </div>
         </div>

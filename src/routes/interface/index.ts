@@ -16,4 +16,11 @@ export enum ERoutes {
    TRIBUTACAO_INTEGRAL = "/tributacao-integral",
    TRIBUTACAO_PERSONALIZADA = "/tributacao-personalizada",
    CONFIG_EMPRESAS = "/configuracoes/empresas",
+   CONFIG_ALIQUOTAS_CBS = "/configuracoes/aliquotas/cbs",
+   CONFIG_ALIQUOTAS_IBS = "/configuracoes/aliquotas/ibs",
+   CONFIG_ALIQUOTAS_IS = "/configuracoes/aliquotas/is",
+   CONFIG_TABELAS_CLASSIFICACAO = "/configuracoes/tabelas/classificacao-tributaria",
+   CONFIG_TABELAS_CREDITO_PRESUMIDO = "/configuracoes/tabelas/credito-presumido",
+   CONFIG_TABELAS_ANEXOS = "/configuracoes/tabelas/anexos",
+   CONFIG_TABELAS_INDICADORES = "/configuracoes/tabelas/indicadores-locais-operacao",
 }

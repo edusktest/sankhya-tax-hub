@@ -23,25 +23,19 @@ function ThinkingBubble() {
         <Bot className="h-3.5 w-3.5 text-primary" />
       </div>
       <div className="bg-muted/60 rounded-lg px-4 py-3 flex items-center gap-1.5">
-        <span
-          className="h-2 w-2 rounded-full bg-primary/50 animate-bounce"
-          style={{ animationDelay: "0ms", animationDuration: "900ms" }}
-        />
-        <span
-          className="h-2 w-2 rounded-full bg-primary/50 animate-bounce"
-          style={{ animationDelay: "180ms", animationDuration: "900ms" }}
-        />
-        <span
-          className="h-2 w-2 rounded-full bg-primary/50 animate-bounce"
-          style={{ animationDelay: "360ms", animationDuration: "900ms" }}
-        />
+        <span className="h-2 w-2 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "0ms", animationDuration: "900ms" }} />
+        <span className="h-2 w-2 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "180ms", animationDuration: "900ms" }} />
+        <span className="h-2 w-2 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "360ms", animationDuration: "900ms" }} />
       </div>
     </div>
   );
 }
 
 export function BIAChat() {
-  const { messages, isOpen, thinking, setIsOpen, setThinking, addMessage, sendInsight } = useBIAChat();
+  const {
+    messages, isOpen, thinking, pendingAction,
+    setIsOpen, setThinking, addMessage, sendInsight,
+  } = useBIAChat();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -49,12 +43,29 @@ export function BIAChat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, thinking]);
 
+  // Last BIA message with quick replies (shown while pendingAction is active)
+  const activeQuickReplies = pendingAction
+    ? [...messages].reverse().find((m) => m.role === "bia" && m.quickReplies?.length)?.quickReplies
+    : null;
+
+  function handleQuickReply(label: string, value: string) {
+    addMessage({ role: "user", content: label });
+    if (pendingAction) pendingAction(value);
+  }
+
   async function sendMessage() {
     const text = input.trim();
-    if (!text) return;
+    if (!text || thinking) return;
     setInput("");
     addMessage({ role: "user", content: text });
     setIsOpen(true);
+
+    // If there's a pending disambiguation, route to it
+    if (pendingAction) {
+      pendingAction(text);
+      return;
+    }
+
     setThinking(true);
     await new Promise((r) => setTimeout(r, 1600));
     setThinking(false);
@@ -137,17 +148,12 @@ export function BIAChat() {
                       </span>
                     )}
                     {m.tag && (
-                      <span
-                        className={cn(
-                          "inline-block text-[9px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 mb-1",
-                          TAG_STYLES[m.tag]
-                        )}
-                      >
+                      <span className={cn("inline-block text-[9px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 mb-1", TAG_STYLES[m.tag])}>
                         {TAG_LABELS[m.tag]}
                       </span>
                     )}
                     <div className="bg-muted/60 rounded-lg px-3 py-2">
-                      <p className="text-[12px] text-foreground leading-relaxed">{m.content}</p>
+                      <p className="text-[12px] text-foreground leading-relaxed whitespace-pre-line">{m.content}</p>
                     </div>
                   </div>
                 </div>
@@ -159,10 +165,24 @@ export function BIAChat() {
             </div>
           ))}
 
-          {/* Bolha de pensamento */}
           {thinking && <ThinkingBubble />}
-
           <div ref={bottomRef} />
+        </div>
+      )}
+
+      {/* Quick reply buttons */}
+      {isOpen && activeQuickReplies && activeQuickReplies.length > 0 && (
+        <div className="border-t px-3 pt-2 pb-1 flex flex-wrap gap-1.5 shrink-0 bg-muted/20">
+          {activeQuickReplies.map((r) => (
+            <button
+              key={r.value}
+              onClick={() => handleQuickReply(r.label, r.value)}
+              disabled={thinking}
+              className="inline-flex items-center px-3 py-1 rounded-full border border-primary/40 text-[11px] text-primary bg-primary/5 hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
       )}
 
@@ -174,7 +194,7 @@ export function BIAChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !thinking && sendMessage()}
-              placeholder="Pergunte sobre o portal…"
+              placeholder={pendingAction ? "Digite sua resposta…" : "Pergunte sobre o portal…"}
               disabled={thinking}
               className="flex-1 rounded-lg border bg-background px-3 py-2 text-[12px] outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             />

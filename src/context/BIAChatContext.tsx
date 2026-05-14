@@ -7,14 +7,17 @@ export interface BIAMessage {
   content: string;
   tag?: "alerta" | "insight" | "info";
   skill?: BIASkill;
+  quickReplies?: { label: string; value: string }[];
 }
 
 interface BIAChatContextValue {
   messages: BIAMessage[];
   isOpen: boolean;
   thinking: boolean;
+  pendingAction: ((input: string) => void) | null;
   setIsOpen: (v: boolean) => void;
   setThinking: (v: boolean) => void;
+  setPendingAction: (action: ((input: string) => void) | null) => void;
   addMessage: (msg: BIAMessage) => void;
   sendInsight: (content: string, tag?: BIAMessage["tag"], skill?: BIASkill) => void;
 }
@@ -51,6 +54,7 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<BIAMessage[]>(INITIAL_MESSAGES);
   const [isOpen, setIsOpen] = useState(true);
   const [thinking, setThinking] = useState(false);
+  const [pendingAction, setPendingActionState] = useState<((input: string) => void) | null>(null);
 
   function addMessage(msg: BIAMessage) {
     setMessages((prev) => [...prev, msg]);
@@ -61,8 +65,17 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
     setMessages((prev) => [...prev, { role: "bia", content, tag, skill }]);
   }
 
+  // Wrap setter to avoid React treating function as updater
+  function setPendingAction(action: ((input: string) => void) | null) {
+    setPendingActionState(() => action);
+  }
+
   return (
-    <BIAChatContext.Provider value={{ messages, isOpen, thinking, setIsOpen, setThinking, addMessage, sendInsight }}>
+    <BIAChatContext.Provider value={{
+      messages, isOpen, thinking, pendingAction,
+      setIsOpen, setThinking, setPendingAction,
+      addMessage, sendInsight,
+    }}>
       {children}
     </BIAChatContext.Provider>
   );
