@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BIAChat } from "@/components/BIAChat";
+import { BIAChatProvider } from "@/context/BIAChatContext";
 import { HelpCircle, Bell, ChevronDown } from "lucide-react";
 
 interface AppLayoutProps {
@@ -9,6 +10,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
+    <BIAChatProvider>
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
@@ -51,5 +53,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </div>
     </SidebarProvider>
+    </BIAChatProvider>
   );
 }

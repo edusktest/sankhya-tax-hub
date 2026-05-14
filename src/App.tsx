@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
+import Home from "./pages/Home";
 import ApuracaoCBS from "./pages/ApuracaoCBS";
 import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
 import ApuracaoDere from "./pages/ApuracaoDere";
@@ -33,7 +34,8 @@ const App = () => (
       <BrowserRouter>
         <AppLayout>
           <Routes>
-            <Route path={ERoutes.INDEX} element={<Navigate to={ERoutes.APURACAO_CBS} replace />} />
+            <Route path={ERoutes.INDEX} element={<Navigate to={ERoutes.HOME} replace />} />
+            <Route path={ERoutes.HOME} element={<Home />} />
             <Route path={ERoutes.APURACAO_CBS} element={<ApuracaoCBS />} />
             <Route path={ERoutes.APURACAO_CBS_DETALHE} element={<ApuracaoDetalhe />} />
             <Route path={ERoutes.APURACAO_IBS} element={<PlaceholderPage />} />

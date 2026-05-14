@@ -1,87 +1,78 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, ChevronRight, ChevronLeft, Sparkles, Bot } from "lucide-react";
+import { Send, ChevronRight, ChevronLeft, Sparkles, Bot, BrainCircuit, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBIAChat } from "@/context/BIAChatContext";
 
-interface Message {
-  role: "bia" | "user";
-  content: string;
-  tag?: "alerta" | "insight" | "info";
-}
-
-const INITIAL_MESSAGES: Message[] = [
-  {
-    role: "bia",
-    content: "Olá, Eduardo! Monitorei o portal e tenho alguns insights para você hoje.",
-    tag: "info",
-  },
-  {
-    role: "bia",
-    content:
-      "Apuração CBS — Mai/2026: a Financeira Alpha S.A. tem 2 divergências entre o ERP e a Receita Federal. Recomendo revisar os créditos antes do envio.",
-    tag: "alerta",
-  },
-  {
-    role: "bia",
-    content:
-      "DeRE — D-1001: o evento da Gamma Seguros S.A. está em Processando há mais de 24h sem recibo. Verifique o Histórico de Eventos para acompanhar o retorno.",
-    tag: "insight",
-  },
-  {
-    role: "bia",
-    content:
-      "Configurações: Beta Factoring Ltda. e Delta Comercio ME não têm nenhum módulo habilitado no portal. Deseja ir para a tela de Empresas para configurá-las?",
-    tag: "insight",
-  },
-];
-
-const TAG_STYLES: Record<NonNullable<Message["tag"]>, string> = {
+const TAG_STYLES = {
   alerta: "bg-warning/15 text-warning border border-warning/30",
   insight: "bg-primary/10 text-primary border border-primary/20",
   info: "bg-muted text-muted-foreground border border-border",
-};
+} as const;
 
-const TAG_LABELS: Record<NonNullable<Message["tag"]>, string> = {
+const TAG_LABELS = {
   alerta: "Alerta",
   insight: "Insight",
   info: "Info",
-};
+} as const;
+
+function ThinkingBubble() {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+        <Bot className="h-3.5 w-3.5 text-primary" />
+      </div>
+      <div className="bg-muted/60 rounded-lg px-4 py-3 flex items-center gap-1.5">
+        <span
+          className="h-2 w-2 rounded-full bg-primary/50 animate-bounce"
+          style={{ animationDelay: "0ms", animationDuration: "900ms" }}
+        />
+        <span
+          className="h-2 w-2 rounded-full bg-primary/50 animate-bounce"
+          style={{ animationDelay: "180ms", animationDuration: "900ms" }}
+        />
+        <span
+          className="h-2 w-2 rounded-full bg-primary/50 animate-bounce"
+          style={{ animationDelay: "360ms", animationDuration: "900ms" }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function BIAChat() {
-  const [open, setOpen] = useState(true);
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const { messages, isOpen, thinking, setIsOpen, setThinking, addMessage, sendInsight } = useBIAChat();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, thinking]);
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = input.trim();
     if (!text) return;
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: text },
-      {
-        role: "bia",
-        content:
-          "Entendido! Estou analisando sua solicitação sobre o Portal da Reforma Tributária. Em breve trarei os dados consolidados.",
-        tag: "info",
-      },
-    ]);
     setInput("");
+    addMessage({ role: "user", content: text });
+    setIsOpen(true);
+    setThinking(true);
+    await new Promise((r) => setTimeout(r, 1600));
+    setThinking(false);
+    sendInsight(
+      "Entendido! Estou analisando sua solicitação sobre o Portal da Reforma Tributária. Em breve trarei os dados consolidados.",
+      "info"
+    );
   }
 
   return (
     <div
       className={cn(
         "flex flex-col border-l bg-card shrink-0 transition-[width] duration-200 overflow-hidden",
-        open ? "w-[340px]" : "w-12"
+        isOpen ? "w-[340px]" : "w-12"
       )}
     >
       {/* Header */}
-      {open ? (
+      {isOpen ? (
         <div className="flex items-center gap-2 px-3 py-2.5 border-b bg-primary text-primary-foreground shrink-0">
           <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
             <Sparkles className="h-3.5 w-3.5" />
@@ -93,7 +84,7 @@ export function BIAChat() {
             </p>
           </div>
           <button
-            onClick={() => setOpen(false)}
+            onClick={() => setIsOpen(false)}
             className="hover:bg-white/10 rounded p-1 transition-colors shrink-0"
             title="Recolher"
           >
@@ -102,7 +93,7 @@ export function BIAChat() {
         </div>
       ) : (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => setIsOpen(true)}
           className="flex flex-col items-center gap-2 py-3 border-b bg-primary text-primary-foreground shrink-0 hover:bg-primary/90 transition-colors w-full"
           title="Expandir assistente"
         >
@@ -112,10 +103,10 @@ export function BIAChat() {
       )}
 
       {/* Collapsed label */}
-      {!open && (
+      {!isOpen && (
         <div
           className="flex-1 flex items-center justify-center cursor-pointer"
-          onClick={() => setOpen(true)}
+          onClick={() => setIsOpen(true)}
         >
           <span
             className="text-[9px] font-semibold text-muted-foreground tracking-[0.2em] uppercase select-none"
@@ -127,7 +118,7 @@ export function BIAChat() {
       )}
 
       {/* Messages */}
-      {open && (
+      {isOpen && (
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {messages.map((m, i) => (
             <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
@@ -137,6 +128,14 @@ export function BIAChat() {
                     <Bot className="h-3.5 w-3.5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
+                    {m.skill && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 mb-0.5 mr-1 bg-primary/10 text-primary border border-primary/20">
+                        {m.skill === "Consultor Tributário"
+                          ? <BrainCircuit className="h-2.5 w-2.5" />
+                          : <Wrench className="h-2.5 w-2.5" />}
+                        {m.skill}
+                      </span>
+                    )}
                     {m.tag && (
                       <span
                         className={cn(
@@ -159,22 +158,32 @@ export function BIAChat() {
               )}
             </div>
           ))}
+
+          {/* Bolha de pensamento */}
+          {thinking && <ThinkingBubble />}
+
           <div ref={bottomRef} />
         </div>
       )}
 
       {/* Input */}
-      {open && (
+      {isOpen && (
         <div className="border-t p-3 space-y-2 shrink-0">
           <div className="flex items-center gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              onKeyDown={(e) => e.key === "Enter" && !thinking && sendMessage()}
               placeholder="Pergunte sobre o portal…"
-              className="flex-1 rounded-lg border bg-background px-3 py-2 text-[12px] outline-none focus:ring-1 focus:ring-primary"
+              disabled={thinking}
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-[12px] outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             />
-            <Button size="sm" className="h-8 w-8 p-0 shrink-0" onClick={sendMessage}>
+            <Button
+              size="sm"
+              className="h-8 w-8 p-0 shrink-0"
+              onClick={sendMessage}
+              disabled={thinking || !input.trim()}
+            >
               <Send className="h-3.5 w-3.5" />
             </Button>
           </div>

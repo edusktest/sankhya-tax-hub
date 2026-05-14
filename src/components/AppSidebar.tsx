@@ -8,6 +8,7 @@ import {
   Search,
   X,
   Building2,
+  LayoutDashboard,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -45,6 +46,12 @@ interface MenuItem {
 
 const menuItems: { group: string; items: MenuItem[] }[] = [
   {
+    group: "Geral",
+    items: [
+      { title: "Home", url: ERoutes.HOME, icon: LayoutDashboard },
+    ],
+  },
+  {
     group: "Operações",
     items: [
       { title: "Apuração CBS", url: ERoutes.APURACAO_CBS, icon: Calculator },
@@ -69,12 +76,12 @@ const menuItems: { group: string; items: MenuItem[] }[] = [
     items: [
       { title: "Empresas", url: ERoutes.CONFIG_EMPRESAS, icon: Building2 },
       {
-        title: "Alíquotas IBS/CBS",
+        title: "Assistente",
         url: ERoutes.TRIBUTACAO_INTEGRAL,
         icon: SlidersHorizontal,
         subItems: [
-          { title: "Tributação Integral", url: ERoutes.TRIBUTACAO_INTEGRAL },
-          { title: "Tributação Personalizada", url: ERoutes.TRIBUTACAO_PERSONALIZADA },
+          { title: "Tributação Integral - IBS/CBS", url: ERoutes.TRIBUTACAO_INTEGRAL },
+          { title: "Tributação Personalizada - IBS/CBS", url: ERoutes.TRIBUTACAO_PERSONALIZADA },
         ],
       },
     ],
