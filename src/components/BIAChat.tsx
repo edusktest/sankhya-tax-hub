@@ -22,10 +22,10 @@ function ThinkingBubble() {
       <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
         <Bot className="h-3.5 w-3.5 text-white" />
       </div>
-      <div className="bg-white/10 rounded-lg px-4 py-3 flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "0ms",   animationDuration: "900ms" }} />
-        <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "180ms", animationDuration: "900ms" }} />
-        <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "360ms", animationDuration: "900ms" }} />
+      <div className="bg-white rounded-lg px-4 py-3 flex items-center gap-1.5">
+        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "0ms",   animationDuration: "900ms" }} />
+        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "180ms", animationDuration: "900ms" }} />
+        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "360ms", animationDuration: "900ms" }} />
       </div>
     </div>
   );
@@ -155,8 +155,8 @@ export function BIAChat() {
                         {TAG_LABELS[m.tag]}
                       </span>
                     )}
-                    <div className="bg-white/[.12] rounded-lg px-3 py-2">
-                      <p className="text-[12px] text-white leading-relaxed whitespace-pre-line">{m.content}</p>
+                    <div className="bg-white rounded-lg px-3 py-2">
+                      <p className="text-[12px] text-gray-800 leading-relaxed whitespace-pre-line">{m.content}</p>
                     </div>
                   </div>
                 </div>
