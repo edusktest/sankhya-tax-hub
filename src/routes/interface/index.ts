@@ -15,6 +15,7 @@ export enum ERoutes {
    FINANCEIRO = "/financeiro",
    TRIBUTACAO_INTEGRAL = "/tributacao-integral",
    TRIBUTACAO_PERSONALIZADA = "/tributacao-personalizada",
+   CONFIG_ASSISTENTE_EXCECOES = "/configuracoes/assistente/excecoes-ibs-cbs",
    CONFIG_EMPRESAS = "/configuracoes/empresas",
    CONFIG_ALIQUOTAS_CBS = "/configuracoes/aliquotas/cbs",
    CONFIG_ALIQUOTAS_IBS = "/configuracoes/aliquotas/ibs",

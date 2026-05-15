@@ -83,8 +83,9 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
         url: ERoutes.TRIBUTACAO_INTEGRAL,
         icon: SlidersHorizontal,
         subItems: [
-          { title: "Tributação Integral - IBS/CBS",    url: ERoutes.TRIBUTACAO_INTEGRAL    },
-          { title: "Tributação Personalizada - IBS/CBS", url: ERoutes.TRIBUTACAO_PERSONALIZADA },
+          { title: "Tributação Integral - IBS/CBS",      url: ERoutes.TRIBUTACAO_INTEGRAL        },
+          { title: "Tributação Personalizada - IBS/CBS", url: ERoutes.TRIBUTACAO_PERSONALIZADA   },
+          { title: "Assistente de Exceções IBS/CBS",     url: ERoutes.CONFIG_ASSISTENTE_EXCECOES },
         ],
       },
       {
