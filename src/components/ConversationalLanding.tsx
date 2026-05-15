@@ -212,24 +212,16 @@ export function ConversationalLanding() {
 
   return (
     <div className="h-screen w-full flex flex-col bg-background">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-[15px] text-foreground tracking-tight">Sankhya</span>
-          <span className="text-muted-foreground/50 select-none">|</span>
-          <span className="text-muted-foreground text-[13px]">Portal da Reforma Tributária</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <span className="text-primary text-[11px] font-bold">EL</span>
-          </div>
-          <span className="text-[13px] text-foreground/70">Eduardo Lino</span>
-        </div>
-      </div>
-
       {/* Scrollable main area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col items-center px-4 pb-10 pt-8">
+        <div className="flex flex-col items-center px-4 pb-10 pt-10">
+          {/* Portal title */}
+          <div className="flex items-center gap-2 mb-7">
+            <span className="font-bold text-[15px] text-foreground tracking-tight">Sankhya</span>
+            <span className="text-muted-foreground/40 select-none">|</span>
+            <span className="text-muted-foreground text-[13px]">Portal da Reforma Tributária</span>
+          </div>
+
           {/* BIA avatar */}
           <div className="relative mb-5">
             <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
