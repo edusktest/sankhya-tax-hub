@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronRight, ChevronLeft, Search, CheckCircle2, Users, Info, ScrollText,
   Building2, FileSearch, ClipboardCheck, AlertTriangle, Sparkles, Check, X,
@@ -103,6 +103,34 @@ const KB: Record<string, CClassCandidate[]> = {
   "8523.49.90": [{ cClass: "22.01.01.100", descricao: "Software — alíquota padrão",          baseLegal: "LC 214/2025 Anexo I",         reducaoPerc: 0  }],
 };
 
+// ── Scenario: aliquotas-pending (pre-built ambiguous rows) ─────────
+const ALIQUOTAS_PENDING_ROWS: NcmRow[] = [
+  {
+    ncm: "3004.20.99",
+    descNcm: "Medicamento Antibiótico Amoxicilina 500mg",
+    empresas: ["Alpha Filial SP"],
+    candidatos: [
+      { cClass: "04.01.01.200", descricao: "Medicamentos registrados ANVISA — isenção total CBS/IBS",  baseLegal: "LC 214/2025 Art. 147 I",  reducaoPerc: 100 },
+      { cClass: "04.01.02.100", descricao: "Outros produtos farmacêuticos — redução 60% CBS/IBS",       baseLegal: "LC 214/2025 Anexo II",    reducaoPerc: 60  },
+    ],
+    isAmbiguo: true,
+    status: "pendente",
+    cClassAprovado: undefined,
+  },
+  {
+    ncm: "0401.10.10",
+    descNcm: "Leite Integral UHT 1L",
+    empresas: ["Beta Factoring Ltda.", "Gamma Seguros S.A."],
+    candidatos: [
+      { cClass: "02.01.05.100", descricao: "Cesta Básica Nacional — isenção total CBS/IBS",       baseLegal: "LC 214/2025 Anexo I Art. 25",  reducaoPerc: 100 },
+      { cClass: "02.01.06.060", descricao: "Produto lácteo processado — redução 60% CBS/IBS",      baseLegal: "LC 214/2025 Anexo II Item 12", reducaoPerc: 60  },
+    ],
+    isAmbiguo: true,
+    status: "pendente",
+    cClassAprovado: undefined,
+  },
+];
+
 const TOPS: Top[] = [
   { codTop: 100, descricao: "Venda de Mercadoria",           tipoMovimento: "S" },
   { codTop: 101, descricao: "Venda de Serviço",              tipoMovimento: "S" },
@@ -150,6 +178,18 @@ function buildNcmRows(selectedIds: number[]): NcmRow[] {
 
 function getBiaRecommendation(row: NcmRow): { cClass: string; reasoning: string } | null {
   if (!row.isAmbiguo || row.candidatos.length < 2) return null;
+  if (row.ncm === "3004.20.99") {
+    return {
+      cClass: "04.01.01.200",
+      reasoning: "NCM 3004.20.99 pode enquadrar-se em duas classes: com registro ANVISA ativo (isenção total, Art. 147 I) ou sem registro (redução 60%, Anexo II). A ANVISA registrou atualização recente neste código. Este medicamento possui registro ANVISA ativo?",
+    };
+  }
+  if (row.ncm === "0401.10.10") {
+    return {
+      cClass: "02.01.05.100",
+      reasoning: "NCM 0401.10.10 abrange leite puro (Cesta Básica Nacional, isenção total, Anexo I Art. 25) e leite processado com ingredientes adicionados (redução 60%, Anexo II Item 12). Este produto é leite puro/integral sem ingredientes adicionados?",
+    };
+  }
   if (row.ncm === "9619.00.00") {
     const lower = row.descNcm.toLowerCase();
     const hasAbsorvent = lower.includes("absorvente");
@@ -444,11 +484,12 @@ interface Step2Props {
   selectedEmpresas: number[];
   onApprovalChange: (allApproved: boolean) => void;
   onRowsSnapshot?: (rows: NcmRow[]) => void;
+  initialRows?: NcmRow[];
 }
 
-function Step2({ selectedEmpresas, onApprovalChange, onRowsSnapshot }: Step2Props) {
+function Step2({ selectedEmpresas, onApprovalChange, onRowsSnapshot, initialRows }: Step2Props) {
   const { addMessage, setThinking, sendInsight, setIsOpen, setPendingAction } = useBIAChat();
-  const [rows, setRows] = useState<NcmRow[]>(() => buildNcmRows(selectedEmpresas));
+  const [rows, setRows] = useState<NcmRow[]>(() => initialRows ?? buildNcmRows(selectedEmpresas));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
 
@@ -505,8 +546,13 @@ function Step2({ selectedEmpresas, onApprovalChange, onRowsSnapshot }: Step2Prop
         : `NCM ${row.ncm} — múltiplos cClass identificados.\n\nCandidatos:\n${candidates}`;
       sendInsight(analysisMsg, "insight", "Consultor Tributário");
 
-      const quickReplies = row.ncm === "9619.00.00"
-        ? [{ label: "É uma fralda", value: "fralda" }, { label: "É um absorvente", value: "absorvente" }]
+      const quickReplies =
+        row.ncm === "3004.20.99"
+          ? [{ label: "Tem registro ANVISA", value: "anvisa_sim" }, { label: "Sem registro ANVISA", value: "anvisa_nao" }]
+        : row.ncm === "0401.10.10"
+          ? [{ label: "Leite puro/integral", value: "leite_puro" }, { label: "Leite processado", value: "leite_processado" }]
+        : row.ncm === "9619.00.00"
+          ? [{ label: "É uma fralda", value: "fralda" }, { label: "É um absorvente", value: "absorvente" }]
         : row.candidatos.map((c) => ({ label: c.cClass, value: c.cClass }));
 
       addMessage({
@@ -520,7 +566,17 @@ function Step2({ selectedEmpresas, onApprovalChange, onRowsSnapshot }: Step2Prop
       setPendingAction((input: string) => {
         const lower = input.toLowerCase();
         let matched: CClassCandidate | undefined;
-        if (lower.includes("absorvente"))
+        if (row.ncm === "3004.20.99") {
+          if (lower === "anvisa_sim" || lower.includes("tem registro") || lower.includes("ativo"))
+            matched = row.candidatos.find((c) => c.cClass === "04.01.01.200");
+          else if (lower === "anvisa_nao" || lower.includes("sem registro"))
+            matched = row.candidatos.find((c) => c.cClass === "04.01.02.100");
+        } else if (row.ncm === "0401.10.10") {
+          if (lower === "leite_puro" || lower.includes("puro") || lower.includes("integral"))
+            matched = row.candidatos.find((c) => c.cClass === "02.01.05.100");
+          else if (lower === "leite_processado" || lower.includes("processado"))
+            matched = row.candidatos.find((c) => c.cClass === "02.01.06.060");
+        } else if (lower.includes("absorvente"))
           matched = row.candidatos.find((c) => c.cClass === "04.03.01.100");
         else if (lower.includes("fralda"))
           matched = row.candidatos.find((c) => c.cClass === "04.03.02.100");
@@ -1196,12 +1252,31 @@ function WelcomeScreen({ onStart, onCancel }: WelcomeScreenProps) {
 // ── Page ───────────────────────────────────────────────────────────
 export default function TributacaoPersonalizadaWizard() {
   const navigate = useNavigate();
-  const [welcome, setWelcome] = useState(true);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [selectedEmpresas, setSelectedEmpresas] = useState<number[]>([]);
+  const [searchParams] = useSearchParams();
+  const { addMessage, setIsOpen } = useBIAChat();
+  const isAliquotasScenario = searchParams.get("scenario") === "aliquotas-pending";
+
+  const [welcome, setWelcome] = useState(!isAliquotasScenario);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(isAliquotasScenario ? 2 : 1);
+  const [selectedEmpresas, setSelectedEmpresas] = useState<number[]>(isAliquotasScenario ? [2, 3, 4] : []);
   const [step2AllApproved, setStep2AllApproved] = useState(false);
   const [ncmSnapshot, setNcmSnapshot] = useState<NcmRow[]>([]);
   const [selectedTops, setSelectedTops] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (isAliquotasScenario) {
+      setIsOpen(true);
+      const t = setTimeout(() => {
+        addMessage({
+          role: "bia",
+          content: "Aqui estão as 2 aprovações pendentes do Assistente de Alíquotas. Clique em BIA em qualquer NCM ambíguo para que eu ajude na desambiguação.",
+          tag: "info",
+          skill: "Consultor Tributário",
+        });
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   if (welcome) {
     return (
@@ -1290,6 +1365,7 @@ export default function TributacaoPersonalizadaWizard() {
           selectedEmpresas={selectedEmpresas}
           onApprovalChange={setStep2AllApproved}
           onRowsSnapshot={setNcmSnapshot}
+          initialRows={isAliquotasScenario ? ALIQUOTAS_PENDING_ROWS : undefined}
         />
       )}
       {step === 3 && <Step3 selectedTops={selectedTops} onChange={setSelectedTops} />}

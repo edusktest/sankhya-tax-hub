@@ -3,6 +3,7 @@ import { Send, ChevronRight, ChevronLeft, Sparkles, Bot, BrainCircuit, Wrench } 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBIAChat } from "@/context/BIAChatContext";
+import { useNavigate } from "react-router-dom";
 
 const TAG_STYLES = {
   alerta: "bg-warning/15 text-warning border border-warning/30",
@@ -34,8 +35,9 @@ function ThinkingBubble() {
 export function BIAChat() {
   const {
     messages, isOpen, thinking, pendingAction,
-    setIsOpen, setThinking, addMessage, sendInsight,
+    setIsOpen, setThinking, addMessage, sendInsight, setPendingAction,
   } = useBIAChat();
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -48,8 +50,13 @@ export function BIAChat() {
     ? [...messages].reverse().find((m) => m.role === "bia" && m.quickReplies?.length)?.quickReplies
     : null;
 
-  function handleQuickReply(label: string, value: string) {
+  function handleQuickReply(label: string, value: string, url?: string) {
     addMessage({ role: "user", content: label });
+    if (url) {
+      setPendingAction(null);
+      navigate(url);
+      return;
+    }
     if (pendingAction) pendingAction(value);
   }
 
@@ -78,7 +85,7 @@ export function BIAChat() {
   return (
     <div
       className={cn(
-        "flex flex-col border-l bg-card shrink-0 transition-[width] duration-200 overflow-hidden",
+        "flex flex-col border-r bg-card shrink-0 transition-[width] duration-200 overflow-hidden",
         isOpen ? "w-[340px]" : "w-12"
       )}
     >
@@ -99,7 +106,7 @@ export function BIAChat() {
             className="hover:bg-white/10 rounded p-1 transition-colors shrink-0"
             title="Recolher"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         </div>
       ) : (
@@ -109,7 +116,7 @@ export function BIAChat() {
           title="Expandir assistente"
         >
           <Sparkles className="h-4 w-4" />
-          <ChevronLeft className="h-3 w-3" />
+          <ChevronRight className="h-3 w-3" />
         </button>
       )}
 
@@ -176,7 +183,7 @@ export function BIAChat() {
           {activeQuickReplies.map((r) => (
             <button
               key={r.value}
-              onClick={() => handleQuickReply(r.label, r.value)}
+              onClick={() => handleQuickReply(r.label, r.value, r.url)}
               disabled={thinking}
               className="inline-flex items-center px-3 py-1 rounded-full border border-primary/40 text-[11px] text-primary bg-primary/5 hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

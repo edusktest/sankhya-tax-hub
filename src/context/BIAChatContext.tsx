@@ -7,13 +7,14 @@ export interface BIAMessage {
   content: string;
   tag?: "alerta" | "insight" | "info";
   skill?: BIASkill;
-  quickReplies?: { label: string; value: string }[];
+  quickReplies?: { label: string; value: string; url?: string }[];
 }
 
 interface BIAChatContextValue {
   messages: BIAMessage[];
   isOpen: boolean;
   thinking: boolean;
+  hasInteracted: boolean;
   pendingAction: ((input: string) => void) | null;
   setIsOpen: (v: boolean) => void;
   setThinking: (v: boolean) => void;
@@ -54,9 +55,11 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<BIAMessage[]>(INITIAL_MESSAGES);
   const [isOpen, setIsOpen] = useState(true);
   const [thinking, setThinking] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [pendingAction, setPendingActionState] = useState<((input: string) => void) | null>(null);
 
   function addMessage(msg: BIAMessage) {
+    if (msg.role === "user") setHasInteracted(true);
     setMessages((prev) => [...prev, msg]);
   }
 
@@ -72,7 +75,7 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
 
   return (
     <BIAChatContext.Provider value={{
-      messages, isOpen, thinking, pendingAction,
+      messages, isOpen, thinking, hasInteracted, pendingAction,
       setIsOpen, setThinking, setPendingAction,
       addMessage, sendInsight,
     }}>
