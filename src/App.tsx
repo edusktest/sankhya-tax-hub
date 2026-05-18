@@ -12,6 +12,7 @@ import ConfigEmpresasPage from "./pages/ConfigEmpresasPage";
 import TributacaoPersonalizadaWizard from "./pages/TributacaoPersonalizadaWizard";
 import TabelaOficialPage from "./pages/TabelaOficialPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import AssistenteExcecoesPage from "./pages/AssistenteExcecoesPage";
 import NotFound from "./pages/NotFound";
 import { ERoutes } from "@/routes/interface";
 
@@ -52,7 +53,7 @@ const App = () => (
             <Route path={ERoutes.FINANCEIRO} element={<PlaceholderPage />} />
             <Route path={ERoutes.TRIBUTACAO_INTEGRAL} element={<PlaceholderPage />} />
             <Route path={ERoutes.TRIBUTACAO_PERSONALIZADA} element={<TributacaoPersonalizadaWizard />} />
-            <Route path={ERoutes.CONFIG_ASSISTENTE_EXCECOES} element={<PlaceholderPage />} />
+            <Route path={ERoutes.CONFIG_ASSISTENTE_EXCECOES} element={<AssistenteExcecoesPage />} />
             <Route path={ERoutes.CONFIG_EMPRESAS} element={<ConfigEmpresasPage />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_CBS} element={<PlaceholderPage />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_IBS} element={<PlaceholderPage />} />
