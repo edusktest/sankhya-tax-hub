@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, Sparkles, Bot, Gem, AlertTriangle, ChevronRight } from "lucide-react";
+import { ArrowUp, Sparkles, Bot, Gem, AlertTriangle, ChevronRight, LayoutDashboard } from "lucide-react";
 import { useBIAChat } from "@/context/BIAChatContext";
 import type { BIASkill } from "@/context/BIAChatContext";
 import { cn } from "@/lib/utils";
@@ -154,7 +154,7 @@ function WorkerCard({
 
 // ── Main component ────────────────────────────────────────────────
 export function ConversationalLanding() {
-  const { addMessage, setThinking, sendInsight, setPendingAction } = useBIAChat();
+  const { addMessage, setThinking, sendInsight, setPendingAction, skipToLayout } = useBIAChat();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -212,6 +212,17 @@ export function ConversationalLanding() {
 
   return (
     <div className="h-screen w-full flex flex-col bg-background">
+      {/* Top-right action */}
+      <div className="absolute top-3 right-4 z-10">
+        <button
+          onClick={skipToLayout}
+          className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent hover:border-primary/30 transition-colors shadow-sm"
+        >
+          <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+          Voltar para layout EIP
+        </button>
+      </div>
+
       {/* Scrollable main area */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center px-4 pb-10 pt-10">

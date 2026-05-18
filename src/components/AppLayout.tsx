@@ -73,15 +73,18 @@ function TransitionScreen() {
 
 // ── Inner layout ──────────────────────────────────────────────────
 function AppLayoutInner({ children }: AppLayoutProps) {
-  const { hasInteracted } = useBIAChat();
+  const { hasInteracted, immediateLayout } = useBIAChat();
   const [showMain, setShowMain] = useState(false);
 
   useEffect(() => {
-    if (hasInteracted && !showMain) {
-      const t = setTimeout(() => setShowMain(true), 2800);
-      return () => clearTimeout(t);
+    if (!hasInteracted || showMain) return;
+    if (immediateLayout) {
+      setShowMain(true);
+      return;
     }
-  }, [hasInteracted]);
+    const t = setTimeout(() => setShowMain(true), 2800);
+    return () => clearTimeout(t);
+  }, [hasInteracted, immediateLayout]);
 
   // Landing: full-screen conversational page
   if (!hasInteracted) {

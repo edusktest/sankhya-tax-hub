@@ -15,12 +15,15 @@ interface BIAChatContextValue {
   isOpen: boolean;
   thinking: boolean;
   hasInteracted: boolean;
+  immediateLayout: boolean;
+  navOpenOnStart: boolean;
   pendingAction: ((input: string) => void) | null;
   setIsOpen: (v: boolean) => void;
   setThinking: (v: boolean) => void;
   setPendingAction: (action: ((input: string) => void) | null) => void;
   addMessage: (msg: BIAMessage) => void;
   sendInsight: (content: string, tag?: BIAMessage["tag"], skill?: BIASkill) => void;
+  skipToLayout: () => void;
 }
 
 const BIAChatContext = createContext<BIAChatContextValue | null>(null);
@@ -56,6 +59,8 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(true);
   const [thinking, setThinking] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [immediateLayout, setImmediateLayout] = useState(false);
+  const [navOpenOnStart, setNavOpenOnStart] = useState(false);
   const [pendingAction, setPendingActionState] = useState<((input: string) => void) | null>(null);
 
   function addMessage(msg: BIAMessage) {
@@ -68,6 +73,12 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
     setMessages((prev) => [...prev, { role: "bia", content, tag, skill }]);
   }
 
+  function skipToLayout() {
+    setHasInteracted(true);
+    setImmediateLayout(true);
+    setNavOpenOnStart(true);
+  }
+
   // Wrap setter to avoid React treating function as updater
   function setPendingAction(action: ((input: string) => void) | null) {
     setPendingActionState(() => action);
@@ -75,9 +86,9 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
 
   return (
     <BIAChatContext.Provider value={{
-      messages, isOpen, thinking, hasInteracted, pendingAction,
+      messages, isOpen, thinking, hasInteracted, immediateLayout, navOpenOnStart, pendingAction,
       setIsOpen, setThinking, setPendingAction,
-      addMessage, sendInsight,
+      addMessage, sendInsight, skipToLayout,
     }}>
       {children}
     </BIAChatContext.Provider>

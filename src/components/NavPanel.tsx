@@ -8,6 +8,7 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { ERoutes } from "@/routes/interface";
 import { cn } from "@/lib/utils";
+import { useBIAChat } from "@/context/BIAChatContext";
 
 type SubItem = { title: string; url: string };
 interface MenuItem { title: string; url: string; icon: React.ElementType; subItems?: SubItem[] }
@@ -75,7 +76,8 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
 ];
 
 export function NavPanel() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { navOpenOnStart } = useBIAChat();
+  const [isOpen, setIsOpen] = useState(navOpenOnStart);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
 
