@@ -125,7 +125,7 @@ function AppLayoutInner({ children }: AppLayoutProps) {
                   <div className="h-7 w-7 rounded-full bg-white/25 border border-white/30 flex items-center justify-center">
                     <span className="text-primary-foreground font-semibold text-xs">EL</span>
                   </div>
-                  <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Eduardo Lino</span>
+                  <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Avelino</span>
                   <ChevronDown className="h-3 w-3 text-primary-foreground/50 hidden sm:block" />
                 </button>
               </div>

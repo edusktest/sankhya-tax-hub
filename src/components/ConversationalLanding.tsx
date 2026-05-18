@@ -244,7 +244,7 @@ export function ConversationalLanding() {
           </div>
 
           <h1 className="text-3xl font-semibold text-foreground mb-1 text-center">
-            Olá, Eduardo!
+            Olá, Avelino!
           </h1>
           <p className="text-lg text-muted-foreground mb-8 text-center">
             O que você está pensando?

@@ -31,7 +31,7 @@ const BIAChatContext = createContext<BIAChatContextValue | null>(null);
 const INITIAL_MESSAGES: BIAMessage[] = [
   {
     role: "bia",
-    content: "Olá, Eduardo! Monitorei o portal e tenho alguns insights para você hoje.",
+    content: "Olá, Avelino! Monitorei o portal e tenho alguns insights para você hoje.",
     tag: "info",
   },
   {
