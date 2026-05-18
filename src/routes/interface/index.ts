@@ -24,4 +24,6 @@ export enum ERoutes {
    CONFIG_TABELAS_CREDITO_PRESUMIDO = "/configuracoes/tabelas/credito-presumido",
    CONFIG_TABELAS_ANEXOS = "/configuracoes/tabelas/anexos",
    CONFIG_TABELAS_INDICADORES = "/configuracoes/tabelas/indicadores-locais-operacao",
+   DIGITAL_WORKERS_CONFIG_GLOBAL = "/digital-workers/configuracoes-globais",
+   DIGITAL_WORKERS_CONFIG_WORKER = "/digital-workers/configuracao-por-worker",
 }

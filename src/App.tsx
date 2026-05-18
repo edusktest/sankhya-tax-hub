@@ -61,6 +61,8 @@ const App = () => (
             <Route path={ERoutes.CONFIG_TABELAS_CREDITO_PRESUMIDO} element={<TabelaOficialPage />} />
             <Route path={ERoutes.CONFIG_TABELAS_ANEXOS} element={<TabelaOficialPage />} />
             <Route path={ERoutes.CONFIG_TABELAS_INDICADORES} element={<TabelaOficialPage />} />
+            <Route path={ERoutes.DIGITAL_WORKERS_CONFIG_GLOBAL} element={<PlaceholderPage />} />
+            <Route path={ERoutes.DIGITAL_WORKERS_CONFIG_WORKER} element={<PlaceholderPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

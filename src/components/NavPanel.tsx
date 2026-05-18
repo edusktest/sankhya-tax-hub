@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Calculator, FileText, ChevronDown, Calendar,
   SlidersHorizontal, Search, X, Building2, LayoutDashboard,
-  Percent, BookOpen, Sparkles, Menu, ChevronRight,
+  Percent, BookOpen, Sparkles, Menu, ChevronRight, Bot, Globe,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -71,6 +71,13 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
           { title: "Indicadores dos Locais de Operação", url: ERoutes.CONFIG_TABELAS_INDICADORES       },
         ],
       },
+    ],
+  },
+  {
+    group: "Digital Workers",
+    items: [
+      { title: "Configurações Globais",   url: ERoutes.DIGITAL_WORKERS_CONFIG_GLOBAL, icon: Globe },
+      { title: "Configuração por Worker", url: ERoutes.DIGITAL_WORKERS_CONFIG_WORKER, icon: Bot  },
     ],
   },
 ];
