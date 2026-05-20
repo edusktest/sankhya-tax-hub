@@ -3,6 +3,7 @@ import {
   Calculator, FileText, ChevronDown, Calendar,
   SlidersHorizontal, Search, X, Building2, LayoutDashboard,
   Percent, BookOpen, Sparkles, Menu, ChevronRight, Bot, Globe,
+  TrendingUp, TrendingDown, FileStack,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -16,6 +17,36 @@ interface MenuItem { title: string; url: string; icon: React.ElementType; subIte
 const HOME_ITEM: MenuItem = { title: "Home", url: ERoutes.HOME, icon: LayoutDashboard };
 
 const menuGroups: { group: string; items: MenuItem[] }[] = [
+  {
+    group: "Movimentações",
+    items: [
+      {
+        title: "Receitas",
+        url: ERoutes.MOVIMENTACOES_RECEITAS_MOVIMENTO,
+        icon: TrendingUp,
+        subItems: [
+          { title: "Movimento",     url: ERoutes.MOVIMENTACOES_RECEITAS_MOVIMENTO   },
+          { title: "Multa e Juros", url: ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS },
+        ],
+      },
+      {
+        title: "Despesas",
+        url: ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO,
+        icon: TrendingDown,
+        subItems: [
+          { title: "Movimento", url: ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO },
+        ],
+      },
+      {
+        title: "Documentos",
+        url: ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO,
+        icon: FileStack,
+        subItems: [
+          { title: "Movimento", url: ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO },
+        ],
+      },
+    ],
+  },
   {
     group: "Operações",
     items: [
@@ -45,9 +76,10 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
         url: ERoutes.TRIBUTACAO_INTEGRAL,
         icon: SlidersHorizontal,
         subItems: [
-          { title: "Tributação Integral - IBS/CBS",      url: ERoutes.TRIBUTACAO_INTEGRAL        },
-          { title: "Tributação Personalizada - IBS/CBS", url: ERoutes.TRIBUTACAO_PERSONALIZADA   },
-          { title: "Assistente de Exceções IBS/CBS",     url: ERoutes.CONFIG_ASSISTENTE_EXCECOES },
+          { title: "Tributação Integral - IBS/CBS",                 url: ERoutes.TRIBUTACAO_INTEGRAL           },
+          { title: "Exceções da Tributação Integral - IBS/CBS",   url: ERoutes.CONFIG_ASSISTENTE_EXCECOES    },
+          { title: "NFe débito - IBS/CBS",                        url: ERoutes.CONFIG_ASSISTENTE_NFE_DEBITO  },
+          { title: "NFe crédito - IBS/CBS",                       url: ERoutes.CONFIG_ASSISTENTE_NFE_CREDITO },
         ],
       },
       {

@@ -16,6 +16,8 @@ export enum ERoutes {
    TRIBUTACAO_INTEGRAL = "/tributacao-integral",
    TRIBUTACAO_PERSONALIZADA = "/tributacao-personalizada",
    CONFIG_ASSISTENTE_EXCECOES = "/configuracoes/assistente/excecoes-ibs-cbs",
+   CONFIG_ASSISTENTE_NFE_DEBITO = "/configuracoes/assistente/nfe-debito-ibs-cbs",
+   CONFIG_ASSISTENTE_NFE_CREDITO = "/configuracoes/assistente/nfe-credito-ibs-cbs",
    CONFIG_EMPRESAS = "/configuracoes/empresas",
    CONFIG_ALIQUOTAS_CBS = "/configuracoes/aliquotas/cbs",
    CONFIG_ALIQUOTAS_IBS = "/configuracoes/aliquotas/ibs",
@@ -26,4 +28,8 @@ export enum ERoutes {
    CONFIG_TABELAS_INDICADORES = "/configuracoes/tabelas/indicadores-locais-operacao",
    DIGITAL_WORKERS_CONFIG_GLOBAL = "/digital-workers/configuracoes-globais",
    DIGITAL_WORKERS_CONFIG_WORKER = "/digital-workers/configuracao-por-worker",
+   MOVIMENTACOES_RECEITAS_MOVIMENTO = "/movimentacoes/receitas/movimento",
+   MOVIMENTACOES_RECEITAS_MULTA_JUROS = "/movimentacoes/receitas/multa-juros",
+   MOVIMENTACOES_DESPESAS_MOVIMENTO = "/movimentacoes/despesas/movimento",
+   MOVIMENTACOES_DOCUMENTOS_MOVIMENTO = "/movimentacoes/documentos/movimento",
 }

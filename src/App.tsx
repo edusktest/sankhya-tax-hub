@@ -13,6 +13,10 @@ import TributacaoPersonalizadaWizard from "./pages/TributacaoPersonalizadaWizard
 import TabelaOficialPage from "./pages/TabelaOficialPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import AssistenteExcecoesPage from "./pages/AssistenteExcecoesPage";
+import MovimentacoesReceitasMovimento from "./pages/MovimentacoesReceitasMovimento";
+import MovimentacoesReceitasMultaJuros from "./pages/MovimentacoesReceitasMultaJuros";
+import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
+import MovimentacoesDocumentosMovimento from "./pages/MovimentacoesDocumentosMovimento";
 import NotFound from "./pages/NotFound";
 import { ERoutes } from "@/routes/interface";
 
@@ -64,6 +68,10 @@ const App = () => (
             <Route path={ERoutes.CONFIG_TABELAS_INDICADORES} element={<TabelaOficialPage />} />
             <Route path={ERoutes.DIGITAL_WORKERS_CONFIG_GLOBAL} element={<PlaceholderPage />} />
             <Route path={ERoutes.DIGITAL_WORKERS_CONFIG_WORKER} element={<PlaceholderPage />} />
+            <Route path={ERoutes.MOVIMENTACOES_RECEITAS_MOVIMENTO} element={<MovimentacoesReceitasMovimento />} />
+            <Route path={ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS} element={<MovimentacoesReceitasMultaJuros />} />
+            <Route path={ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO} element={<MovimentacoesDespedasMovimento />} />
+            <Route path={ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO} element={<MovimentacoesDocumentosMovimento />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

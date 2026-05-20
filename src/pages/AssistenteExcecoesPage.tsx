@@ -241,7 +241,7 @@ export default function AssistenteExcecoesPage() {
   const screen1 = (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[22px] font-bold text-foreground">Assistente de Exceções IBS/CBS</h1>
+        <h1 className="text-[22px] font-bold text-foreground">Exceções da Tributação Integral - IBS/CBS</h1>
         <p className="text-[13px] text-muted-foreground mt-0.5">
           Configure as exceções tributárias da Reforma com base no seu histórico real de operações.
         </p>
@@ -717,7 +717,7 @@ export default function AssistenteExcecoesPage() {
           <ChevronRight className="h-3 w-3" />
           <span>Assistentes</span>
           <ChevronRight className="h-3 w-3" />
-          <span className="font-semibold text-primary">Assistente de Exceções IBS/CBS</span>
+          <span className="font-semibold text-primary">Exceções da Tributação Integral - IBS/CBS</span>
         </div>
 
         {/* Screen nav pills */}
