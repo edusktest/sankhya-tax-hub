@@ -57,13 +57,37 @@ const EMPRESAS_INIT = [
   { id: "c", nome: "Empresa C Filial SP",          cnpj: "12.345.678/0003-22", docs: "178 docs no período",   checked: false },
 ];
 
-const OPERACOES_INIT = [
-  { id: "venda",         label: "Venda",         docs: 1654, checked: true  },
-  { id: "transferencia", label: "Transferência",  docs: 312,  checked: true  },
-  { id: "devolucao",     label: "Devolução",      docs: 89,   checked: false },
-  { id: "exportacao",    label: "Exportação",     docs: 12,   checked: false },
-  { id: "remessa",       label: "Remessa",        docs: 45,   checked: false },
-  { id: "outros",        label: "Outros",         docs: 67,   checked: false },
+const TOPS_LIST = [
+  { id: "1",  label: "Venda"               },
+  { id: "2",  label: "Devolução de venda"  },
+  { id: "3",  label: "Remessa"             },
+  { id: "4",  label: "Retorno"             },
+  { id: "5",  label: "Simples faturamento" },
+  { id: "6",  label: "Compra"              },
+  { id: "7",  label: "Devolução de compra" },
+  { id: "8",  label: "Transferência"       },
+  { id: "9",  label: "Exportação"          },
+  { id: "10", label: "Importação"          },
+];
+
+const FINALIDADES_LIST = [
+  { id: "1", label: "Uso e Consumo"     },
+  { id: "2", label: "Ativo Imobilizado" },
+  { id: "3", label: "Industrialização"  },
+  { id: "4", label: "Conserto"          },
+  { id: "5", label: "Revenda"           },
+  { id: "6", label: "Serviço"           },
+];
+
+const GRUPOS_PARCEIROS_LIST = [
+  { id: "001", label: "Entidades sem Fins Lucrativos e Vulnerabilidade Social"          },
+  { id: "002", label: "Setor Público e Infraestrutura"                                  },
+  { id: "003", label: "Cadeia de Saúde, Educação e Inovação"                            },
+  { id: "004", label: "Produção Primária e Agronegócio"                                 },
+  { id: "005", label: "Consumidores Finais Pessoa Física (Regime Geral vs. Protegido)"  },
+  { id: "006", label: "Grandes Contribuintes e Multinacionais"                          },
+  { id: "007", label: "Micro e Pequenas Empresas (Simples Nacional)"                    },
+  { id: "008", label: "Exportadores e Comércio Exterior"                                },
 ];
 
 const WIZARD_STEP_LABELS = ["NCM/NBS", "Empresa", "Tipo de Operação", "Parceiro"] as const;
@@ -182,11 +206,16 @@ export default function AssistenteExcecoesPage() {
   const [search, setSearch]             = useState("");
   const [showUndo, setShowUndo]         = useState(false);
   const [logOpen, setLogOpen]           = useState(false);
-  const [partnerOpt, setPartnerOpt]     = useState<"all" | "specific" | "group">("all");
-  const [empresas, setEmpresas]         = useState(EMPRESAS_INIT);
-  const [operacoes, setOperacoes]       = useState(OPERACOES_INIT);
-  const [allEmpresas, setAllEmpresas]   = useState(false);
-  const [allOps, setAllOps]             = useState(false);
+  const [partnerOpt, setPartnerOpt]               = useState<"all" | "specific" | "group">("all");
+  const [topOpt, setTopOpt]                       = useState<"all" | "specific" | "finalidade">("all");
+  const [topSearch, setTopSearch]                 = useState("");
+  const [finalidadeSearch, setFinalidadeSearch]   = useState("");
+  const [selectedTops, setSelectedTops]           = useState<Set<string>>(new Set());
+  const [selectedFinalidades, setSelectedFinalidades] = useState<Set<string>>(new Set());
+  const [grupoSearch, setGrupoSearch]               = useState("");
+  const [selectedGrupos, setSelectedGrupos]         = useState<Set<string>>(new Set());
+  const [empresas, setEmpresas]                   = useState(EMPRESAS_INIT);
+  const [allEmpresas, setAllEmpresas]             = useState(false);
 
   const metrics = PERIOD_METRICS[period];
 
@@ -209,6 +238,24 @@ export default function AssistenteExcecoesPage() {
     return rows;
   }, [search, statusFilter, sortKey, sortDir]);
 
+  const filteredTops = useMemo(() => {
+    if (!topSearch.trim()) return TOPS_LIST;
+    const q = topSearch.toLowerCase();
+    return TOPS_LIST.filter(t => t.label.toLowerCase().includes(q) || t.id.includes(q));
+  }, [topSearch]);
+
+  const filteredFinalidades = useMemo(() => {
+    if (!finalidadeSearch.trim()) return FINALIDADES_LIST;
+    const q = finalidadeSearch.toLowerCase();
+    return FINALIDADES_LIST.filter(f => f.label.toLowerCase().includes(q) || f.id.includes(q));
+  }, [finalidadeSearch]);
+
+  const filteredGrupos = useMemo(() => {
+    if (!grupoSearch.trim()) return GRUPOS_PARCEIROS_LIST;
+    const q = grupoSearch.toLowerCase();
+    return GRUPOS_PARCEIROS_LIST.filter(g => g.label.toLowerCase().includes(q) || g.id.includes(q));
+  }, [grupoSearch]);
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortKey(key); setSortDir("desc"); }
@@ -229,14 +276,6 @@ export default function AssistenteExcecoesPage() {
     setAllEmpresas(v);
     setEmpresas(prev => prev.map(e => ({ ...e, checked: v })));
   }
-  function toggleOp(id: string) {
-    setOperacoes(prev => prev.map(o => o.id === id ? { ...o, checked: !o.checked } : o));
-  }
-  function handleAllOps(v: boolean) {
-    setAllOps(v);
-    setOperacoes(prev => prev.map(o => ({ ...o, checked: v })));
-  }
-
   // ── Screen 1 ─────────────────────────────────────────────────────────────────
   const screen1 = (
     <div className="space-y-5">
@@ -303,6 +342,16 @@ export default function AssistenteExcecoesPage() {
         <p className="text-[13px] text-muted-foreground mt-0.5">
           Lista baseada no seu histórico de vendas (últimos 90 dias), filtrada pelas tabelas de Anexos do Portal da Conformidade Fácil.
         </p>
+      </div>
+
+      <div className="flex items-center justify-between pb-4 border-b border-border">
+        <span className="text-[12px] text-muted-foreground">{selected.size} item(s) selecionado(s)</span>
+        <button
+          disabled={selected.size === 0}
+          onClick={() => { if (selected.size > 0) setScreen(3); }}
+          className="px-5 py-2 rounded-lg text-[13px] font-bold bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-30">
+          Configurar selecionados ({selected.size})
+        </button>
       </div>
 
       <div className="flex gap-3 items-center">
@@ -377,15 +426,6 @@ export default function AssistenteExcecoesPage() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-[12px] text-muted-foreground">{selected.size} item(s) selecionado(s)</span>
-        <button
-          disabled={selected.size === 0}
-          onClick={() => { if (selected.size > 0) setScreen(3); }}
-          className="px-5 py-2 rounded-lg text-[13px] font-bold bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-30">
-          Configurar selecionados ({selected.size})
-        </button>
-      </div>
     </div>
   );
 
@@ -448,16 +488,95 @@ export default function AssistenteExcecoesPage() {
     if (wizardStep === 3) return (
       <div className="space-y-4">
         <h2 className="text-[16px] font-bold text-foreground">Para quais tipos de operação?</h2>
-        <Toggle checked={allOps} onChange={handleAllOps} label="Aplicar para todos os tipos de operação" />
-        <div className="grid grid-cols-2 gap-2">
-          {operacoes.map(op => (
-            <div key={op.id} className="border border-border rounded-lg p-3 flex items-center gap-3">
-              <Checkbox checked={op.checked} onCheckedChange={() => toggleOp(op.id)} />
-              <span className="flex-1 text-[13px] font-medium text-foreground">{op.label}</span>
-              <span className="text-[11px] text-muted-foreground">{fmtNum(op.docs)} docs</span>
-            </div>
+        <div className="space-y-2">
+          {([
+            { val: "all",        label: "Todas as TOPs (sem restrição)", badge: "Recomendado" },
+            { val: "specific",   label: "TOPs específicas",              badge: null          },
+            { val: "finalidade", label: "Finalidade da operação",        badge: null          },
+          ] as const).map(opt => (
+            <label key={opt.val}
+              className={cn(
+                "flex items-center gap-3 border rounded-lg p-3.5 cursor-pointer transition-colors",
+                topOpt === opt.val
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:bg-muted/30"
+              )}
+              onClick={() => setTopOpt(opt.val)}>
+              <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                topOpt === opt.val ? "border-primary" : "border-muted-foreground/40")}>
+                {topOpt === opt.val && <div className="h-2 w-2 rounded-full bg-primary" />}
+              </div>
+              <span className="text-[13px] font-medium text-foreground flex-1">{opt.label}</span>
+              {opt.badge && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-success/10 text-success">{opt.badge}</span>
+              )}
+            </label>
           ))}
         </div>
+        {topOpt === "specific" && (
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={topSearch}
+                onChange={e => setTopSearch(e.target.value)}
+                placeholder="Buscar tipo de operação..."
+                className="pl-8 text-[12px] h-9"
+              />
+            </div>
+            <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
+              {filteredTops.map(top => (
+                <div key={top.id} className="flex items-center gap-3 px-3 py-2.5">
+                  <Checkbox
+                    checked={selectedTops.has(top.id)}
+                    onCheckedChange={() => setSelectedTops(prev => {
+                      const next = new Set(prev);
+                      next.has(top.id) ? next.delete(top.id) : next.add(top.id);
+                      return next;
+                    })}
+                  />
+                  <span className="text-[11px] text-muted-foreground w-5 shrink-0">{top.id}</span>
+                  <span className="text-[12px] text-foreground">{top.label}</span>
+                </div>
+              ))}
+              {filteredTops.length === 0 && (
+                <p className="text-[12px] text-muted-foreground text-center py-4">Nenhum resultado encontrado.</p>
+              )}
+            </div>
+          </div>
+        )}
+        {topOpt === "finalidade" && (
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={finalidadeSearch}
+                onChange={e => setFinalidadeSearch(e.target.value)}
+                placeholder="Buscar finalidade da operação..."
+                className="pl-8 text-[12px] h-9"
+              />
+            </div>
+            <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
+              {filteredFinalidades.map(fin => (
+                <div key={fin.id} className="flex items-center gap-3 px-3 py-2.5">
+                  <Checkbox
+                    checked={selectedFinalidades.has(fin.id)}
+                    onCheckedChange={() => setSelectedFinalidades(prev => {
+                      const next = new Set(prev);
+                      next.has(fin.id) ? next.delete(fin.id) : next.add(fin.id);
+                      return next;
+                    })}
+                  />
+                  <span className="text-[11px] text-muted-foreground w-5 shrink-0">{fin.id}</span>
+                  <span className="text-[12px] text-foreground">{fin.label}</span>
+                </div>
+              ))}
+              {filteredFinalidades.length === 0 && (
+                <p className="text-[12px] text-muted-foreground text-center py-4">Nenhum resultado encontrado.</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
 
@@ -502,6 +621,38 @@ export default function AssistenteExcecoesPage() {
             </div>
           </div>
         )}
+        {partnerOpt === "group" && (
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={grupoSearch}
+                onChange={e => setGrupoSearch(e.target.value)}
+                placeholder="Buscar grupo de parceiros..."
+                className="pl-8 text-[12px] h-9"
+              />
+            </div>
+            <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
+              {filteredGrupos.map(grupo => (
+                <div key={grupo.id} className="flex items-center gap-3 px-3 py-2.5">
+                  <Checkbox
+                    checked={selectedGrupos.has(grupo.id)}
+                    onCheckedChange={() => setSelectedGrupos(prev => {
+                      const next = new Set(prev);
+                      next.has(grupo.id) ? next.delete(grupo.id) : next.add(grupo.id);
+                      return next;
+                    })}
+                  />
+                  <span className="text-[11px] text-muted-foreground w-8 shrink-0">{grupo.id}</span>
+                  <span className="text-[12px] text-foreground">{grupo.label}</span>
+                </div>
+              ))}
+              {filteredGrupos.length === 0 && (
+                <p className="text-[12px] text-muted-foreground text-center py-4">Nenhum resultado encontrado.</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -514,8 +665,7 @@ export default function AssistenteExcecoesPage() {
       </div>
       <SectionCard>
         <WizardProgress step={wizardStep} />
-        {wizardContent()}
-        <div className="flex justify-between mt-6 pt-4 border-t border-border">
+        <div className="flex justify-between pb-4 mb-4 border-b border-border">
           <button
             onClick={() => wizardStep > 1 ? setWizardStep(s => (s - 1) as WizardStep) : setScreen(2)}
             className="px-4 py-2 rounded-lg border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted transition-colors">
@@ -533,6 +683,7 @@ export default function AssistenteExcecoesPage() {
             </button>
           </div>
         </div>
+        {wizardContent()}
       </SectionCard>
     </div>
   );
@@ -552,6 +703,18 @@ export default function AssistenteExcecoesPage() {
           Revise as regras antes de confirmar. Esta ação pode ser desfeita apenas durante esta sessão.
         </p>
       </div>
+
+      <div className="flex justify-between pb-4 border-b border-border">
+        <button onClick={() => setScreen(3)}
+          className="px-4 py-2 rounded-lg border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted transition-colors">
+          Cancelar e voltar
+        </button>
+        <button onClick={() => setScreen(5)}
+          className="px-6 py-2 rounded-lg text-[13px] font-bold bg-success text-success-foreground flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <CheckCheck className="h-4 w-4" /> Confirmar e Gravar
+        </button>
+      </div>
+
       {resumeItems.map(item => (
         <div key={item.ncm} className="bg-card rounded-lg overflow-hidden border border-border card-shadow">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/40">
@@ -606,16 +769,6 @@ export default function AssistenteExcecoesPage() {
         ))}
       </div>
 
-      <div className="flex justify-between pt-1">
-        <button onClick={() => setScreen(3)}
-          className="px-4 py-2 rounded-lg border border-border text-[13px] font-medium text-muted-foreground hover:bg-muted transition-colors">
-          Cancelar e voltar
-        </button>
-        <button onClick={() => setScreen(5)}
-          className="px-6 py-2 rounded-lg text-[13px] font-bold bg-success text-success-foreground flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <CheckCheck className="h-4 w-4" /> Confirmar e Gravar
-        </button>
-      </div>
     </div>
   );
 
@@ -630,6 +783,17 @@ export default function AssistenteExcecoesPage() {
         <p className="text-[13px] text-muted-foreground mt-1">
           3 exceções tributárias foram gravadas em 12/05/2026 às 14:32 por Ana Silva.
         </p>
+      </div>
+
+      <div className="flex justify-between pb-4 border-b border-border">
+        <button onClick={() => setShowUndo(true)}
+          className="px-4 py-2 rounded-lg border border-destructive text-destructive text-[13px] font-medium flex items-center gap-2 hover:bg-destructive/5 transition-colors">
+          <RotateCcw className="h-3.5 w-3.5" /> Desfazer esta configuração
+        </button>
+        <button onClick={() => { setScreen(2); setWizardStep(1); }}
+          className="px-5 py-2 rounded-lg text-[13px] font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+          Voltar ao Diagnóstico
+        </button>
       </div>
 
       <SectionCard className="p-0 overflow-hidden">
@@ -685,17 +849,6 @@ export default function AssistenteExcecoesPage() {
           </div>
         )}
       </SectionCard>
-
-      <div className="flex justify-between">
-        <button onClick={() => setShowUndo(true)}
-          className="px-4 py-2 rounded-lg border border-destructive text-destructive text-[13px] font-medium flex items-center gap-2 hover:bg-destructive/5 transition-colors">
-          <RotateCcw className="h-3.5 w-3.5" /> Desfazer esta configuração
-        </button>
-        <button onClick={() => { setScreen(2); setWizardStep(1); }}
-          className="px-5 py-2 rounded-lg text-[13px] font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
-          Voltar ao Diagnóstico
-        </button>
-      </div>
 
       <div className="rounded-lg px-4 py-2.5 flex items-center gap-2 text-[12px] bg-warning/10 border border-warning/30 text-warning">
         <span>💡</span>
