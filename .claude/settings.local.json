@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(assets\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\eduardol_sankhya\\\\Documents\\\\VS Code\\\\sankhyaPRJ\\\\sankhya-tax-hub\\\\src\" -Recurse -Name)",
+      "Bash(Select-String -Pattern \"tributo|titulo|receita|revenue|darf|dae|dam|cbs|ibs\" -IgnoreCase)"
     ]
   }
 }

@@ -67,6 +67,7 @@ interface ReceitaMovimento {
   nroUnico: string;
   tipo: "Receita" | "Despesa";
   tipoMovimento: string;
+  tipoTitulo: string;
   vlrDesdobramento: number;
   totalIBSUF: number;
   totalIBSMun: number;
@@ -113,6 +114,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "100.001",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 24500.0,
     totalIBSUF: 857.5,
     totalIBSMun: 857.5,
@@ -143,6 +145,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "100.002",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "PIX",
     vlrDesdobramento: 8750.0,
     totalIBSUF: 306.25,
     totalIBSMun: 306.25,
@@ -173,6 +176,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "200.015",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 52000.0,
     totalIBSUF: 1820.0,
     totalIBSMun: 1820.0,
@@ -203,6 +207,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "100.003",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "Cartão",
     vlrDesdobramento: 3200.0,
     totalIBSUF: 112.0,
     totalIBSMun: 112.0,
@@ -233,6 +238,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "100.004",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "PIX",
     vlrDesdobramento: 11300.0,
     totalIBSUF: 395.5,
     totalIBSMun: 395.5,
@@ -263,6 +269,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "200.020",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "Cartão",
     vlrDesdobramento: 29800.0,
     totalIBSUF: 1043.0,
     totalIBSMun: 1043.0,
@@ -293,6 +300,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "100.005",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "PIX",
     vlrDesdobramento: 7600.0,
     totalIBSUF: 266.0,
     totalIBSMun: 266.0,
@@ -325,6 +333,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "900.001",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 8400.0,
     totalIBSUF: 294.0,
     totalIBSMun: 294.0,
@@ -362,6 +371,40 @@ const MOCK: ReceitaMovimento[] = [
     },
   },
 
+  // ── Venda – Logística Express Ltda (imposto quitado via DARF/DAE/DAM) ───────
+  {
+    id: "10",
+    dataNegociacao: "25/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Logística Express Ltda",
+    parceiroCNPJ: "88.999.000/0001-44",
+    nroUnico: "100.006",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 15000.0,
+    totalIBSUF: 525.0,
+    totalIBSMun: 525.0,
+    totalCBS: 750.0,
+    nroNota: "NF-001325",
+    desdob: "001/001",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "25/05/2026",
+    dtVencimento: "30/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "5,00%", valor:  750.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor:  525.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor:  525.0, digitado: "Não" },
+    ],
+    tributosDevolvidos: [
+      { imposto: "CBS",     incidencia: "DARF", cst: "01", base: -15000, baseReduzida: 0, aliquota: "5,00%", valor: -750.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "DAR",  cst: "01", base: -15000, baseReduzida: 0, aliquota: "3,50%", valor: -525.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "DAR",  cst: "01", base: -15000, baseReduzida: 0, aliquota: "3,50%", valor: -525.0, digitado: "Não" },
+    ],
+  },
+
   // ── Venda – Indústria Central Ltda (devolução total → 800.001) ─────────────
   {
     id: "8",
@@ -373,6 +416,7 @@ const MOCK: ReceitaMovimento[] = [
     nroUnico: "700.001",
     tipo: "Receita",
     tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 18600.0,
     totalIBSUF: 651.0,
     totalIBSMun: 651.0,
@@ -549,6 +593,7 @@ export default function MovimentacoesReceitasMovimento() {
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
                     <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
                     <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
@@ -576,6 +621,7 @@ export default function MovimentacoesReceitasMovimento() {
                         {r.tipo}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
+                      <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
                       <TableCell className="text-right font-mono">{brl(r.vlrDesdobramento)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.totalIBSUF)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.totalIBSMun)}</TableCell>
@@ -609,6 +655,21 @@ export default function MovimentacoesReceitasMovimento() {
 
 // ─── Detail View ──────────────────────────────────────────────────────────────
 
+function TipoTituloBadge({ tipo }: { tipo: string }) {
+  const styles: Record<string, string> = {
+    Boleto: "border-slate-300  text-slate-700  bg-slate-50  dark:text-slate-300  dark:bg-slate-900/40",
+    PIX:    "border-emerald-300 text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/40",
+    Cartão: "border-violet-300 text-violet-700 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/40",
+    DARF:   "border-blue-300  text-blue-700  bg-blue-50  dark:text-blue-400  dark:bg-blue-950/40",
+    DAR:    "border-amber-300 text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40",
+  };
+  return (
+    <Badge variant="outline" className={cn("text-[11px] font-semibold", styles[tipo] ?? "")}>
+      {tipo}
+    </Badge>
+  );
+}
+
 function ImpostoBadge({ imposto }: { imposto: string }) {
   return (
     <Badge
@@ -640,7 +701,7 @@ function TributoTable({
           <TableRow className="bg-muted/40">
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
-            <TableHead className="text-[12px]">CST</TableHead>
+            <TableHead className="text-[12px]">cClass</TableHead>
             <TableHead className="text-[12px] text-right">Base</TableHead>
             <TableHead className="text-[12px] text-right">Base Cálc. Reduzida</TableHead>
             <TableHead className="text-[12px] text-right">Alíquota</TableHead>
@@ -677,21 +738,26 @@ function TributoTable({
               <TableCell className="text-center text-[12px]">{tri.digitado}</TableCell>
             </TableRow>
           ))}
-          {tributosDevolvidos?.map((tri, i) => (
-            <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
-              <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
-              <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
-              <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
-              <TableCell className="text-right font-mono text-[12px] text-rose-600 dark:text-rose-400">{brl(tri.base)}</TableCell>
-              <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
-              <TableCell className="text-right font-mono text-[12px]">{tri.aliquota}</TableCell>
-              <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
-              <TableCell className="text-right font-mono text-[12px] font-semibold text-rose-600 dark:text-rose-400">
-                -{brl(Math.abs(tri.valor))}
-              </TableCell>
-              <TableCell className="text-center text-[12px]">{tri.digitado}</TableCell>
-            </TableRow>
-          ))}
+          {tributosDevolvidos?.map((tri, i) => {
+            const isGuia = tri.incidencia === "DARF" || tri.incidencia === "DAR";
+            return (
+              <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+                <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
+                <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
+                <TableCell className="font-mono text-[12px] text-muted-foreground">{isGuia ? "—" : tri.cst}</TableCell>
+                <TableCell className="text-right font-mono text-[12px] text-rose-600 dark:text-rose-400">
+                  {isGuia ? "—" : brl(tri.base)}
+                </TableCell>
+                <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
+                <TableCell className="text-right font-mono text-[12px]">{isGuia ? "—" : tri.aliquota}</TableCell>
+                <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
+                <TableCell className="text-right font-mono text-[12px] font-semibold text-rose-600 dark:text-rose-400">
+                  -{brl(Math.abs(tri.valor))}
+                </TableCell>
+                <TableCell className="text-center text-[12px]">{isGuia ? "—" : tri.digitado}</TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

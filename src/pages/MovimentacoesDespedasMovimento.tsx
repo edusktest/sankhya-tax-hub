@@ -67,6 +67,7 @@ interface DespesaMovimento {
   nroUnico: string;
   tipo: "Receita" | "Despesa";
   tipoMovimento: string;
+  tipoTitulo: string;
   vlrDesdobramento: number;
   totalIBSUF: number;
   totalIBSMun: number;
@@ -99,6 +100,7 @@ const PERIODOS = [
   { value: "2026-03", label: "Março/2026" },
   { value: "2026-04", label: "Abril/2026" },
   { value: "2026-05", label: "Maio/2026" },
+  { value: "2026-06", label: "Junho/2026" },
 ];
 
 const MOCK: DespesaMovimento[] = [
@@ -112,6 +114,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "500.001",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 18000.0,
     totalIBSUF: 630.0,
     totalIBSMun: 630.0,
@@ -142,6 +145,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "500.002",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "PIX",
     vlrDesdobramento: 6200.0,
     totalIBSUF: 217.0,
     totalIBSMun: 217.0,
@@ -172,6 +176,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "600.010",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 37500.0,
     totalIBSUF: 1312.5,
     totalIBSMun: 1312.5,
@@ -202,6 +207,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "500.003",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "Cartão",
     vlrDesdobramento: 4800.0,
     totalIBSUF: 168.0,
     totalIBSMun: 168.0,
@@ -232,6 +238,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "500.004",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "PIX",
     vlrDesdobramento: 9400.0,
     totalIBSUF: 329.0,
     totalIBSMun: 329.0,
@@ -262,6 +269,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "600.020",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "Cartão",
     vlrDesdobramento: 21500.0,
     totalIBSUF: 752.5,
     totalIBSMun: 752.5,
@@ -292,6 +300,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "500.005",
     tipo: "Despesa",
     tipoMovimento: "Compra",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 5100.0,
     totalIBSUF: 178.5,
     totalIBSMun: 178.5,
@@ -324,6 +333,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "950.001",
     tipo: "Despesa",
     tipoMovimento: "Devolução de Venda",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 3360.0,
     totalIBSUF: 117.60,
     totalIBSMun: 117.60,
@@ -366,6 +376,56 @@ const MOCK: DespesaMovimento[] = [
     },
   },
 
+  // ── DARF – CBS (par com Receita 100.006 – Logística Express Ltda) ──────────
+  {
+    id: "11",
+    dataNegociacao: "30/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Receita Federal do Brasil",
+    parceiroCNPJ: "00.394.460/0001-41",
+    nroUnico: "110.001",
+    tipo: "Despesa",
+    tipoMovimento: "DARF",
+    tipoTitulo: "DARF",
+    vlrDesdobramento: 750.0,
+    totalIBSUF: 0,
+    totalIBSMun: 0,
+    totalCBS: 750.0,
+    nroNota: "DARF-2026-001",
+    desdob: "001/001",
+    tipoOperacao: "9.001 - Guia de Pagamento",
+    dtEntradaSaida: "30/06/2026",
+    dtVencimento: "30/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 750.0, dataBaixa: "30/06/2026",
+    tributos: [],
+  },
+
+  // ── DAR – IBS UF + IBS Mun (par com Receita 100.006 – Logística Express Ltda)
+  {
+    id: "12",
+    dataNegociacao: "30/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Fazenda Estadual / Municipal",
+    parceiroCNPJ: "—",
+    nroUnico: "110.002",
+    tipo: "Despesa",
+    tipoMovimento: "DAR",
+    tipoTitulo: "DAR",
+    vlrDesdobramento: 1050.0,
+    totalIBSUF: 525.0,
+    totalIBSMun: 525.0,
+    totalCBS: 0,
+    nroNota: "DAR-2026-001",
+    desdob: "001/001",
+    tipoOperacao: "9.002 - Guia de Pagamento",
+    dtEntradaSaida: "30/06/2026",
+    dtVencimento: "30/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 1050.0, dataBaixa: "30/06/2026",
+    tributos: [],
+  },
+
   // ── Devolução total – Indústria Central Ltda (par com Receita 700.001) ─────
   {
     id: "8",
@@ -377,6 +437,7 @@ const MOCK: DespesaMovimento[] = [
     nroUnico: "800.001",
     tipo: "Despesa",
     tipoMovimento: "Devolução de Venda",
+    tipoTitulo: "Boleto",
     vlrDesdobramento: 18600.0,
     totalIBSUF: 651.0,
     totalIBSMun: 651.0,
@@ -558,6 +619,7 @@ export default function MovimentacoesDespedasMovimento() {
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
                     <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
                     <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
@@ -585,6 +647,7 @@ export default function MovimentacoesDespedasMovimento() {
                         {r.tipo}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
+                      <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
                       <TableCell className="text-right font-mono">{brl(r.vlrDesdobramento)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.totalIBSUF)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.totalIBSMun)}</TableCell>
@@ -618,6 +681,21 @@ export default function MovimentacoesDespedasMovimento() {
 
 // ─── Detail View ──────────────────────────────────────────────────────────────
 
+function TipoTituloBadge({ tipo }: { tipo: string }) {
+  const styles: Record<string, string> = {
+    Boleto: "border-slate-300  text-slate-700  bg-slate-50  dark:text-slate-300  dark:bg-slate-900/40",
+    PIX:    "border-emerald-300 text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/40",
+    Cartão: "border-violet-300 text-violet-700 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/40",
+    DARF:   "border-blue-300  text-blue-700  bg-blue-50  dark:text-blue-400  dark:bg-blue-950/40",
+    DAR:    "border-amber-300 text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40",
+  };
+  return (
+    <Badge variant="outline" className={cn("text-[11px] font-semibold", styles[tipo] ?? "")}>
+      {tipo}
+    </Badge>
+  );
+}
+
 function ImpostoBadge({ imposto }: { imposto: string }) {
   return (
     <Badge
@@ -649,7 +727,7 @@ function TributoTable({
           <TableRow className="bg-muted/40">
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
-            <TableHead className="text-[12px]">CST</TableHead>
+            <TableHead className="text-[12px]">cClass</TableHead>
             <TableHead className="text-[12px] text-right">Base</TableHead>
             <TableHead className="text-[12px] text-right">Base Cálc. Reduzida</TableHead>
             <TableHead className="text-[12px] text-right">Alíquota</TableHead>
@@ -907,14 +985,14 @@ function DetailView({
             </h2>
             <TributoTable tributos={r.tituloRef.tributos} tributosDevolvidos={r.tituloRef.tributosDevolvidos} />
           </section>
-        ) : (
+        ) : r.tributos.length > 0 ? (
           <section>
             <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Tributos do Título
             </h2>
             <TributoTable tributos={r.tributos} />
           </section>
-        )}
+        ) : null}
 
       </div>
     </div>

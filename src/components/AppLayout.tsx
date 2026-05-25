@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
-import { HelpCircle, Bell, ChevronDown, Sparkles } from "lucide-react";
+import { HelpCircle, Bell, ChevronDown, Sparkles, ArrowLeft } from "lucide-react";
 import { BIAChatProvider, useBIAChat } from "@/context/BIAChatContext";
 import { BIAChat } from "@/components/BIAChat";
 import { NavPanel } from "@/components/NavPanel";
 import { ConversationalLanding } from "@/components/ConversationalLanding";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -121,13 +127,25 @@ function AppLayoutInner({ children }: AppLayoutProps) {
 
                 <div className="w-px h-5 bg-white/20 mx-1.5" />
 
-                <button className="flex items-center gap-2 hover:bg-white/10 rounded-full pl-1 pr-3 py-1 transition-colors">
-                  <div className="h-7 w-7 rounded-full bg-white/25 border border-white/30 flex items-center justify-center">
-                    <span className="text-primary-foreground font-semibold text-xs">EL</span>
-                  </div>
-                  <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Avelino</span>
-                  <ChevronDown className="h-3 w-3 text-primary-foreground/50 hidden sm:block" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 hover:bg-white/10 rounded-full pl-1 pr-3 py-1 transition-colors">
+                      <div className="h-7 w-7 rounded-full bg-white/25 border border-white/30 flex items-center justify-center">
+                        <span className="text-primary-foreground font-semibold text-xs">EL</span>
+                      </div>
+                      <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Avelino</span>
+                      <ChevronDown className="h-3 w-3 text-primary-foreground/50 hidden sm:block" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[200px]">
+                    <DropdownMenuItem asChild>
+                      <a href="https://cognito-layout-dream.lovable.app/" className="flex items-center gap-2 cursor-pointer">
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar para Team Workers
+                      </a>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </header>
 
