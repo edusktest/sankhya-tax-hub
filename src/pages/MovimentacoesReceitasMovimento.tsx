@@ -39,6 +39,24 @@ interface Tributo {
   digitado: string;
 }
 
+interface TituloRef {
+  id: string;
+  dataNegociacao: string;
+  empresa: string;
+  parceiroNome: string;
+  parceiroCNPJ: string;
+  tipo: "Receita" | "Despesa";
+  tipoMovimento: string;
+  nroUnico: string;
+  nroNota: string;
+  vlrDesdobramento: number;
+  totalIBSUF: number;
+  totalIBSMun: number;
+  totalCBS: number;
+  tributos?: Tributo[];
+  tributosDevolvidos?: Tributo[];
+}
+
 interface ReceitaMovimento {
   id: string;
   dataNegociacao: string;
@@ -48,6 +66,7 @@ interface ReceitaMovimento {
   parceiroCNPJ: string;
   nroUnico: string;
   tipo: "Receita" | "Despesa";
+  tipoMovimento: string;
   vlrDesdobramento: number;
   totalIBSUF: number;
   totalIBSMun: number;
@@ -63,6 +82,8 @@ interface ReceitaMovimento {
   vlrBaixa: number;
   dataBaixa: string;
   tributos: Tributo[];
+  tributosDevolvidos?: Tributo[];
+  tituloRef?: TituloRef;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -91,6 +112,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "45.678.901/0001-23",
     nroUnico: "100.001",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 24500.0,
     totalIBSUF: 857.5,
     totalIBSMun: 857.5,
@@ -120,6 +142,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "67.890.123/0001-45",
     nroUnico: "100.002",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 8750.0,
     totalIBSUF: 306.25,
     totalIBSMun: 306.25,
@@ -149,6 +172,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "12.345.678/0001-90",
     nroUnico: "200.015",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 52000.0,
     totalIBSUF: 1820.0,
     totalIBSMun: 1820.0,
@@ -178,6 +202,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "98.765.432/0001-11",
     nroUnico: "100.003",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 3200.0,
     totalIBSUF: 112.0,
     totalIBSMun: 112.0,
@@ -207,6 +232,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "23.456.789/0001-01",
     nroUnico: "100.004",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 11300.0,
     totalIBSUF: 395.5,
     totalIBSMun: 395.5,
@@ -236,6 +262,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "77.888.999/0001-55",
     nroUnico: "200.020",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 29800.0,
     totalIBSUF: 1043.0,
     totalIBSMun: 1043.0,
@@ -265,6 +292,7 @@ const MOCK: ReceitaMovimento[] = [
     parceiroCNPJ: "67.890.123/0001-45",
     nroUnico: "100.005",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     vlrDesdobramento: 7600.0,
     totalIBSUF: 266.0,
     totalIBSMun: 266.0,
@@ -285,6 +313,102 @@ const MOCK: ReceitaMovimento[] = [
       { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 7600, baseReduzida: 0, aliquota: "3,50%", valor: 266.0, digitado: "Não" },
     ],
   },
+
+  // ── Venda – Atacado Regional Ltda (devolução parcial 40% → 950.001) ────────
+  {
+    id: "9",
+    dataNegociacao: "12/05/2026",
+    empresa: "003 - Distribuidora Norte Ltda",
+    empresaCod: "003",
+    parceiroNome: "Atacado Regional Ltda",
+    parceiroCNPJ: "33.444.555/0001-99",
+    nroUnico: "900.001",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    vlrDesdobramento: 8400.0,
+    totalIBSUF: 294.0,
+    totalIBSMun: 294.0,
+    totalCBS: 420.0,
+    nroNota: "NF-003200",
+    desdob: "001/001",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "12/05/2026",
+    dtVencimento: "12/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "5,00%", valor:  420.0,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "3,50%", valor:  294.0,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "3,50%", valor:  294.0,  digitado: "Não" },
+    ],
+    tributosDevolvidos: [
+      { imposto: "CBS",     incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "5,00%", valor: -168.0,   digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
+    ],
+    tituloRef: {
+      id: "t10",
+      dataNegociacao: "20/05/2026",
+      empresa: "003 - Distribuidora Norte Ltda",
+      parceiroNome: "Atacado Regional Ltda",
+      parceiroCNPJ: "33.444.555/0001-99",
+      tipo: "Despesa",
+      tipoMovimento: "Devolução de Venda",
+      nroUnico: "950.001",
+      nroNota: "NF-003250",
+      vlrDesdobramento: 3360.0,
+      totalIBSUF: 117.60,
+      totalIBSMun: 117.60,
+      totalCBS: 168.0,
+    },
+  },
+
+  // ── Venda – Indústria Central Ltda (devolução total → 800.001) ─────────────
+  {
+    id: "8",
+    dataNegociacao: "08/05/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Indústria Central Ltda",
+    parceiroCNPJ: "44.555.666/0001-22",
+    nroUnico: "700.001",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    vlrDesdobramento: 18600.0,
+    totalIBSUF: 651.0,
+    totalIBSMun: 651.0,
+    totalCBS: 930.0,
+    nroNota: "NF-003050",
+    desdob: "001/001",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "08/05/2026",
+    dtVencimento: "08/05/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "5,00%", valor: 930.0,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "3,50%", valor: 651.0,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "3,50%", valor: 651.0,  digitado: "Não" },
+    ],
+    tributosDevolvidos: [
+      { imposto: "CBS",     incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "5,00%", valor: -930.0,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
+    ],
+    tituloRef: {
+      id: "t8",
+      dataNegociacao: "19/05/2026",
+      empresa: "002 - Sankhya São Paulo S.A.",
+      parceiroNome: "Indústria Central Ltda",
+      parceiroCNPJ: "44.555.666/0001-22",
+      tipo: "Despesa",
+      tipoMovimento: "Devolução de Venda",
+      nroUnico: "800.001",
+      nroNota: "NF-003100",
+      vlrDesdobramento: 18600.0,
+      totalIBSUF: 651.0,
+      totalIBSMun: 651.0,
+      totalCBS: 930.0,
+    },
+  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -300,8 +424,9 @@ function dateToPeriod(date: string): string {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function MovimentacoesReceitasMovimento() {
-  const [view, setView] = useState<"list" | "detail">("list");
+  const [view, setView] = useState<"list" | "detail" | "ref-detail">("list");
   const [selected, setSelected] = useState<ReceitaMovimento | null>(null);
+  const [selectedRef, setSelectedRef] = useState<TituloRef | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [filtroPeriodo, setFiltroPeriodo] = useState("");
 
@@ -323,11 +448,22 @@ export default function MovimentacoesReceitasMovimento() {
     });
   }, [filtroEmpresa, filtroPeriodo, hasFilter]);
 
+  if (view === "ref-detail" && selectedRef && selected) {
+    return (
+      <RefDetailView
+        tituloRef={selectedRef}
+        parentRecord={selected}
+        onBack={() => { setView("detail"); setSelectedRef(null); }}
+      />
+    );
+  }
+
   if (view === "detail" && selected) {
     return (
       <DetailView
         record={selected}
         onBack={() => { setView("list"); setSelected(null); }}
+        onDetalharTituloRef={(ref) => { setSelectedRef(ref); setView("ref-detail"); }}
       />
     );
   }
@@ -473,6 +609,95 @@ export default function MovimentacoesReceitasMovimento() {
 
 // ─── Detail View ──────────────────────────────────────────────────────────────
 
+function ImpostoBadge({ imposto }: { imposto: string }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-[11px] font-semibold",
+        imposto === "CBS"
+          ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40"
+          : "border-amber-300 text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40"
+      )}
+    >
+      {imposto}
+    </Badge>
+  );
+}
+
+function TributoTable({
+  tributos,
+  tributosDevolvidos,
+}: {
+  tributos: Tributo[];
+  tributosDevolvidos?: Tributo[];
+}) {
+  const contaCorrente = !!tributosDevolvidos;
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40">
+            <TableHead className="text-[12px]">Imposto</TableHead>
+            <TableHead className="text-[12px]">Incidência</TableHead>
+            <TableHead className="text-[12px]">CST</TableHead>
+            <TableHead className="text-[12px] text-right">Base</TableHead>
+            <TableHead className="text-[12px] text-right">Base Cálc. Reduzida</TableHead>
+            <TableHead className="text-[12px] text-right">Alíquota</TableHead>
+            {contaCorrente ? (
+              <>
+                <TableHead className="text-[12px] text-right">Débito</TableHead>
+                <TableHead className="text-[12px] text-right">Crédito</TableHead>
+              </>
+            ) : (
+              <TableHead className="text-[12px] text-right">Valor</TableHead>
+            )}
+            <TableHead className="text-[12px] text-center">Digitado</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tributos.map((tri, i) => (
+            <TableRow key={`orig-${i}`} className="text-[13px]">
+              <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
+              <TableCell>{tri.incidencia}</TableCell>
+              <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
+              <TableCell className="text-right font-mono text-[12px]">{brl(tri.base)}</TableCell>
+              <TableCell className="text-right font-mono text-[12px]">
+                {tri.baseReduzida !== 0 ? brl(tri.baseReduzida) : "—"}
+              </TableCell>
+              <TableCell className="text-right font-mono text-[12px]">{tri.aliquota}</TableCell>
+              {contaCorrente ? (
+                <>
+                  <TableCell className="text-right font-mono text-[12px] font-semibold">{brl(tri.valor)}</TableCell>
+                  <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
+                </>
+              ) : (
+                <TableCell className="text-right font-mono text-[12px] font-semibold">{brl(tri.valor)}</TableCell>
+              )}
+              <TableCell className="text-center text-[12px]">{tri.digitado}</TableCell>
+            </TableRow>
+          ))}
+          {tributosDevolvidos?.map((tri, i) => (
+            <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+              <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
+              <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
+              <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
+              <TableCell className="text-right font-mono text-[12px] text-rose-600 dark:text-rose-400">{brl(tri.base)}</TableCell>
+              <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
+              <TableCell className="text-right font-mono text-[12px]">{tri.aliquota}</TableCell>
+              <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
+              <TableCell className="text-right font-mono text-[12px] font-semibold text-rose-600 dark:text-rose-400">
+                -{brl(Math.abs(tri.valor))}
+              </TableCell>
+              <TableCell className="text-center text-[12px]">{tri.digitado}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 function SummaryCard({
   label,
   value,
@@ -514,9 +739,11 @@ function DetailField({
 function DetailView({
   record: r,
   onBack,
+  onDetalharTituloRef,
 }: {
   record: ReceitaMovimento;
   onBack: () => void;
+  onDetalharTituloRef?: (ref: TituloRef) => void;
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -596,58 +823,216 @@ function DetailView({
           </div>
         </section>
 
+        {/* Título Referenciado */}
+        {r.tituloRef && (
+          <section>
+            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Título Referenciado
+            </h2>
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Empresa</TableHead>
+                    <TableHead className="text-[12px]">Parceiro</TableHead>
+                    <TableHead className="text-[12px]">Tipo</TableHead>
+                    <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Nro Nota</TableHead>
+                    <TableHead className="text-[12px] text-right">Valor</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">Total CBS</TableHead>
+                    <TableHead className="text-[12px] text-center">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="text-[13px]">
+                    <TableCell className="font-mono text-[12px]">{r.tituloRef.dataNegociacao}</TableCell>
+                    <TableCell>{r.tituloRef.empresa}</TableCell>
+                    <TableCell>
+                      <div>{r.tituloRef.parceiroNome}</div>
+                      <div className="text-[11px] text-muted-foreground">{r.tituloRef.parceiroCNPJ}</div>
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "text-[13px] font-medium",
+                        r.tituloRef.tipo === "Receita"
+                          ? "text-blue-700 dark:text-blue-400"
+                          : "text-red-700 dark:text-red-400"
+                      )}
+                    >
+                      {r.tituloRef.tipo}
+                    </TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{r.tituloRef.tipoMovimento}</TableCell>
+                    <TableCell className="font-mono">{r.tituloRef.nroUnico}</TableCell>
+                    <TableCell className="font-mono">{r.tituloRef.nroNota}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.tituloRef.vlrDesdobramento)}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBSUF)}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBSMun)}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalCBS)}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[12px] gap-1"
+                        onClick={() => onDetalharTituloRef?.(r.tituloRef!)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Detalhar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </section>
+        )}
+
         {/* Tributos do Título — TGFIIF */}
         <section>
           <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Tributos do Título
           </h2>
+          <TributoTable tributos={r.tributos} tributosDevolvidos={r.tributosDevolvidos} />
+        </section>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── Ref Detail View ──────────────────────────────────────────────────────────
+
+function RefDetailView({
+  tituloRef: tr,
+  parentRecord: p,
+  onBack,
+}: {
+  tituloRef: TituloRef;
+  parentRecord: ReceitaMovimento;
+  onBack: () => void;
+}) {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b shrink-0">
+        <Button variant="ghost" size="sm" className="gap-1.5 h-8 text-[13px]" onClick={onBack}>
+          <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+          Voltar ao Título
+        </Button>
+        <div className="h-4 w-px bg-border" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground mb-0.5">
+            <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+            <span>Receitas</span>
+            <ChevronRight className="h-3 w-3" />
+            <span>Movimento</span>
+            <ChevronRight className="h-3 w-3" />
+            <span>Título {p.nroUnico}</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground font-medium truncate">Título Ref. {tr.nroUnico}</span>
+          </div>
+          <h1 className="text-[16px] font-semibold">Detalhamento do Título Referenciado</h1>
+        </div>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
+
+        {/* Resumo do Título */}
+        <section>
+          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Resumo do Título
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <SummaryCard label="Dt. Negociação"    value={tr.dataNegociacao}        mono />
+            <SummaryCard label="Empresa"           value={tr.empresa}                    />
+            <SummaryCard label="Parceiro"          value={tr.parceiroNome}               />
+            <SummaryCard label="Nro Único"         value={tr.nroUnico}             mono />
+            <SummaryCard label="Tipo de Movimento" value={tr.tipoMovimento}              />
+            <SummaryCard label="Valor"             value={brl(tr.vlrDesdobramento)} mono />
+            <SummaryCard label="Total CBS"         value={brl(tr.totalCBS)}         mono colorClass="text-blue-700 dark:text-blue-400" />
+            <SummaryCard label="Total IBS UF"      value={brl(tr.totalIBSUF)}       mono colorClass="text-amber-700 dark:text-amber-400" />
+            <SummaryCard label="Total IBS Mun"     value={brl(tr.totalIBSMun)}      mono colorClass="text-amber-700 dark:text-amber-400" />
+          </div>
+        </section>
+
+        {/* Título Referenciado — back to parent */}
+        <section>
+          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Título Referenciado
+          </h2>
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
-                  <TableHead className="text-[12px]">Imposto</TableHead>
-                  <TableHead className="text-[12px]">Incidência</TableHead>
-                  <TableHead className="text-[12px]">CST</TableHead>
-                  <TableHead className="text-[12px] text-right">Base</TableHead>
-                  <TableHead className="text-[12px] text-right">Base Cálc. Reduzida</TableHead>
-                  <TableHead className="text-[12px] text-right">Alíquota</TableHead>
+                  <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                  <TableHead className="text-[12px]">Empresa</TableHead>
+                  <TableHead className="text-[12px]">Parceiro</TableHead>
+                  <TableHead className="text-[12px]">Tipo</TableHead>
+                  <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
+                  <TableHead className="text-[12px]">Nro Único</TableHead>
+                  <TableHead className="text-[12px]">Nro Nota</TableHead>
                   <TableHead className="text-[12px] text-right">Valor</TableHead>
-                  <TableHead className="text-[12px] text-center">Digitado</TableHead>
+                  <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
+                  <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                  <TableHead className="text-[12px] text-right">Total CBS</TableHead>
+                  <TableHead className="text-[12px] text-center">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {r.tributos.map((t, i) => (
-                  <TableRow key={i} className="text-[13px]">
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-[11px] font-semibold",
-                          t.imposto === "CBS"
-                            ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40"
-                            : "border-amber-300 text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40"
-                        )}
-                      >
-                        {t.imposto}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{t.incidencia}</TableCell>
-                    <TableCell className="font-mono text-[12px]">{t.cst}</TableCell>
-                    <TableCell className="text-right font-mono text-[12px]">{brl(t.base)}</TableCell>
-                    <TableCell className="text-right font-mono text-[12px]">
-                      {t.baseReduzida > 0 ? brl(t.baseReduzida) : "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-[12px]">{t.aliquota}</TableCell>
-                    <TableCell className="text-right font-mono text-[12px] font-semibold">
-                      {brl(t.valor)}
-                    </TableCell>
-                    <TableCell className="text-center text-[12px]">{t.digitado}</TableCell>
-                  </TableRow>
-                ))}
+                <TableRow className="text-[13px]">
+                  <TableCell className="font-mono text-[12px]">{p.dataNegociacao}</TableCell>
+                  <TableCell>{p.empresa}</TableCell>
+                  <TableCell>
+                    <div>{p.parceiroNome}</div>
+                    <div className="text-[11px] text-muted-foreground">{p.parceiroCNPJ}</div>
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "text-[13px] font-medium",
+                      p.tipo === "Receita"
+                        ? "text-blue-700 dark:text-blue-400"
+                        : "text-red-700 dark:text-red-400"
+                    )}
+                  >
+                    {p.tipo}
+                  </TableCell>
+                  <TableCell className="font-medium whitespace-nowrap">{p.tipoMovimento}</TableCell>
+                  <TableCell className="font-mono">{p.nroUnico}</TableCell>
+                  <TableCell className="font-mono">{p.nroNota}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(p.vlrDesdobramento)}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(p.totalIBSUF)}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(p.totalIBSMun)}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(p.totalCBS)}</TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[12px] gap-1"
+                      onClick={onBack}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Detalhar
+                    </Button>
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </div>
         </section>
+
+        {/* Tributos do Título — somente quando tituloRef é Receita com tributos */}
+        {tr.tipo === "Receita" && tr.tributos && (
+          <section>
+            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Tributos do Título
+            </h2>
+            <TributoTable tributos={tr.tributos} tributosDevolvidos={tr.tributosDevolvidos} />
+          </section>
+        )}
 
       </div>
     </div>
