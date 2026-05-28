@@ -559,3 +559,48 @@ function ResumoField({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function SyncBadge({ label, date, nextSync }: { label: string; date: string; nextSync: string }) {
+  return (
+    <div className="relative group inline-flex">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200 cursor-default dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
+        ✓ {label}: {date}
+      </span>
+      <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block z-20">
+        <div className="bg-popover text-popover-foreground text-[11px] px-2.5 py-1.5 rounded-md shadow-md border border-border whitespace-nowrap">
+          Próxima sincronização: {nextSync}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ icon, label, value, sub, variant, highlighted }: {
+  icon: React.ReactNode; label: string; value: string; sub: string;
+  variant: "primary" | "success" | "warning" | "muted";
+  highlighted?: boolean;
+}) {
+  const map = {
+    primary: { value: "text-primary",    bg: "bg-primary/10" },
+    success: { value: "text-success",    bg: "bg-success/10" },
+    warning: { value: "text-warning",    bg: "bg-warning/10" },
+    muted:   { value: "text-foreground", bg: "bg-muted"      },
+  };
+  const { value: valCls, bg } = map[variant];
+  return (
+    <div
+      className={cn(
+        "rounded-lg p-4 flex-1 border transition-shadow",
+        highlighted ? "bg-warning/5 border-warning/50" : "bg-background border-border"
+      )}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <span className="text-[12px] font-medium text-muted-foreground leading-tight">{label}</span>
+        <div className={cn("rounded-full p-1.5", bg)}>{icon}</div>
+      </div>
+      <p className={cn("text-2xl font-bold", valCls)}>{value}</p>
+      <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
+    </div>
+  );
+}
+
