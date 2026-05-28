@@ -9,6 +9,7 @@ import ApuracaoCBS from "./pages/ApuracaoCBS";
 import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
 import ApuracaoDere from "./pages/ApuracaoDere";
 import ConfigEmpresasPage from "./pages/ConfigEmpresasPage";
+import TributacaoIntegralPage from "./pages/TributacaoIntegralPage";
 import TributacaoPersonalizadaWizard from "./pages/TributacaoPersonalizadaWizard";
 import TabelaOficialPage from "./pages/TabelaOficialPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
