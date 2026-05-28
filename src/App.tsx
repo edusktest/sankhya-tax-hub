@@ -9,6 +9,7 @@ import ApuracaoCBS from "./pages/ApuracaoCBS";
 import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
 import ApuracaoDere from "./pages/ApuracaoDere";
 import ConfigEmpresasPage from "./pages/ConfigEmpresasPage";
+import TributacaoIntegralPage from "./pages/TributacaoIntegralPage";
 import TributacaoPersonalizadaWizard from "./pages/TributacaoPersonalizadaWizard";
 import TabelaOficialPage from "./pages/TabelaOficialPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
@@ -55,7 +56,7 @@ const App = () => (
             <Route path={ERoutes.GESTAO_EVENTOS} element={<PlaceholderPage />} />
             <Route path={ERoutes.PROCESSOS} element={<PlaceholderPage />} />
             <Route path={ERoutes.FINANCEIRO} element={<PlaceholderPage />} />
-            <Route path={ERoutes.TRIBUTACAO_INTEGRAL} element={<PlaceholderPage />} />
+            <Route path={ERoutes.TRIBUTACAO_INTEGRAL} element={<TributacaoIntegralPage />} />
             <Route path={ERoutes.TRIBUTACAO_PERSONALIZADA} element={<TributacaoPersonalizadaWizard />} />
             <Route path={ERoutes.CONFIG_ASSISTENTE_EXCECOES} element={<AssistenteExcecoesPage />} />
             <Route path={ERoutes.CONFIG_EMPRESAS} element={<ConfigEmpresasPage />} />

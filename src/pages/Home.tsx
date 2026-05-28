@@ -47,7 +47,7 @@ const integralCount      = ASSISTENTE.filter((e) => e.integral).length;
 const personalizadaCount = ASSISTENTE.filter((e) => e.personalizada).length;
 
 // ── Derived: Apuração CBS ─────────────────────────────────────────
-function calcApuracao(list: typeof apuracoes | typeof APURACAO_IBS) {
+function calcApuracao(list: Array<{ situacao: string; tipoResultado: string; alertas?: number }>) {
   return {
     devedor:   list.filter((a) => a.situacao === "Em andamento" && a.tipoResultado === "Devedor").length,
     credor:    list.filter((a) => a.situacao === "Em andamento" && a.tipoResultado === "Credor").length,
@@ -55,6 +55,7 @@ function calcApuracao(list: typeof apuracoes | typeof APURACAO_IBS) {
     concluido: list.filter((a) => a.situacao === "Concluído").length,
   };
 }
+
 
 const statsCBS = calcApuracao(apuracoes);
 const statsIBS = calcApuracao(APURACAO_IBS);
