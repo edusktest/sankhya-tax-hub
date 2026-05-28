@@ -164,7 +164,71 @@ export default function TributacaoIntegralPage() {
           </div>
         </div>
 
+        {/* Período de análise */}
+        <div className="bg-card rounded-lg p-5 border border-border card-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[13px] font-semibold text-foreground">Período de análise</p>
+            <div className="flex flex-col items-end gap-1">
+              <SyncBadge label="Tabela CFF"  date="12/05/2026" nextSync="13/05/2026 às 02:00" />
+              <SyncBadge label="Análise DFe" date="12/05/2026" nextSync="13/05/2026 às 04:00" />
+            </div>
+          </div>
+
+          <div className="flex gap-2 mb-1.5">
+            {(["60", "90", "120"] as const).map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[12px] font-semibold border transition-colors",
+                  period === p
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                )}
+              >
+                {p} dias{period === p ? " ✓" : ""}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-4">
+            Analisando empresas e tipos de operação com movimento no período: NF-e · NFC-e · CT-e · NFS-e
+          </p>
+
+          <div className="flex gap-3">
+            <MetricCard
+              icon={<Building2 className="h-4 w-4 text-primary" />}
+              label="Empresas elegíveis"
+              value={String(EMPRESAS.length)}
+              sub="com movimento no período"
+              variant="primary"
+            />
+            <MetricCard
+              icon={<CheckCircle2 className="h-4 w-4 text-success" />}
+              label="Empresas configuradas"
+              value={String(CONFIG_LOG.reduce((a, c) => a + c.empresas, 0))}
+              sub="com tributação integral"
+              variant="success"
+            />
+            <MetricCard
+              icon={<Clock className="h-4 w-4 text-warning" />}
+              label="Aguardando configuração"
+              value="3"
+              sub="sem parametrização"
+              variant="warning"
+              highlighted
+            />
+            <MetricCard
+              icon={<Layers className="h-4 w-4 text-muted-foreground" />}
+              label="TOPs cobertos"
+              value={String(CONFIG_LOG.reduce((a, c) => a + c.tops, 0))}
+              sub={`últimos ${period} dias`}
+              variant="muted"
+            />
+          </div>
+        </div>
+
         {/* Filtros */}
+
         <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/40 rounded-lg border">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
