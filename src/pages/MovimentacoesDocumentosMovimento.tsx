@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   FileStack,
   ChevronRight,
@@ -6,6 +7,8 @@ import {
   Eye,
   Filter,
   X,
+  FilePlus,
+  Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,10 +28,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TipoMovimento = "Venda" | "Compra" | "Devolução de Venda" | "Devolução de Compra";
+type TipoMovimento = "Venda" | "Compra" | "Devolução de Venda" | "Devolução de Compra" | "Multa e Juros";
+
+type StatusDFe = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado";
+
+interface DocumentoTitulo {
+  nroUnico: string;
+  nroNota: string;
+  chaveDFe: string;
+  statusDFe: StatusDFe;
+  finalidade: string;
+}
 
 interface Tributo {
   imposto: string;
@@ -48,6 +62,7 @@ interface DocumentoFiscalRef {
   parceiroNome: string;
   parceiroCNPJ: string;
   tipoMovimento: TipoMovimento;
+  finalidadeOperacao?: string;
   numero: string;
   chaveDFe: string;
   valor: number;
@@ -99,7 +114,9 @@ interface TituloDocumento {
   dataBaixa: string;
   tributos: Tributo[];
   tributosDevolvidos?: Tributo[];
+  tributosMultaJuros?: Tributo[];
   tituloRef?: TituloRef;
+  documentos?: DocumentoTitulo[];
 }
 
 interface DocumentoMovimento {
@@ -183,6 +200,7 @@ const MOCK: DocumentoMovimento[] = [
       parceiroNome: "Grupo Nexus S.A.",
       parceiroCNPJ: "23.456.789/0001-01",
       tipoMovimento: "Venda",
+      finalidadeOperacao: "Normal",
       numero: "1198",
       chaveDFe: "35260123456789000100550010000011981234567880",
       valor: 11300.0,
@@ -214,6 +232,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 11300, baseReduzida: 0, aliquota: "5,00%", valor: 565.0,  digitado: "Não" },
           { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 11300, baseReduzida: 0, aliquota: "3,50%", valor: 395.5,  digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 11300, baseReduzida: 0, aliquota: "3,50%", valor: 395.5,  digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.004", nroNota: "NF-001310", chaveDFe: "35260123456789000100550010000012341234567890", statusDFe: "Autorizado", finalidade: "Normal" },
         ],
       },
     ],
@@ -271,6 +292,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 9933.34, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 9933.34, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
         ],
+        documentos: [
+          { nroUnico: "200.021", nroNota: "NF-002200", chaveDFe: "35260267890100000123550010000022001234567891", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
       },
       {
         id: "t2b",
@@ -296,6 +320,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
         ],
+        documentos: [
+          { nroUnico: "200.022", nroNota: "NF-002200", chaveDFe: "35260267890100000123550010000022001234567891", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
       },
       {
         id: "t2c",
@@ -320,6 +347,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "5,00%", valor: 496.66, digitado: "Não" },
           { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.66, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.66, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "200.023", nroNota: "NF-002200", chaveDFe: "35260267890100000123550010000022001234567891", statusDFe: "Autorizado", finalidade: "Normal" },
         ],
       },
     ],
@@ -377,6 +407,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
         ],
+        documentos: [
+          { nroUnico: "600.020", nroNota: "NF-600100", chaveDFe: "35260288999000000133550010000061001234567892", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
       },
     ],
   },
@@ -433,6 +466,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
         ],
+        documentos: [
+          { nroUnico: "500.005", nroNota: "NF-500210", chaveDFe: "35260255666777000188550010000052101234567893", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
       },
     ],
   },
@@ -471,6 +507,7 @@ const MOCK: DocumentoMovimento[] = [
       parceiroNome: "Grupo Nexus S.A.",
       parceiroCNPJ: "23.456.789/0001-01",
       tipoMovimento: "Venda",
+      finalidadeOperacao: "Normal",
       numero: "1234",
       chaveDFe: "35260123456789000100550010000012341234567890",
       valor: 11300.0,
@@ -502,6 +539,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 5650, baseReduzida: 0, aliquota: "5,00%", valor: 282.5,  digitado: "Não" },
           { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 5650, baseReduzida: 0, aliquota: "3,50%", valor: 197.75, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 5650, baseReduzida: 0, aliquota: "3,50%", valor: 197.75, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.009", nroNota: "NF-001310", chaveDFe: "35260123456789000100550010000013101234567894", statusDFe: "Autorizado", finalidade: "Devolução" },
         ],
       },
     ],
@@ -541,6 +581,7 @@ const MOCK: DocumentoMovimento[] = [
       parceiroNome: "Indústria Central Ltda",
       parceiroCNPJ: "44.555.666/0001-22",
       tipoMovimento: "Devolução de Venda",
+      finalidadeOperacao: "Devolução",
       numero: "3100",
       chaveDFe: "35260244555666000122550010000031001234567897",
       valor: 18600.0,
@@ -593,6 +634,9 @@ const MOCK: DocumentoMovimento[] = [
           totalIBSMun: 651.0,
           totalCBS: 930.0,
         },
+        documentos: [
+          { nroUnico: "700.001", nroNota: "NF-003050", chaveDFe: "35260244555666000122550010000030501234567896", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
       },
     ],
   },
@@ -631,6 +675,7 @@ const MOCK: DocumentoMovimento[] = [
       parceiroNome: "Indústria Central Ltda",
       parceiroCNPJ: "44.555.666/0001-22",
       tipoMovimento: "Venda",
+      finalidadeOperacao: "Normal",
       numero: "3050",
       chaveDFe: "35260244555666000122550010000030501234567896",
       valor: 18600.0,
@@ -688,6 +733,9 @@ const MOCK: DocumentoMovimento[] = [
             { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
           ],
         },
+        documentos: [
+          { nroUnico: "800.001", nroNota: "NF-003100", chaveDFe: "35260244555666000122550010000031001234567897", statusDFe: "Autorizado", finalidade: "Devolução" },
+        ],
       },
     ],
   },
@@ -726,6 +774,7 @@ const MOCK: DocumentoMovimento[] = [
       parceiroNome: "Atacado Regional Ltda",
       parceiroCNPJ: "33.444.555/0001-99",
       tipoMovimento: "Devolução de Venda",
+      finalidadeOperacao: "Devolução",
       numero: "3250",
       chaveDFe: "35260233444555000199550010000032501234567899",
       valor: 3360.0,
@@ -778,6 +827,9 @@ const MOCK: DocumentoMovimento[] = [
           totalIBSMun: 117.60,
           totalCBS: 168.0,
         },
+        documentos: [
+          { nroUnico: "900.001", nroNota: "NF-003200", chaveDFe: "35260233444555000199550010000032001234567898", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
       },
     ],
   },
@@ -816,6 +868,7 @@ const MOCK: DocumentoMovimento[] = [
       parceiroNome: "Atacado Regional Ltda",
       parceiroCNPJ: "33.444.555/0001-99",
       tipoMovimento: "Venda",
+      finalidadeOperacao: "Normal",
       numero: "3200",
       chaveDFe: "35260233444555000199550010000032001234567898",
       valor: 8400.0,
@@ -873,8 +926,136 @@ const MOCK: DocumentoMovimento[] = [
             { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
           ],
         },
+        documentos: [
+          { nroUnico: "950.001", nroNota: "NF-003250", chaveDFe: "35260233444555000199550010000032501234567899", statusDFe: "Autorizado", finalidade: "Devolução" },
+        ],
       },
     ],
+  },
+
+  // ── Venda – Transportes Delta (com Nota de Débito por Multa e Juros) ─────
+  {
+    id: "11",
+    dataNegociacao: "15/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Transportes Delta S.A.",
+    parceiroCNPJ: "22.333.444/0001-66",
+    numero: "1400",
+    chaveDFe: "35260123456789000100550010000014001234567901",
+    valor: 12000.0,
+    totalIBSUF: 420.0,
+    totalIBSMun: 420.0,
+    totalCBS: 600.0,
+    empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+    tipoOperacao: "1.201 - Venda de Mercadoria",
+    tipoNegociacao: "A Vista",
+    dtEntradaSaida: "15/05/2026",
+    dtFaturamento: "15/05/2026",
+    dtMovimento: "15/05/2026",
+    finalidadeOperacao: "Normal",
+    nroNFSe: "—",
+    nroUnico: "400.001",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    documentoFiscalRef: {
+      id: "12",
+      dataNegociacao: "25/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Transportes Delta S.A.",
+      parceiroCNPJ: "22.333.444/0001-66",
+      tipoMovimento: "Venda",
+      finalidadeOperacao: "Débito",
+      numero: "20",
+      chaveDFe: "35260123456789000100550010000000201234567902",
+      valor: 540.0,
+      totalIBSUF: 18.9,
+      totalIBSMun: 18.9,
+      totalCBS: 27.0,
+    },
+    titulos: [
+      {
+        id: "t11",
+        dataNegociacao: "15/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Transportes Delta S.A.",
+        parceiroCNPJ: "22.333.444/0001-66",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "400.001",
+        vlrDesdobramento: 12000.0,
+        totalIBSUF: 420.0,
+        totalIBSMun: 420.0,
+        totalCBS: 600.0,
+        nroNota: "NF-001400",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "15/05/2026",
+        dtVencimento: "15/06/2026",
+        vlrDesconto: 0, vlrMulta: 360.0, vlrJuros: 180.0, vlrBaixa: 12540.0, dataBaixa: "25/05/2026",
+        tributos: [
+          { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 12000, baseReduzida: 0, aliquota: "5,00%", valor: 600.0, digitado: "Não" },
+          { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 12000, baseReduzida: 0, aliquota: "3,50%", valor: 420.0, digitado: "Não" },
+          { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 12000, baseReduzida: 0, aliquota: "3,50%", valor: 420.0, digitado: "Não" },
+        ],
+        tributosMultaJuros: [
+          { imposto: "CBS",     incidencia: "Multa e Juros", cst: "01", base: 540, baseReduzida: 0, aliquota: "5,00%", valor: 27.0, digitado: "Não" },
+          { imposto: "IBS UF",  incidencia: "Multa e Juros", cst: "01", base: 540, baseReduzida: 0, aliquota: "3,50%", valor: 18.9, digitado: "Não" },
+          { imposto: "IBS Mun", incidencia: "Multa e Juros", cst: "01", base: 540, baseReduzida: 0, aliquota: "3,50%", valor: 18.9, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "400.001", nroNota: "NF-001400", chaveDFe: "35260123456789000100550010000014001234567901", statusDFe: "Autorizado", finalidade: "Normal" },
+          { nroUnico: "400.010", nroNota: "ND-000020", chaveDFe: "35260123456789000100550010000000201234567902", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+      },
+    ],
+  },
+
+  // ── Nota de Débito – Transportes Delta (Multa e Juros da NF-001400) ───────
+  {
+    id: "12",
+    dataNegociacao: "25/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Transportes Delta S.A.",
+    parceiroCNPJ: "22.333.444/0001-66",
+    numero: "20",
+    chaveDFe: "35260123456789000100550010000000201234567902",
+    valor: 540.0,
+    totalIBSUF: 18.9,
+    totalIBSMun: 18.9,
+    totalCBS: 27.0,
+    empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+    tipoOperacao: "1.209 - Nota de Débito",
+    tipoNegociacao: "A Vista",
+    dtEntradaSaida: "25/05/2026",
+    dtFaturamento: "25/05/2026",
+    dtMovimento: "25/05/2026",
+    finalidadeOperacao: "Débito",
+    nroNFSe: "—",
+    nroUnico: "400.010",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    documentoFiscalRef: {
+      id: "11",
+      dataNegociacao: "15/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Transportes Delta S.A.",
+      parceiroCNPJ: "22.333.444/0001-66",
+      tipoMovimento: "Venda",
+      finalidadeOperacao: "Normal",
+      numero: "1400",
+      chaveDFe: "35260123456789000100550010000014001234567901",
+      valor: 12000.0,
+      totalIBSUF: 420.0,
+      totalIBSMun: 420.0,
+      totalCBS: 600.0,
+    },
+    titulos: [],
   },
 
   // ── Devolução de Compra – 2 títulos ──────────────────────────────────────
@@ -929,6 +1110,9 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 4200, baseReduzida: 0, aliquota: "3,50%", valor: 147.0, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 4200, baseReduzida: 0, aliquota: "3,50%", valor: 147.0, digitado: "Não" },
         ],
+        documentos: [
+          { nroUnico: "300.011", nroNota: "NF-000180", chaveDFe: "35260288999000000133550010000001801234567895", statusDFe: "Autorizado", finalidade: "Devolução" },
+        ],
       },
       {
         id: "t6b",
@@ -954,6 +1138,96 @@ const MOCK: DocumentoMovimento[] = [
           { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 4200, baseReduzida: 0, aliquota: "3,50%", valor: 147.0, digitado: "Não" },
           { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 4200, baseReduzida: 0, aliquota: "3,50%", valor: 147.0, digitado: "Não" },
         ],
+        documentos: [
+          { nroUnico: "300.012", nroNota: "NF-000180", chaveDFe: "35260288999000000133550010000001801234567895", statusDFe: "Autorizado", finalidade: "Devolução" },
+        ],
+      },
+    ],
+  },
+
+  // ── Venda – sem títulos ───────────────────────────────────────────────────
+  {
+    id: "13",
+    dataNegociacao: "20/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Tech Solutions Ltda",
+    parceiroCNPJ: "11.222.333/0001-44",
+    numero: "5500",
+    chaveDFe: "35260123456789000100550010000055001234567800",
+    valor: 8500.0,
+    totalIBSUF: 297.5,
+    totalIBSMun: 297.5,
+    totalCBS: 425.0,
+    empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+    tipoOperacao: "1.201 - Venda de Mercadoria",
+    tipoNegociacao: "A Vista",
+    dtEntradaSaida: "20/05/2026",
+    dtFaturamento: "20/05/2026",
+    dtMovimento: "20/05/2026",
+    finalidadeOperacao: "Normal",
+    nroNFSe: "—",
+    nroUnico: "500.001",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    titulos: [],
+  },
+
+  // ── Venda – título sem documentos ─────────────────────────────────────────
+  {
+    id: "14",
+    dataNegociacao: "22/05/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Global Parts S.A.",
+    parceiroCNPJ: "55.666.777/0001-88",
+    numero: "6601",
+    chaveDFe: "35260267890100000123550010000066011234567810",
+    valor: 15000.0,
+    totalIBSUF: 525.0,
+    totalIBSMun: 525.0,
+    totalCBS: 750.0,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.201 - Venda de Mercadoria",
+    tipoNegociacao: "A Vista",
+    dtEntradaSaida: "22/05/2026",
+    dtFaturamento: "22/05/2026",
+    dtMovimento: "22/05/2026",
+    finalidadeOperacao: "Normal",
+    nroNFSe: "—",
+    nroUnico: "600.001",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    titulos: [
+      {
+        id: "t14",
+        dataNegociacao: "22/05/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Global Parts S.A.",
+        parceiroCNPJ: "55.666.777/0001-88",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "600.002",
+        vlrDesdobramento: 15000.0,
+        totalIBSUF: 525.0,
+        totalIBSMun: 525.0,
+        totalCBS: 750.0,
+        nroNota: "NF-006601",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "22/05/2026",
+        dtVencimento: "22/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+        tributos: [
+          { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "5,00%", valor: 750.0,  digitado: "Não" },
+          { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor: 525.0,  digitado: "Não" },
+          { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor: 525.0,  digitado: "Não" },
+        ],
+        documentos: [],
       },
     ],
   },
@@ -974,11 +1248,12 @@ function tipoMovClass(t: TipoMovimento): string {
   if (t === "Compra")              return "text-amber-700 dark:text-amber-500";
   if (t === "Devolução de Venda")  return "text-rose-700 dark:text-rose-400";
   if (t === "Devolução de Compra") return "text-blue-700 dark:text-blue-400";
+  if (t === "Multa e Juros")       return "text-orange-700 dark:text-orange-400";
   return "";
 }
 
 function centralLabel(tm: TipoMovimento): string {
-  return ["Venda", "Devolução de Venda"].includes(tm)
+  return ["Venda", "Devolução de Venda", "Multa e Juros"].includes(tm)
     ? "Central de Vendas"
     : "Central de Compra";
 }
@@ -988,9 +1263,17 @@ function centralLabel(tm: TipoMovimento): string {
 function TributoTable({
   tributos,
   tributosDevolvidos,
+  tributosMultaJuros,
+  data,
+  dataMultaJuros,
+  dataDevolucao,
 }: {
   tributos: Tributo[];
   tributosDevolvidos?: Tributo[];
+  tributosMultaJuros?: Tributo[];
+  data: string;
+  dataMultaJuros?: string;
+  dataDevolucao?: string;
 }) {
   const contaCorrente = !!tributosDevolvidos;
   return (
@@ -998,6 +1281,7 @@ function TributoTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            <TableHead className="text-[12px]">Data</TableHead>
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
             <TableHead className="text-[12px]">CST</TableHead>
@@ -1018,6 +1302,7 @@ function TributoTable({
         <TableBody>
           {tributos.map((tri, i) => (
             <TableRow key={`orig-${i}`} className="text-[13px]">
+              <TableCell className="font-mono text-[12px]">{data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell>{tri.incidencia}</TableCell>
               <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
@@ -1037,8 +1322,31 @@ function TributoTable({
               <TableCell className="text-center text-[12px]">{tri.digitado}</TableCell>
             </TableRow>
           ))}
+          {tributosMultaJuros?.map((tri, i) => (
+            <TableRow key={`mj-${i}`} className="text-[13px] bg-amber-50/40 dark:bg-amber-950/10">
+              <TableCell className="font-mono text-[12px]">{dataMultaJuros ?? data}</TableCell>
+              <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
+              <TableCell className="text-amber-700 dark:text-amber-400 font-medium">{tri.incidencia}</TableCell>
+              <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
+              <TableCell className="text-right font-mono text-[12px]">{brl(tri.base)}</TableCell>
+              <TableCell className="text-right font-mono text-[12px]">
+                {tri.baseReduzida !== 0 ? brl(tri.baseReduzida) : "—"}
+              </TableCell>
+              <TableCell className="text-right font-mono text-[12px]">{tri.aliquota}</TableCell>
+              {contaCorrente ? (
+                <>
+                  <TableCell className="text-right font-mono text-[12px] font-semibold text-amber-700 dark:text-amber-400">{brl(tri.valor)}</TableCell>
+                  <TableCell className="text-right font-mono text-[12px] text-muted-foreground">—</TableCell>
+                </>
+              ) : (
+                <TableCell className="text-right font-mono text-[12px] font-semibold text-amber-700 dark:text-amber-400">{brl(tri.valor)}</TableCell>
+              )}
+              <TableCell className="text-center text-[12px]">{tri.digitado}</TableCell>
+            </TableRow>
+          ))}
           {tributosDevolvidos?.map((tri, i) => (
             <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+              <TableCell className="font-mono text-[12px]">{dataDevolucao ?? data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
               <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
@@ -1072,6 +1380,28 @@ function ImpostoBadge({ imposto }: { imposto: string }) {
       {imposto}
     </Badge>
   );
+}
+
+function FinalidadeBadge({ finalidade }: { finalidade: string }) {
+  const styles: Record<string, string> = {
+    Normal:    "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40",
+    Devolução: "border-rose-300 text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/40",
+    Débito:    "border-teal-300 text-teal-700 bg-teal-50 dark:text-teal-400 dark:bg-teal-950/40",
+  };
+  return (
+    <Badge variant="outline" className={cn("text-[11px] font-semibold whitespace-nowrap", styles[finalidade] ?? "")}>
+      {finalidade}
+    </Badge>
+  );
+}
+
+function BadgeDFe({ status }: { status: StatusDFe }) {
+  const cls =
+    status === "Autorizado"             ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
+    status === "Aguardando autorização" ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Erro"                   ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
+                                          "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
+  return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
 }
 
 function SummaryCard({
@@ -1117,11 +1447,19 @@ function DetailField({
 type View = "list" | "doc-detail" | "titulo-detail";
 
 export default function MovimentacoesDocumentosMovimento() {
+  const location = useLocation();
   const [view, setView] = useState<View>("list");
   const [selectedDoc, setSelectedDoc] = useState<DocumentoMovimento | null>(null);
   const [selectedTitulo, setSelectedTitulo] = useState<TituloDocumento | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [filtroPeriodo, setFiltroPeriodo] = useState("");
+
+  useEffect(() => {
+    const chaveDFe = (location.state as { openChaveDFe?: string } | null)?.openChaveDFe;
+    if (!chaveDFe) return;
+    const doc = MOCK.find((r) => r.chaveDFe === chaveDFe);
+    if (doc) { setSelectedDoc(doc); setView("doc-detail"); }
+  }, [location.state]);
 
   const hasFilter = filtroEmpresa !== "" || filtroPeriodo !== "";
 
@@ -1247,6 +1585,7 @@ export default function MovimentacoesDocumentosMovimento() {
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
+                    <TableHead className="text-[12px]">Finalidade</TableHead>
                     <TableHead className="text-[12px]">Número</TableHead>
                     <TableHead className="text-[12px]">Chave DFe</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
@@ -1258,7 +1597,7 @@ export default function MovimentacoesDocumentosMovimento() {
                 </TableHeader>
                 <TableBody>
                   {rows.map((r) => (
-                    <TableRow key={r.id} className="hover:bg-muted/40 text-[13px]">
+                    <TableRow key={r.id} className="hover:bg-muted/40 text-[13px] align-middle">
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
@@ -1268,6 +1607,7 @@ export default function MovimentacoesDocumentosMovimento() {
                       <TableCell className={cn("font-medium whitespace-nowrap", tipoMovClass(r.tipoMovimento))}>
                         {r.tipoMovimento}
                       </TableCell>
+                      <TableCell><FinalidadeBadge finalidade={r.finalidadeOperacao} /></TableCell>
                       <TableCell className="font-mono">{r.numero}</TableCell>
                       <TableCell className="max-w-[160px]">
                         <span className="font-mono text-[11px] text-muted-foreground truncate block" title={r.chaveDFe}>
@@ -1350,10 +1690,7 @@ function DocumentDetailView({
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
         {/* Resumo do Documento */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Resumo do Documento
-          </h2>
+        <CollapsibleSection title="Resumo do Documento">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <SummaryCard label="Dt. Negociação"   value={d.dataNegociacao}  mono />
             <SummaryCard label="Empresa"           value={d.empresa}              />
@@ -1375,13 +1712,10 @@ function DocumentDetailView({
               </div>
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Detalhes do Documento — TGFCAB */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Detalhes do Documento
-          </h2>
+        <CollapsibleSection title="Detalhes do Documento">
           <div className="rounded-lg border bg-card p-4">
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-4">
               <DetailField label="Chave DFe"              value={d.chaveDFe}              mono />
@@ -1405,14 +1739,11 @@ function DocumentDetailView({
               <DetailField label="Vlr. Nota"              value={brl(d.valor)}            mono />
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Documento Fiscal Origem (Devolução de Venda) / Referenciado (Venda) */}
         {d.documentoFiscalRef && (d.tipoMovimento === "Devolução de Venda" || d.tipoMovimento === "Venda") && (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              {d.tipoMovimento === "Devolução de Venda" ? "Documento Fiscal Origem" : "Documento Fiscal Referenciado"}
-            </h2>
+          <CollapsibleSection title={d.tipoMovimento === "Devolução de Venda" || d.finalidadeOperacao === "Débito" ? "Documento Fiscal Origem" : "Documento Fiscal Referenciado"}>
             <div className="rounded-lg border overflow-hidden">
               <Table>
                 <TableHeader>
@@ -1421,6 +1752,7 @@ function DocumentDetailView({
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
+                    <TableHead className="text-[12px]">Finalidade</TableHead>
                     <TableHead className="text-[12px]">Número</TableHead>
                     <TableHead className="text-[12px]">Chave DFe</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
@@ -1440,6 +1772,11 @@ function DocumentDetailView({
                     </TableCell>
                     <TableCell className={cn("font-medium whitespace-nowrap", tipoMovClass(d.documentoFiscalRef.tipoMovimento))}>
                       {d.documentoFiscalRef.tipoMovimento}
+                    </TableCell>
+                    <TableCell>
+                      {d.documentoFiscalRef.finalidadeOperacao && (
+                        <FinalidadeBadge finalidade={d.documentoFiscalRef.finalidadeOperacao} />
+                      )}
                     </TableCell>
                     <TableCell className="font-mono">{d.documentoFiscalRef.numero}</TableCell>
                     <TableCell className="max-w-[140px]">
@@ -1469,74 +1806,84 @@ function DocumentDetailView({
                 </TableBody>
               </Table>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* Títulos do Documento */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Títulos do Documento
-            <span className="ml-2 font-normal text-muted-foreground normal-case tracking-normal">
-              ({d.titulos.length} título{d.titulos.length !== 1 ? "s" : ""})
-            </span>
-          </h2>
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead className="text-[12px]">Dt. Negociação</TableHead>
-                  <TableHead className="text-[12px]">Empresa</TableHead>
-                  <TableHead className="text-[12px]">Parceiro</TableHead>
-                  <TableHead className="text-[12px]">Tipo</TableHead>
-                  <TableHead className="text-[12px]">Nro Único</TableHead>
-                  <TableHead className="text-[12px] text-right">Valor</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
-                  <TableHead className="text-[12px] text-right">Total CBS</TableHead>
-                  <TableHead className="text-[12px] text-center">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {d.titulos.map((t) => (
-                  <TableRow key={t.id} className="hover:bg-muted/40 text-[13px]">
-                    <TableCell className="font-mono text-[12px]">{t.dataNegociacao}</TableCell>
-                    <TableCell>{t.empresa}</TableCell>
-                    <TableCell>
-                      <div>{t.parceiroNome}</div>
-                      <div className="text-[11px] text-muted-foreground">{t.parceiroCNPJ}</div>
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        "text-[13px] font-medium",
-                        t.tipo === "Receita"
-                          ? "text-blue-700 dark:text-blue-400"
-                          : "text-red-700 dark:text-red-400"
-                      )}
-                    >
-                      {t.tipo}
-                    </TableCell>
-                    <TableCell className="font-mono">{t.nroUnico}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(t.vlrDesdobramento)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(t.totalIBSUF)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(t.totalIBSMun)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(t.totalCBS)}</TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[12px] gap-1"
-                        onClick={() => onDetalhaTitulo(t)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        Detalhar
-                      </Button>
-                    </TableCell>
+        <CollapsibleSection title="Títulos do Documento">
+          {d.titulos.length > 0 ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Empresa</TableHead>
+                    <TableHead className="text-[12px]">Parceiro</TableHead>
+                    <TableHead className="text-[12px]">Tipo</TableHead>
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px] text-right">Valor</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">Total CBS</TableHead>
+                    <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </section>
+                </TableHeader>
+                <TableBody>
+                  {d.titulos.map((t) => (
+                    <TableRow key={t.id} className="hover:bg-muted/40 text-[13px]">
+                      <TableCell className="font-mono text-[12px]">{t.dataNegociacao}</TableCell>
+                      <TableCell>{t.empresa}</TableCell>
+                      <TableCell>
+                        <div>{t.parceiroNome}</div>
+                        <div className="text-[11px] text-muted-foreground">{t.parceiroCNPJ}</div>
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-[13px] font-medium",
+                          t.tipo === "Receita"
+                            ? "text-blue-700 dark:text-blue-400"
+                            : "text-red-700 dark:text-red-400"
+                        )}
+                      >
+                        {t.tipo}
+                      </TableCell>
+                      <TableCell className="font-mono">{t.nroUnico}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(t.vlrDesdobramento)}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(t.totalIBSUF)}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(t.totalIBSMun)}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(t.totalCBS)}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[12px] gap-1"
+                          onClick={() => onDetalhaTitulo(t)}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Detalhar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
+              <p className="text-[13px] text-muted-foreground">Não existe um título relacionado a esse documento.</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                  <FilePlus className="h-3.5 w-3.5" />
+                  Lançar título
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                  <Link2 className="h-3.5 w-3.5" />
+                  Relacionar título
+                </Button>
+              </div>
+            </div>
+          )}
+        </CollapsibleSection>
 
       </div>
     </div>
@@ -1590,10 +1937,7 @@ function TituloDetailView({
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
         {/* Resumo do Título */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Resumo do Título
-          </h2>
+        <CollapsibleSection title="Resumo do Título">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <SummaryCard label="Dt. Negociação"    value={t.dataNegociacao}        mono />
             <SummaryCard label="Empresa"           value={t.empresa}                    />
@@ -1609,13 +1953,10 @@ function TituloDetailView({
             <SummaryCard label="Total IBS UF"      value={brl(t.totalIBSUF)}       mono />
             <SummaryCard label="Total IBS Mun"     value={brl(t.totalIBSMun)}      mono />
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Detalhes do Título — TGFFIN */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Detalhes do Título
-          </h2>
+        <CollapsibleSection title="Detalhes do Título">
           <div className="rounded-lg border bg-card p-4">
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-4">
               <DetailField label="Nro Único"         value={t.nroUnico}               mono />
@@ -1636,14 +1977,49 @@ function TituloDetailView({
               <DetailField label="Data Baixa"        value={t.dataBaixa}              mono />
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
+
+        {/* Documentos do Título */}
+        <CollapsibleSection title="Documentos do Título">
+          {t.documentos && t.documentos.length > 0 ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Nro Nota</TableHead>
+                    <TableHead className="text-[12px]">Chave DFe</TableHead>
+                    <TableHead className="text-[12px]">Status DFe</TableHead>
+                    <TableHead className="text-[12px]">Finalidade</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {t.documentos.map((doc, i) => (
+                    <TableRow key={i} className="text-[13px]">
+                      <TableCell className="font-mono">{doc.nroUnico}</TableCell>
+                      <TableCell className="font-mono">{doc.nroNota}</TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <span className="font-mono text-[11px] text-muted-foreground truncate block" title={doc.chaveDFe}>
+                          {doc.chaveDFe}
+                        </span>
+                      </TableCell>
+                      <TableCell><BadgeDFe status={doc.statusDFe} /></TableCell>
+                      <TableCell><FinalidadeBadge finalidade={doc.finalidade} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground py-6 text-center">
+              Não existe um documento fiscal relacionado a esse título.
+            </p>
+          )}
+        </CollapsibleSection>
 
         {/* Título Referenciado */}
         {t.tituloRef && (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Título Referenciado
-            </h2>
+          <CollapsibleSection title="Título Referenciado">
             <div className="rounded-lg border overflow-hidden">
               <Table>
                 <TableHeader>
@@ -1704,33 +2080,33 @@ function TituloDetailView({
                 </TableBody>
               </Table>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* Tributos do Título Referenciado — somente Despesa com tituloRef.tributos */}
         {t.tipo === "Despesa" && t.tituloRef?.tributos && (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Tributos do Título Referenciado
-            </h2>
+          <CollapsibleSection title="Tributos do Título Referenciado">
             <TributoTable
               tributos={t.tituloRef.tributos}
               tributosDevolvidos={t.tituloRef.tributosDevolvidos}
+              data={t.tituloRef.dataNegociacao}
+              dataDevolucao={t.dataNegociacao}
             />
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* Tributos do Título — somente Receita */}
         {t.tipo === "Receita" && (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Tributos do Título
-            </h2>
+          <CollapsibleSection title="Tributos do Título">
             <TributoTable
               tributos={t.tributos}
               tributosDevolvidos={t.tributosDevolvidos}
+              tributosMultaJuros={t.tributosMultaJuros}
+              data={t.dataNegociacao}
+              dataMultaJuros={t.dataBaixa !== "—" ? t.dataBaixa : undefined}
+              dataDevolucao={t.tituloRef?.dataNegociacao}
             />
-          </section>
+          </CollapsibleSection>
         )}
 
       </div>

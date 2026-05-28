@@ -41,21 +41,22 @@ sankhya-tax-hub/
 │   │   └── ui/                     # Biblioteca shadcn/ui (40+ primitivos)
 │   │
 │   ├── pages/                  # Uma página por rota (nomenclatura PascalCase)
-│   │   ├── Home.tsx                    # Dashboard principal com status de módulos e empresas
-│   │   ├── ApuracaoCBS.tsx             # Lista de apurações CBS com filtros
-│   │   ├── ApuracaoDetalhe.tsx         # Detalhe de uma apuração CBS (contas, alertas, eventos)
-│   │   ├── ApuracaoDere.tsx            # Gestão DeRE (plano-ref, d1001, d1011, histórico)
-│   │   ├── ConfigEmpresasPage.tsx      # Habilitar/desabilitar módulos por empresa/filial
-│   │   ├── AssistenteExcecoesPage.tsx  # Configuração de exceções de tributação IBS/CBS
-│   │   ├── TributacaoPersonalizadaWizard.tsx  # Wizard de configuração de alíquotas personalizadas
-│   │   ├── TabelaOficialPage.tsx       # Tabelas oficiais (classificação, crédito presumido, anexos)
+│   │   ├── Home.tsx                              # Dashboard principal com status de módulos e empresas
+│   │   ├── ApuracaoCBS.tsx                       # Lista de apurações CBS com filtros
+│   │   ├── ApuracaoDetalhe.tsx                   # Detalhe de uma apuração CBS (contas, alertas, eventos)
+│   │   ├── ApuracaoDere.tsx                      # Gestão DeRE — prop initialScreen controla tela ativa
+│   │   │                                         #   (plano-ref | d1001-list | d1011-list | historico)
+│   │   ├── ConfigEmpresasPage.tsx                # Habilitar/desabilitar módulos por empresa/filial
+│   │   ├── AssistenteExcecoesPage.tsx            # Configuração de exceções de tributação IBS/CBS
+│   │   ├── TributacaoPersonalizadaWizard.tsx     # Wizard de configuração de alíquotas personalizadas
+│   │   ├── TabelaOficialPage.tsx                 # Tabelas oficiais (reutilizada em 4 rotas de tabelas)
 │   │   ├── MovimentacoesReceitasMovimento.tsx    # Movimentações de receitas
 │   │   ├── MovimentacoesReceitasMultaJuros.tsx   # Multas e juros sobre receitas
 │   │   ├── MovimentacoesDespedasMovimento.tsx    # Movimentações de despesas
 │   │   ├── MovimentacoesDocumentosMovimento.tsx  # Movimentações de documentos
-│   │   ├── PlaceholderPage.tsx         # Stub para páginas futuras
-│   │   ├── Index.tsx                   # Redireciona / → /home
-│   │   └── NotFound.tsx                # Página 404
+│   │   ├── PlaceholderPage.tsx                   # Stub para páginas futuras (IBS, IS, Processos…)
+│   │   ├── Index.tsx                             # Redireciona / → /home
+│   │   └── NotFound.tsx                          # Página 404
 │   │
 │   ├── context/
 │   │   └── BIAChatContext.tsx      # Estado global do chat BIA (mensagens, thinking, pendingAction)
@@ -104,21 +105,21 @@ sankhya-tax-hub/
 
 ## Páginas Existentes
 
-| Arquivo | Rota | O que faz |
+| Arquivo | Rota(s) | O que faz |
 |---|---|---|
 | `Home.tsx` | `/home` | Dashboard com status de empresas habilitadas e módulos tributários |
 | `ApuracaoCBS.tsx` | `/apuracao-cbs` | Lista de apurações CBS com filtros (período, empresa, situação) |
 | `ApuracaoDetalhe.tsx` | `/apuracao-cbs/:id` | Detalhe de uma apuração: contas, alertas, eventos |
-| `ApuracaoDere.tsx` | `/apuracao-dere/*` | Telas DeRE: plano-ref, D-1001, D-1011, histórico |
+| `ApuracaoDere.tsx` | `/apuracao-dere`, `/apuracao-dere/plano-ref`, `/apuracao-dere/d1001`, `/apuracao-dere/d1011`, `/apuracao-dere/historico` | Telas DeRE: plano-ref, D-1001, D-1011, histórico (prop `initialScreen` controla a tela ativa) |
 | `ConfigEmpresasPage.tsx` | `/configuracoes/empresas` | Habilitar módulos (CBS, IBS, IS, DeRE) por empresa/filial |
-| `AssistenteExcecoesPage.tsx` | `/configuracoes/assistente/excecoes` | Configurar exceções de tributação IBS/CBS |
-| `TributacaoPersonalizadaWizard.tsx` | `/tributacao/personalizada` | Wizard multi-etapa de alíquotas personalizadas |
-| `TabelaOficialPage.tsx` | `/configuracoes/tabelas/*` | Tabelas oficiais de tributação |
+| `AssistenteExcecoesPage.tsx` | `/configuracoes/assistente/excecoes-ibs-cbs` | Configurar exceções de tributação IBS/CBS |
+| `TributacaoPersonalizadaWizard.tsx` | `/tributacao-personalizada` | Wizard multi-etapa de alíquotas personalizadas |
+| `TabelaOficialPage.tsx` | `/configuracoes/tabelas/classificacao-tributaria`, `/configuracoes/tabelas/credito-presumido`, `/configuracoes/tabelas/anexos`, `/configuracoes/tabelas/indicadores-locais-operacao` | Tabelas oficiais de tributação (reutilizada em 4 rotas) |
 | `MovimentacoesReceitasMovimento.tsx` | `/movimentacoes/receitas/movimento` | Movimentos de receitas |
 | `MovimentacoesReceitasMultaJuros.tsx` | `/movimentacoes/receitas/multa-juros` | Multas e juros sobre receitas |
 | `MovimentacoesDespedasMovimento.tsx` | `/movimentacoes/despesas/movimento` | Movimentos de despesas |
 | `MovimentacoesDocumentosMovimento.tsx` | `/movimentacoes/documentos/movimento` | Movimentos de documentos |
-| `PlaceholderPage.tsx` | várias | Stub para funcionalidades ainda não implementadas |
+| `PlaceholderPage.tsx` | `/apuracao-ibs`, `/apuracao-is`, `/gestao-eventos`, `/processos`, `/financeiro`, `/tributacao-integral`, alíquotas CBS/IBS/IS, digital workers | Stub para funcionalidades ainda não implementadas |
 
 ---
 
@@ -128,16 +129,26 @@ sankhya-tax-hub/
 // src/routes/interface/index.ts
 
 // Raiz
-INDEX                              → /               (redireciona para /home)
+INDEX                              → /                                              (redireciona para /home)
 HOME                               → /home
 
 // Operações tributárias
 APURACAO_CBS                       → /apuracao-cbs
 APURACAO_CBS_DETALHE               → /apuracao-cbs/:id
-APURACAO_IBS                       → /apuracao-ibs           (placeholder)
-APURACAO_IS                        → /apuracao-is            (placeholder)
-APURACAO_DERE                      → /apuracao-dere/*        (sub-rotas: plano-ref, d1001, d1011, historico)
-GESTAO_EVENTOS                     → /gestao-eventos
+APURACAO_IBS                       → /apuracao-ibs                                 (placeholder)
+APURACAO_IS                        → /apuracao-is                                  (placeholder)
+APURACAO_DERE                      → /apuracao-dere                                (ApuracaoDere — tela padrão)
+APURACAO_DERE_PLANO_REF            → /apuracao-dere/plano-ref                      (ApuracaoDere initialScreen="plano-ref")
+APURACAO_DERE_D1001                → /apuracao-dere/d1001                          (ApuracaoDere initialScreen="d1001-list")
+APURACAO_DERE_D1011                → /apuracao-dere/d1011                          (ApuracaoDere initialScreen="d1011-list")
+APURACAO_DERE_HISTORICO            → /apuracao-dere/historico                      (ApuracaoDere initialScreen="historico")
+GESTAO_EVENTOS                     → /gestao-eventos                               (placeholder)
+PROCESSOS                          → /processos                                    (placeholder)
+FINANCEIRO                         → /financeiro                                   (placeholder)
+
+// Tributação
+TRIBUTACAO_INTEGRAL                → /tributacao-integral                          (placeholder)
+TRIBUTACAO_PERSONALIZADA           → /tributacao-personalizada
 
 // Movimentações
 MOVIMENTACOES_RECEITAS_MOVIMENTO   → /movimentacoes/receitas/movimento
@@ -145,23 +156,28 @@ MOVIMENTACOES_RECEITAS_MULTA_JUROS → /movimentacoes/receitas/multa-juros
 MOVIMENTACOES_DESPESAS_MOVIMENTO   → /movimentacoes/despesas/movimento
 MOVIMENTACOES_DOCUMENTOS_MOVIMENTO → /movimentacoes/documentos/movimento
 
-// Configurações
-CONFIG_EMPRESAS                    → /configuracoes/empresas
-CONFIG_ASSISTENTE_EXCECOES         → /configuracoes/assistente/excecoes
-CONFIG_ALIQUOTAS_CBS               → /configuracoes/aliquotas/cbs
-CONFIG_ALIQUOTAS_IBS               → /configuracoes/aliquotas/ibs
-CONFIG_ALIQUOTAS_IS                → /configuracoes/aliquotas/is
-CONFIG_TABELAS_CLASSIFICACAO       → /configuracoes/tabelas/classificacao
-CONFIG_TABELAS_CREDITO_PRESUMIDO   → /configuracoes/tabelas/credito-presumido
-CONFIG_TABELAS_ANEXO_I             → /configuracoes/tabelas/anexo-i
-CONFIG_TABELAS_ANEXO_II            → /configuracoes/tabelas/anexo-ii
+// Configurações — Assistente
+CONFIG_ASSISTENTE_EXCECOES         → /configuracoes/assistente/excecoes-ibs-cbs
+CONFIG_ASSISTENTE_NFE_DEBITO       → /configuracoes/assistente/nfe-debito-ibs-cbs  (no enum, sem rota registrada)
+CONFIG_ASSISTENTE_NFE_CREDITO      → /configuracoes/assistente/nfe-credito-ibs-cbs (no enum, sem rota registrada)
 
-// Tributação
-TRIBUTACAO_PERSONALIZADA           → /tributacao/personalizada
+// Configurações — Empresa
+CONFIG_EMPRESAS                    → /configuracoes/empresas
+
+// Configurações — Alíquotas
+CONFIG_ALIQUOTAS_CBS               → /configuracoes/aliquotas/cbs                  (placeholder)
+CONFIG_ALIQUOTAS_IBS               → /configuracoes/aliquotas/ibs                  (placeholder)
+CONFIG_ALIQUOTAS_IS                → /configuracoes/aliquotas/is                   (placeholder)
+
+// Configurações — Tabelas
+CONFIG_TABELAS_CLASSIFICACAO       → /configuracoes/tabelas/classificacao-tributaria
+CONFIG_TABELAS_CREDITO_PRESUMIDO   → /configuracoes/tabelas/credito-presumido
+CONFIG_TABELAS_ANEXOS              → /configuracoes/tabelas/anexos
+CONFIG_TABELAS_INDICADORES         → /configuracoes/tabelas/indicadores-locais-operacao
 
 // Digital Workers
-DIGITAL_WORKERS_CONFIG_GLOBAL      → /digital-workers/configuracoes-globais
-DIGITAL_WORKERS_CONFIG_WORKER      → /digital-workers/configuracao-por-worker
+DIGITAL_WORKERS_CONFIG_GLOBAL      → /digital-workers/configuracoes-globais        (placeholder)
+DIGITAL_WORKERS_CONFIG_WORKER      → /digital-workers/configuracao-por-worker      (placeholder)
 ```
 
 ---

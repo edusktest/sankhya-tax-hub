@@ -5,7 +5,13 @@
       "Bash(assets\")",
       "Bash(npx tsc *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\eduardol_sankhya\\\\Documents\\\\VS Code\\\\sankhyaPRJ\\\\sankhya-tax-hub\\\\src\" -Recurse -Name)",
-      "Bash(Select-String -Pattern \"tributo|titulo|receita|revenue|darf|dae|dam|cbs|ibs\" -IgnoreCase)"
+      "Bash(Select-String -Pattern \"tributo|titulo|receita|revenue|darf|dae|dam|cbs|ibs\" -IgnoreCase)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\eduardol_sankhya\\\\Documents\\\\VS Code\\\\sankhyaPRJ\\\\sankhya-tax-hub\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Read(//c/Users/eduardol_sankhya/.claude/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\eduardol_sankhya\\.claude"
     ]
   }
 }

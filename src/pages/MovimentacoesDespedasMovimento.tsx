@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { ERoutes } from "@/routes/interface";
 import {
   TrendingDown,
   ChevronRight,
@@ -6,6 +8,8 @@ import {
   Eye,
   Filter,
   X,
+  Upload,
+  Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,8 +29,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type StatusDFe = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado";
+
+interface DocumentoTitulo {
+  nroUnico: string;
+  nroNota: string;
+  chaveDFe: string;
+  statusDFe: StatusDFe;
+  finalidade: string;
+}
 
 interface Tributo {
   imposto: string;
@@ -84,6 +99,7 @@ interface DespesaMovimento {
   dataBaixa: string;
   tributos: Tributo[];
   tituloRef?: TituloRef;
+  documentos?: DocumentoTitulo[];
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -134,6 +150,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
     ],
+    documentos: [
+      { nroUnico: "500.001", nroNota: "NF-500100", chaveDFe: "35260111222333000144550010005001001005001000", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
   },
   {
     id: "2",
@@ -164,6 +183,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "5,00%", valor: 310.0,  digitado: "Não" },
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "3,50%", valor: 217.0,  digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "3,50%", valor: 217.0,  digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "500.002", nroNota: "NF-500101", chaveDFe: "35260155666777000188550010005001011005001010", statusDFe: "Aguardando autorização", finalidade: "Normal" },
     ],
   },
   {
@@ -196,6 +218,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 37500, baseReduzida: 0, aliquota: "3,50%", valor: 1312.5,  digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 37500, baseReduzida: 0, aliquota: "3,50%", valor: 1312.5,  digitado: "Não" },
     ],
+    documentos: [
+      { nroUnico: "600.010", nroNota: "NF-600050", chaveDFe: "35260299000111000122550010006000501006000500", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
   },
   {
     id: "4",
@@ -226,6 +251,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "5,00%", valor: 240.0, digitado: "Não" },
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "3,50%", valor: 168.0, digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "3,50%", valor: 168.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "500.003", nroNota: "NF-500115", chaveDFe: "35260233444555000166550010005001151005001150", statusDFe: "Autorizado", finalidade: "Normal" },
     ],
   },
   {
@@ -258,6 +286,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 9400, baseReduzida: 0, aliquota: "3,50%", valor: 329.0, digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 9400, baseReduzida: 0, aliquota: "3,50%", valor: 329.0, digitado: "Não" },
     ],
+    documentos: [
+      { nroUnico: "500.004", nroNota: "NF-500200", chaveDFe: "35260444555666000177550010005002001005002000", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
   },
   {
     id: "6",
@@ -289,6 +320,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
     ],
+    documentos: [
+      { nroUnico: "600.020", nroNota: "NF-600100", chaveDFe: "35260588999000000133550010006001001006001000", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
   },
   {
     id: "7",
@@ -319,6 +353,9 @@ const MOCK: DespesaMovimento[] = [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "5,00%", valor: 255.0, digitado: "Não" },
       { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
       { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "500.005", nroNota: "NF-500210", chaveDFe: "35260555666777000188550010005002101005002100", statusDFe: "Autorizado", finalidade: "Normal" },
     ],
   },
 
@@ -374,6 +411,9 @@ const MOCK: DespesaMovimento[] = [
         { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
       ],
     },
+    documentos: [
+      { nroUnico: "950.001", nroNota: "NF-003250", chaveDFe: "35260533444555000199550010032500010032500101", statusDFe: "Autorizado", finalidade: "Devolução" },
+    ],
   },
 
   // ── DARF – CBS (par com Receita 100.006 – Logística Express Ltda) ──────────
@@ -399,6 +439,9 @@ const MOCK: DespesaMovimento[] = [
     dtVencimento: "30/06/2026",
     vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 750.0, dataBaixa: "30/06/2026",
     tributos: [],
+    documentos: [
+      { nroUnico: "110.001", nroNota: "DARF-2026-001", chaveDFe: "—", statusDFe: "Não enviado", finalidade: "—" },
+    ],
   },
 
   // ── DAR – IBS UF + IBS Mun (par com Receita 100.006 – Logística Express Ltda)
@@ -424,6 +467,9 @@ const MOCK: DespesaMovimento[] = [
     dtVencimento: "30/06/2026",
     vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 1050.0, dataBaixa: "30/06/2026",
     tributos: [],
+    documentos: [
+      { nroUnico: "110.002", nroNota: "DAR-2026-001", chaveDFe: "—", statusDFe: "Não enviado", finalidade: "—" },
+    ],
   },
 
   // ── Devolução total – Indústria Central Ltda (par com Receita 700.001) ─────
@@ -478,6 +524,9 @@ const MOCK: DespesaMovimento[] = [
         { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
       ],
     },
+    documentos: [
+      { nroUnico: "800.001", nroNota: "NF-003100", chaveDFe: "35260544555666000122550010031000010031000101", statusDFe: "Autorizado", finalidade: "Devolução" },
+    ],
   },
 ];
 
@@ -485,6 +534,13 @@ const MOCK: DespesaMovimento[] = [
 
 const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function saldo(tributos: Tributo[], imposto: string): string {
+  if (tributos.length === 0) return "—";
+  const net = tributos.filter(t => t.imposto === imposto).reduce((s, t) => s + t.valor, 0);
+  if (Math.abs(net) < 0.001) return brl(0);
+  return `${brl(Math.abs(net))} ${net > 0 ? "D" : "C"}`;
+}
 
 function dateToPeriod(date: string): string {
   const [, m, y] = date.split("/");
@@ -621,9 +677,9 @@ export default function MovimentacoesDespedasMovimento() {
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
-                    <TableHead className="text-[12px] text-right">Total CBS</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -649,9 +705,9 @@ export default function MovimentacoesDespedasMovimento() {
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
                       <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
                       <TableCell className="text-right font-mono">{brl(r.vlrDesdobramento)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(r.totalIBSUF)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(r.totalIBSMun)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(r.totalCBS)}</TableCell>
+                      <TableCell className="text-right font-mono">{saldo(r.tributos, "IBS UF")}</TableCell>
+                      <TableCell className="text-right font-mono">{saldo(r.tributos, "IBS Mun")}</TableCell>
+                      <TableCell className="text-right font-mono">{saldo(r.tributos, "CBS")}</TableCell>
                       <TableCell className="text-center">
                         <Button
                           size="sm"
@@ -712,12 +768,38 @@ function ImpostoBadge({ imposto }: { imposto: string }) {
   );
 }
 
+function BadgeDFe({ status }: { status: StatusDFe }) {
+  const cls =
+    status === "Autorizado"             ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
+    status === "Aguardando autorização" ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Erro"                   ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
+                                          "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
+  return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
+}
+
+function FinalidadeBadge({ finalidade }: { finalidade: string }) {
+  const styles: Record<string, string> = {
+    Normal:    "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40",
+    Devolução: "border-rose-300 text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/40",
+    Débito:    "border-teal-300 text-teal-700 bg-teal-50 dark:text-teal-400 dark:bg-teal-950/40",
+  };
+  return (
+    <Badge variant="outline" className={cn("text-[11px] font-semibold whitespace-nowrap", styles[finalidade] ?? "")}>
+      {finalidade}
+    </Badge>
+  );
+}
+
 function TributoTable({
   tributos,
   tributosDevolvidos,
+  data,
+  dataDevolucao,
 }: {
   tributos: Tributo[];
   tributosDevolvidos?: Tributo[];
+  data: string;
+  dataDevolucao?: string;
 }) {
   const contaCorrente = !!tributosDevolvidos;
   return (
@@ -725,6 +807,7 @@ function TributoTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            <TableHead className="text-[12px]">Data</TableHead>
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
             <TableHead className="text-[12px]">cClass</TableHead>
@@ -745,6 +828,7 @@ function TributoTable({
         <TableBody>
           {tributos.map((tri, i) => (
             <TableRow key={`orig-${i}`} className="text-[13px]">
+              <TableCell className="font-mono text-[12px]">{data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell>{tri.incidencia}</TableCell>
               <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
@@ -766,6 +850,7 @@ function TributoTable({
           ))}
           {tributosDevolvidos?.map((tri, i) => (
             <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+              <TableCell className="font-mono text-[12px]">{dataDevolucao ?? data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
               <TableCell className="font-mono text-[12px]">{tri.cst}</TableCell>
@@ -832,6 +917,7 @@ function DetailView({
   onBack: () => void;
   onDetalharTituloRef?: (ref: TituloRef) => void;
 }) {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -868,27 +954,21 @@ function DetailView({
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
         {/* Resumo do Título */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Resumo do Título
-          </h2>
+        <CollapsibleSection title="Resumo do Título">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <SummaryCard label="Dt. Negociação" value={r.dataNegociacao}        mono />
             <SummaryCard label="Empresa"        value={r.empresa}                    />
             <SummaryCard label="Parceiro"       value={r.parceiroNome}               />
             <SummaryCard label="Nro Único"      value={r.nroUnico}              mono />
-            <SummaryCard label="Valor"          value={brl(r.vlrDesdobramento)} mono />
-            <SummaryCard label="Total CBS"      value={brl(r.totalCBS)}         mono />
-            <SummaryCard label="Total IBS UF"   value={brl(r.totalIBSUF)}       mono />
-            <SummaryCard label="Total IBS Mun"  value={brl(r.totalIBSMun)}      mono />
+            <SummaryCard label="Valor"    value={brl(r.vlrDesdobramento)} mono />
+            <SummaryCard label="CBS"      value={saldo(r.tributos, "CBS")}     mono />
+            <SummaryCard label="IBS UF"   value={saldo(r.tributos, "IBS UF")}  mono />
+            <SummaryCard label="IBS Mun"  value={saldo(r.tributos, "IBS Mun")} mono />
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Detalhes do Título — TGFFIN */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Detalhes do Título
-          </h2>
+        <CollapsibleSection title="Detalhes do Título">
           <div className="rounded-lg border bg-card p-4">
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-4">
               <DetailField label="Nro Único"          value={r.nroUnico}               mono />
@@ -908,14 +988,75 @@ function DetailView({
               <DetailField label="Data Baixa"         value={r.dataBaixa}              mono />
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
+
+        {/* Documentos do Título */}
+        <CollapsibleSection title="Documentos do Título">
+          {r.documentos && r.documentos.length > 0 ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Nro Nota</TableHead>
+                    <TableHead className="text-[12px]">Chave DFe</TableHead>
+                    <TableHead className="text-[12px]">Status DFe</TableHead>
+                    <TableHead className="text-[12px]">Finalidade</TableHead>
+                    <TableHead className="text-[12px] text-center">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {r.documentos.map((doc, i) => (
+                    <TableRow key={i} className="text-[13px]">
+                      <TableCell className="font-mono">{doc.nroUnico}</TableCell>
+                      <TableCell className="font-mono">{doc.nroNota}</TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <span className="font-mono text-[11px] text-muted-foreground truncate block" title={doc.chaveDFe}>
+                          {doc.chaveDFe}
+                        </span>
+                      </TableCell>
+                      <TableCell><BadgeDFe status={doc.statusDFe} /></TableCell>
+                      <TableCell><FinalidadeBadge finalidade={doc.finalidade} /></TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[12px] gap-1"
+                          onClick={() =>
+                            navigate(ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO, {
+                              state: { openChaveDFe: doc.chaveDFe },
+                            })
+                          }
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Detalhar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
+              <p className="text-[13px] text-muted-foreground">Não existe um documento fiscal relacionado</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                  <Upload className="h-3.5 w-3.5" />
+                  Importar XML
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                  <Link2 className="h-3.5 w-3.5" />
+                  Relacionar documento
+                </Button>
+              </div>
+            </div>
+          )}
+        </CollapsibleSection>
 
         {/* Título Referenciado */}
         {r.tituloRef && (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Título Referenciado
-            </h2>
+          <CollapsibleSection title="Título Referenciado">
             <div className="rounded-lg border overflow-hidden">
               <Table>
                 <TableHeader>
@@ -928,9 +1069,9 @@ function DetailView({
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
-                    <TableHead className="text-[12px] text-right">Total CBS</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -974,24 +1115,26 @@ function DetailView({
                 </TableBody>
               </Table>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* Tributos do Título Referenciado (Devolução) OR Tributos do Título (regular) */}
         {r.tituloRef?.tributos ? (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Tributos do Título Referenciado
-            </h2>
-            <TributoTable tributos={r.tituloRef.tributos} tributosDevolvidos={r.tituloRef.tributosDevolvidos} />
-          </section>
+          <CollapsibleSection title="Tributos do Título Referenciado">
+            <TributoTable
+              tributos={r.tituloRef.tributos}
+              tributosDevolvidos={r.tituloRef.tributosDevolvidos}
+              data={r.tituloRef.dataNegociacao}
+              dataDevolucao={r.dataNegociacao}
+            />
+          </CollapsibleSection>
         ) : r.tributos.length > 0 ? (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Tributos do Título
-            </h2>
-            <TributoTable tributos={r.tributos} />
-          </section>
+          <CollapsibleSection title="Tributos do Título">
+            <TributoTable
+              tributos={r.tributos}
+              data={r.dataNegociacao}
+            />
+          </CollapsibleSection>
         ) : null}
 
       </div>
@@ -1038,10 +1181,7 @@ function RefDetailView({
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
         {/* Resumo do Título */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Resumo do Título
-          </h2>
+        <CollapsibleSection title="Resumo do Título">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <SummaryCard label="Dt. Negociação"    value={tr.dataNegociacao}        mono />
             <SummaryCard label="Empresa"           value={tr.empresa}                    />
@@ -1053,13 +1193,10 @@ function RefDetailView({
             <SummaryCard label="Total IBS UF"      value={brl(tr.totalIBSUF)}       mono colorClass="text-amber-700 dark:text-amber-400" />
             <SummaryCard label="Total IBS Mun"     value={brl(tr.totalIBSMun)}      mono colorClass="text-amber-700 dark:text-amber-400" />
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Título Referenciado — back to parent */}
-        <section>
-          <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Título Referenciado
-          </h2>
+        <CollapsibleSection title="Título Referenciado">
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
@@ -1118,16 +1255,18 @@ function RefDetailView({
               </TableBody>
             </Table>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Tributos do Título — somente quando tituloRef é Receita com tributos */}
         {tr.tipo === "Receita" && tr.tributos && (
-          <section>
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Tributos do Título
-            </h2>
-            <TributoTable tributos={tr.tributos} tributosDevolvidos={tr.tributosDevolvidos} />
-          </section>
+          <CollapsibleSection title="Tributos do Título">
+            <TributoTable
+              tributos={tr.tributos}
+              tributosDevolvidos={tr.tributosDevolvidos}
+              data={tr.dataNegociacao}
+              dataDevolucao={p.dataNegociacao}
+            />
+          </CollapsibleSection>
         )}
 
       </div>

@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowUp, Sparkles, Bot, Gem, AlertTriangle, ChevronRight, LayoutDashboard } from "lucide-react";
 import { useBIAChat } from "@/context/BIAChatContext";
 import type { BIASkill } from "@/context/BIAChatContext";
 import { cn } from "@/lib/utils";
+import { ERoutes } from "@/routes/interface";
 
 // ── Skill detection ───────────────────────────────────────────────
 const TAX_KEYS = ["prazo", "entrega", "alíquota", "tributação", "reforma", "cbs", "ibs", "dere", "fiscal", "apuração", "legislação", "ncm", "isenção", "imposto"];
@@ -155,6 +157,7 @@ function WorkerCard({
 // ── Main component ────────────────────────────────────────────────
 export function ConversationalLanding() {
   const { addMessage, setThinking, sendInsight, setPendingAction, skipToLayout } = useBIAChat();
+  const navigate = useNavigate();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -180,30 +183,11 @@ export function ConversationalLanding() {
   }
 
   async function handleWorkerActivate(worker: DigitalWorker) {
-    await handleSend(worker.triggerMessage, worker.skill, worker.biaResponse);
-
     if (worker.id === "aliquotas") {
-      addMessage({
-        role: "bia",
-        content: "Deseja revisar e aprovar agora?",
-        tag: "info",
-        skill: "Consultor Tributário",
-        quickReplies: [
-          { label: "Sim, revisar agora", value: "revisar", url: "/tributacao-personalizada?scenario=aliquotas-pending" },
-          { label: "Ver mais tarde",      value: "depois" },
-        ],
-      });
-      setPendingAction((input: string) => {
-        setPendingAction(null);
-        if (input !== "revisar") {
-          sendInsight(
-            "Ok! As pendências ficam aqui no painel. Você pode acessar o Assistente de Configuração de Alíquotas quando quiser.",
-            "info",
-            "Consultor Tributário"
-          );
-        }
-      });
+      navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, { state: { initialScreen: 2 } });
+      return;
     }
+    await handleSend(worker.triggerMessage, worker.skill, worker.biaResponse);
   }
 
   function handleInputSend() {
