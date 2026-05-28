@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ChevronRight, Search, Plus, ScrollText, CheckCircle2, Calendar,
+  Building2, Layers, Clock, DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
