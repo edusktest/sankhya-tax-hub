@@ -71,6 +71,7 @@ export default function TributacaoIntegralPage() {
 
   // Filtros listagem
   const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<"60" | "90" | "120">("90");
 
   // Wizard state
   const [selEmpresas, setSelEmpresas] = useState<Set<string>>(new Set());
