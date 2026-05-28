@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ChevronRight, Search, Plus, ScrollText, CheckCircle2, Calendar,
+  Building2, Layers, Clock, DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export default function TributacaoIntegralPage() {
 
   // Filtros listagem
   const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<"60" | "90" | "120">("90");
 
   // Wizard state
   const [selEmpresas, setSelEmpresas] = useState<Set<string>>(new Set());
@@ -162,7 +164,71 @@ export default function TributacaoIntegralPage() {
           </div>
         </div>
 
+        {/* Período de análise */}
+        <div className="bg-card rounded-lg p-5 border border-border card-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[13px] font-semibold text-foreground">Período de análise</p>
+            <div className="flex flex-col items-end gap-1">
+              <SyncBadge label="Tabela CFF"  date="12/05/2026" nextSync="13/05/2026 às 02:00" />
+              <SyncBadge label="Análise DFe" date="12/05/2026" nextSync="13/05/2026 às 04:00" />
+            </div>
+          </div>
+
+          <div className="flex gap-2 mb-1.5">
+            {(["60", "90", "120"] as const).map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[12px] font-semibold border transition-colors",
+                  period === p
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                )}
+              >
+                {p} dias{period === p ? " ✓" : ""}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-4">
+            Analisando empresas e tipos de operação com movimento no período: NF-e · NFC-e · CT-e · NFS-e
+          </p>
+
+          <div className="flex gap-3">
+            <MetricCard
+              icon={<Building2 className="h-4 w-4 text-primary" />}
+              label="Empresas elegíveis"
+              value={String(EMPRESAS.length)}
+              sub="com movimento no período"
+              variant="primary"
+            />
+            <MetricCard
+              icon={<CheckCircle2 className="h-4 w-4 text-success" />}
+              label="Empresas configuradas"
+              value={String(CONFIG_LOG.reduce((a, c) => a + c.empresas, 0))}
+              sub="com tributação integral"
+              variant="success"
+            />
+            <MetricCard
+              icon={<Clock className="h-4 w-4 text-warning" />}
+              label="Aguardando configuração"
+              value="3"
+              sub="sem parametrização"
+              variant="warning"
+              highlighted
+            />
+            <MetricCard
+              icon={<Layers className="h-4 w-4 text-muted-foreground" />}
+              label="TOPs cobertos"
+              value={String(CONFIG_LOG.reduce((a, c) => a + c.tops, 0))}
+              sub={`últimos ${period} dias`}
+              variant="muted"
+            />
+          </div>
+        </div>
+
         {/* Filtros */}
+
         <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/40 rounded-lg border">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -493,3 +559,48 @@ function ResumoField({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function SyncBadge({ label, date, nextSync }: { label: string; date: string; nextSync: string }) {
+  return (
+    <div className="relative group inline-flex">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200 cursor-default dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
+        ✓ {label}: {date}
+      </span>
+      <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block z-20">
+        <div className="bg-popover text-popover-foreground text-[11px] px-2.5 py-1.5 rounded-md shadow-md border border-border whitespace-nowrap">
+          Próxima sincronização: {nextSync}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ icon, label, value, sub, variant, highlighted }: {
+  icon: React.ReactNode; label: string; value: string; sub: string;
+  variant: "primary" | "success" | "warning" | "muted";
+  highlighted?: boolean;
+}) {
+  const map = {
+    primary: { value: "text-primary",    bg: "bg-primary/10" },
+    success: { value: "text-success",    bg: "bg-success/10" },
+    warning: { value: "text-warning",    bg: "bg-warning/10" },
+    muted:   { value: "text-foreground", bg: "bg-muted"      },
+  };
+  const { value: valCls, bg } = map[variant];
+  return (
+    <div
+      className={cn(
+        "rounded-lg p-4 flex-1 border transition-shadow",
+        highlighted ? "bg-warning/5 border-warning/50" : "bg-background border-border"
+      )}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <span className="text-[12px] font-medium text-muted-foreground leading-tight">{label}</span>
+        <div className={cn("rounded-full p-1.5", bg)}>{icon}</div>
+      </div>
+      <p className={cn("text-2xl font-bold", valCls)}>{value}</p>
+      <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
+    </div>
+  );
+}
+
