@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { HelpCircle, Bell, ChevronDown, Sparkles, ArrowLeft } from "lucide-react";
+import { HelpCircle, Bell, ChevronDown, Sparkles, ArrowLeft, LayoutDashboard } from "lucide-react";
 import { BIAChatProvider, useBIAChat } from "@/context/BIAChatContext";
 import { BIAChat } from "@/components/BIAChat";
 import { NavPanel } from "@/components/NavPanel";
@@ -117,6 +117,13 @@ function AppLayoutInner({ children }: AppLayoutProps) {
               </div>
 
               <div className="flex items-center gap-0.5">
+                <button
+                  className="flex items-center gap-1.5 text-primary-foreground/80 hover:text-primary-foreground border border-white/30 hover:border-white/60 hover:bg-white/10 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-colors mr-1"
+                  title="Voltar para layout EIP"
+                >
+                  <LayoutDashboard className="h-[15px] w-[15px]" />
+                  <span className="hidden sm:inline">Voltar para layout EIP</span>
+                </button>
                 <button className="relative text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10 rounded p-2 transition-colors">
                   <Bell className="h-[18px] w-[18px]" />
                   <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-warning border border-primary" />

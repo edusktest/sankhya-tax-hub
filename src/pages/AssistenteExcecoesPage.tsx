@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   CheckCircle2, AlertTriangle, Clock, DollarSign, ChevronRight, ChevronDown,
@@ -304,7 +304,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AssistenteExcecoesPage() {
   const location = useLocation();
-  const [screen, setScreen]             = useState<Screen>((location.state?.initialScreen as Screen) ?? 1);
+  const [screen, setScreen]             = useState<Screen>(1);
   const [wizardStep, setWizardStep]     = useState<WizardStep>(1);
   const [period, setPeriod]             = useState<Period>("90");
   const [selected, setSelected]         = useState<Set<string>>(new Set());
@@ -325,6 +325,47 @@ export default function AssistenteExcecoesPage() {
   const [empresas, setEmpresas]                   = useState(EMPRESAS_INIT);
   const [allEmpresas, setAllEmpresas]             = useState(false);
   const [selectedLogs, setSelectedLogs]           = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const state = location.state as {
+      fromBIA?: boolean;
+      screen?: Screen;
+      wizardStep?: WizardStep;
+      selectAll?: boolean;
+      selAllEmpresas?: boolean;
+      selAllTops?: boolean;
+      selAllParceiros?: boolean;
+      initialScreen?: Screen;
+    } | null;
+
+    if (state?.initialScreen) {
+      setScreen(state.initialScreen);
+      return;
+    }
+    if (!state?.fromBIA) return;
+
+    if (state.screen !== undefined) setScreen(state.screen);
+    if (state.wizardStep !== undefined) setWizardStep(state.wizardStep);
+
+    if (state.selectAll) {
+      const awaitingIds = TABLE_ROWS
+        .filter(r => r.sincedays <= 90 && r.status !== "configurado")
+        .map(r => r.id);
+      setSelected(new Set(awaitingIds));
+      setStatusFilter("aguardando");
+      setScreen(2);
+    }
+    if (state.selAllEmpresas) {
+      setAllEmpresas(true);
+      setEmpresas(prev => prev.map(e => ({ ...e, checked: true })));
+    }
+    if (state.selAllTops) {
+      setTopOpt("all");
+    }
+    if (state.selAllParceiros) {
+      setPartnerOpt("all");
+    }
+  }, [location.state]);
 
   const metrics = useMemo(() => {
     const rows = TABLE_ROWS.filter(r => r.sincedays <= parseInt(period));

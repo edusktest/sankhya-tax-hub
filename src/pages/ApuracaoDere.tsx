@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1200,12 +1201,21 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
 interface D1001WizardScreenProps {
   navigate: (s: Screen) => void;
   batch: Batch | null;
+  initialStep?: number;
+  initialRegime?: string;
+  initialNatureza?: string;
 }
-function D1001WizardScreen({ navigate, batch }: D1001WizardScreenProps) {
-  const [step, setStep] = useState(1);
-  const [regTribPrinc, setRegTribPrinc] = useState("");
+function D1001WizardScreen({
+  navigate,
+  batch,
+  initialStep = 1,
+  initialRegime = "",
+  initialNatureza = "",
+}: D1001WizardScreenProps) {
+  const [step, setStep] = useState(initialStep);
+  const [regTribPrinc, setRegTribPrinc] = useState(initialRegime);
   const [regTribSecund, setRegTribSecund] = useState<string[]>([]);
-  const [indNatTrib, setIndNatTrib] = useState("");
+  const [indNatTrib, setIndNatTrib] = useState(initialNatureza);
   const [atividadesFinanc, setAtividadesFinanc] = useState<string[]>([]);
   const [atividadesSaude, setAtividadesSaude] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
@@ -2210,13 +2220,32 @@ interface ApuracaoDereProps {
 }
 
 export default function ApuracaoDere({ initialScreen = "home" }: ApuracaoDereProps) {
+  const location = useLocation();
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [batch, setBatch] = useState<Batch | null>(null);
+  const [biaWizStep, setBiaWizStep] = useState(1);
+  const [biaRegime, setBiaRegime] = useState("");
+  const [biaNatureza, setBiaNatureza] = useState("");
 
   useEffect(() => {
     setScreen(initialScreen);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [initialScreen]);
+
+  useEffect(() => {
+    const state = location.state as {
+      fromBIA?: boolean;
+      wizScreen?: Screen;
+      wizStep?: number;
+      regime?: string;
+      natureza?: string;
+    } | null;
+    if (!state?.fromBIA) return;
+    if (state.wizScreen) setScreen(state.wizScreen);
+    if (state.wizStep !== undefined) setBiaWizStep(state.wizStep);
+    if (state.regime !== undefined) setBiaRegime(state.regime);
+    if (state.natureza !== undefined) setBiaNatureza(state.natureza);
+  }, [location.state]);
 
   function navigate(s: Screen) {
     setScreen(s);
@@ -2231,7 +2260,14 @@ export default function ApuracaoDere({ initialScreen = "home" }: ApuracaoDerePro
         <D1001ListScreen navigate={navigate} setBatch={setBatch} />
       )}
       {screen === "d1001-wiz" && (
-        <D1001WizardScreen navigate={navigate} batch={batch} />
+        <D1001WizardScreen
+          key={`bia-${biaWizStep}-${biaRegime}-${biaNatureza}`}
+          navigate={navigate}
+          batch={batch}
+          initialStep={biaWizStep}
+          initialRegime={biaRegime}
+          initialNatureza={biaNatureza}
+        />
       )}
       {screen === "d1011-list" && <D1011ListScreen navigate={navigate} />}
       {screen === "d1011-depara" && <D1011DeparaScreen navigate={navigate} />}

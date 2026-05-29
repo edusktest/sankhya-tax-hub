@@ -1,8 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, ChevronRight, ChevronLeft, Sparkles, Bot, BrainCircuit, Wrench } from "lucide-react";
+import { Send, ChevronRight, ChevronLeft, Sparkles, Bot, BrainCircuit, Wrench, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBIAChat } from "@/context/BIAChatContext";
 import { useNavigate } from "react-router-dom";
+import { ERoutes } from "@/routes/interface";
+
+const SKILL_OPTIONS = [
+  { id: "dere",               label: "DeRE",                          prompt: "Enviar eventos pendentes da DeRE" },
+  { id: "aliquota-integral",  label: "Alíquota Integral",             prompt: "Configurar tributação com alíquota integral" },
+  { id: "excecoes-tributacao",label: "Exceções da Tributação Integral",prompt: "Configurar exceções da Tributação Integral de IBS/CBS para NCM/NBS específicos" },
+] as const;
+
+const DERE_TRIGGER = "Enviar eventos pendentes da DeRE";
 
 const TAG_STYLES = {
   alerta: "bg-amber-50 text-amber-700 border border-amber-200",
@@ -34,11 +43,23 @@ export function BIAChat() {
   } = useBIAChat();
   const navigate = useNavigate();
   const [input, setInput] = useState("");
+  const [showSkillMenu, setShowSkillMenu] = useState(false);
+  const skillMenuRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, thinking]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (skillMenuRef.current && !skillMenuRef.current.contains(e.target as Node)) {
+        setShowSkillMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const activeQuickReplies = pendingAction
     ? [...messages].reverse().find((m) => m.role === "bia" && m.quickReplies?.length)?.quickReplies
@@ -50,12 +71,76 @@ export function BIAChat() {
     if (pendingAction) pendingAction(value);
   }
 
+  function handleSkillSelect(skill: typeof SKILL_OPTIONS[number]) {
+    setShowSkillMenu(false);
+    if (skill.id === "dere") {
+      setInput(DERE_TRIGGER);
+    } else {
+      setInput(skill.prompt);
+    }
+  }
+
   async function sendMessage() {
     const text = input.trim();
     if (!text || thinking) return;
     setInput("");
     addMessage({ role: "user", content: text });
     setIsOpen(true);
+
+    // Skill flows — delegate to context-based handlers via pendingAction chain
+    if (text === DERE_TRIGGER) {
+      navigate(ERoutes.APURACAO_DERE);
+      setThinking(true);
+      await new Promise((r) => setTimeout(r, 500));
+      setThinking(false);
+      addMessage({
+        role: "bia",
+        content: "Qual evento você quer enviar?",
+        tag: "insight",
+        skill: "Consultor Tributário",
+        quickReplies: [
+          { label: "D-1001", value: "d1001" },
+          { label: "D-1011", value: "d1011" },
+        ],
+      });
+      return;
+    }
+
+    if (text === SKILL_OPTIONS[1].prompt) {
+      navigate(ERoutes.TRIBUTACAO_INTEGRAL);
+      setThinking(true);
+      await new Promise((r) => setTimeout(r, 500));
+      setThinking(false);
+      addMessage({
+        role: "bia",
+        content: "Encontrei 12 empresas com produtos vendidos nos últimos 90 dias sem alíquota integral de IBS e CBS configurada. Deseja configurar agora?",
+        tag: "insight",
+        skill: "Consultor Tributário",
+        quickReplies: [
+          { label: "Sim", value: "sim" },
+          { label: "Não", value: "nao" },
+        ],
+      });
+      return;
+    }
+
+    if (text === SKILL_OPTIONS[2].prompt) {
+      navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
+        state: { fromBIA: true, selectAll: true },
+      });
+      setThinking(true);
+      await new Promise((r) => setTimeout(r, 1200));
+      setThinking(false);
+      addMessage({
+        role: "bia",
+        content: "Encontrei 35 NCM/NBS vendidas nos últimos 90 dias com exceções de alíquota integral de IBS e CBS que não foram configuradas. Verifiquei as NCM que deseja configurar e me avise para continuar",
+        tag: "insight",
+        skill: "Consultor Tributário",
+        quickReplies: [{ label: "Continuar", value: "continuar" }],
+      });
+      return;
+    }
+
     if (pendingAction) { pendingAction(text); return; }
     setThinking(true);
     await new Promise((r) => setTimeout(r, 1600));
@@ -192,6 +277,40 @@ export function BIAChat() {
       {isOpen && (
         <div className="border-t border-primary/10 p-3 space-y-2 shrink-0 bg-white/60">
           <div className="flex items-center gap-2">
+            {/* + Skills button */}
+            <div className="relative shrink-0" ref={skillMenuRef}>
+              <button
+                onClick={() => setShowSkillMenu((v) => !v)}
+                disabled={thinking}
+                className={cn(
+                  "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
+                  showSkillMenu
+                    ? "bg-primary/15 text-primary"
+                    : "text-primary/50 hover:bg-primary/10 hover:text-primary"
+                )}
+                title="Skills"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+
+              {showSkillMenu && (
+                <div className="absolute bottom-full left-0 mb-1.5 w-56 rounded-xl border border-border bg-card shadow-lg z-50 py-1 overflow-hidden">
+                  <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    Skills
+                  </p>
+                  {SKILL_OPTIONS.map((skill) => (
+                    <button
+                      key={skill.id}
+                      onClick={() => handleSkillSelect(skill)}
+                      className="w-full px-3 py-1.5 text-left text-[12px] text-foreground hover:bg-accent transition-colors"
+                    >
+                      {skill.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
