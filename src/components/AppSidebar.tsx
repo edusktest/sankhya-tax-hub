@@ -148,7 +148,7 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
     ],
   },
   {
-    group: "Digital Workers",
+    group: "Digital Workers (Em construção)",
     items: [
       { title: "Configurações Globais",   url: ERoutes.DIGITAL_WORKERS_CONFIG_GLOBAL, icon: Globe },
       { title: "Configuração por Worker", url: ERoutes.DIGITAL_WORKERS_CONFIG_WORKER, icon: Bot  },
