@@ -138,9 +138,9 @@ function AppLayoutInner({ children }: AppLayoutProps) {
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 hover:bg-white/10 rounded-full pl-1 pr-3 py-1 transition-colors">
                       <div className="h-7 w-7 rounded-full bg-white/25 border border-white/30 flex items-center justify-center">
-                        <span className="text-primary-foreground font-semibold text-xs">EL</span>
+                        <span className="text-primary-foreground font-semibold text-xs">AS</span>
                       </div>
-                      <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Avelino</span>
+                      <span className="text-primary-foreground text-[13px] font-medium hidden sm:block">Ana Silva</span>
                       <ChevronDown className="h-3 w-3 text-primary-foreground/50 hidden sm:block" />
                     </button>
                   </DropdownMenuTrigger>
