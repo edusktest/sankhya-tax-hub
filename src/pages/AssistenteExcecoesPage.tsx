@@ -18,7 +18,7 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Screen    = 1 | 2 | 3 | 4;
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
-type Period    = "60" | "90" | "120";
+type Period    = "30" | "60" | "90";
 type SortKey   = "ncm" | "descricao" | "volume" | "docs" | "status";
 type SortDir   = "asc" | "desc";
 type StatusFilter = "todos" | "aguardando" | "sem" | "parcial" | "configurado";
@@ -117,6 +117,54 @@ const EMPRESAS_INIT = [
   { id: "c", nome: "Empresa C Filial SP",          cnpj: "12.345.678/0003-22", docs: "178 docs no período",   checked: false },
 ];
 
+const UFS_LIST = [
+  { id: "AC", label: "Acre"                },
+  { id: "AL", label: "Alagoas"             },
+  { id: "AP", label: "Amapá"              },
+  { id: "AM", label: "Amazonas"            },
+  { id: "BA", label: "Bahia"              },
+  { id: "CE", label: "Ceará"             },
+  { id: "DF", label: "Distrito Federal"    },
+  { id: "ES", label: "Espírito Santo"    },
+  { id: "GO", label: "Goiás"             },
+  { id: "MA", label: "Maranhão"           },
+  { id: "MT", label: "Mato Grosso"         },
+  { id: "MS", label: "Mato Grosso do Sul"  },
+  { id: "MG", label: "Minas Gerais"        },
+  { id: "PA", label: "Pará"              },
+  { id: "PB", label: "Paraíba"           },
+  { id: "PR", label: "Paraná"            },
+  { id: "PE", label: "Pernambuco"          },
+  { id: "PI", label: "Piauí"             },
+  { id: "RJ", label: "Rio de Janeiro"      },
+  { id: "RN", label: "Rio Grande do Norte" },
+  { id: "RS", label: "Rio Grande do Sul"   },
+  { id: "RO", label: "Rondônia"          },
+  { id: "RR", label: "Roraima"             },
+  { id: "SC", label: "Santa Catarina"      },
+  { id: "SP", label: "São Paulo"         },
+  { id: "SE", label: "Sergipe"             },
+  { id: "TO", label: "Tocantins"           },
+];
+
+const MUNICIPIOS_LIST = [
+  { id: "3550308", label: "São Paulo — SP"          },
+  { id: "3304557", label: "Rio de Janeiro — RJ"     },
+  { id: "3106200", label: "Belo Horizonte — MG"     },
+  { id: "2927408", label: "Salvador — BA"           },
+  { id: "4106902", label: "Curitiba — PR"           },
+  { id: "2611606", label: "Recife — PE"             },
+  { id: "1302603", label: "Manaus — AM"             },
+  { id: "2304400", label: "Fortaleza — CE"          },
+  { id: "4314902", label: "Porto Alegre — RS"       },
+  { id: "1501402", label: "Belém — PA"              },
+  { id: "5300108", label: "Brasília — DF"           },
+  { id: "3518800", label: "Guarulhos — SP"          },
+  { id: "3509502", label: "Campinas — SP"           },
+  { id: "3548708", label: "São Bernardo do Campo — SP" },
+  { id: "4209102", label: "Joinville — SC"          },
+];
+
 const TOPS_LIST = [
   { id: "1",  label: "Venda"               },
   { id: "2",  label: "Devolução de venda"  },
@@ -160,7 +208,7 @@ const LOG_ENTRIES: LogEntry[] = [
   { id: "EXC-2026-00820", usuario: "joao.santos",  dataHora: "02/05/2026 14:10", versaoCFF: "01/05/2026", tempo: "1,7s", registros: "6 (3 ex. × 2 emp.)", status: "Sucesso"  },
 ];
 
-const WIZARD_STEP_LABELS = ["NCM/NBS", "Empresa", "Operação", "Parceiro", "Resumo", "Conclusão"] as const;
+const WIZARD_STEP_LABELS = ["UF/Município", "NCM/NBS", "Empresa", "Operação", "Parceiro", "Resumo/Conclusão"] as const;
 
 function fmtBRL(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -301,12 +349,136 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   );
 }
 
+// ─── ResumoConcluso ───────────────────────────────────────────────────────────
+function ResumoConcluso({
+  selectedRows, resumeItems, logOpen, setLogOpen, confirmed, onConfirm, onConcluir,
+}: {
+  selectedRows: NcmRow[];
+  resumeItems: { ncm: string; desc: string; action: string; actionCls: string }[];
+  logOpen: boolean;
+  setLogOpen: (v: (prev: boolean) => boolean) => void;
+  confirmed: boolean;
+  onConfirm: () => void;
+  onConcluir: () => void;
+}) {
+  const [listOpen, setListOpen] = useState(false);
+
+  useEffect(() => { if (confirmed) setListOpen(false); }, [confirmed]);
+
+  return (
+    <div className="space-y-5">
+      {/* ── Resumo de impacto (sempre visível) ── */}
+      <div className="rounded-lg px-5 py-4 space-y-1.5 bg-success/10 border border-success/30">
+        <p className="text-[13px] font-semibold text-success">Resumo de impacto</p>
+        {[
+          `${selectedRows.length} NCM${selectedRows.length !== 1 ? "s" : ""}/NBS serão configurados`,
+          "2 empresas serão impactadas",
+          `Estimativa: ${selectedRows.reduce((s, r) => s + r.docs, 0).toLocaleString("pt-BR")} documentos futuros passarão a calcular IBS/CBS com a nova classificação`,
+        ].map(t => (
+          <p key={t} className="text-[12px] flex items-center gap-2 text-success">
+            <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" /> {t}
+          </p>
+        ))}
+      </div>
+
+      {/* ── Lista colapsável de NCMs ── */}
+      <div className="bg-card rounded-lg border border-border card-shadow overflow-hidden">
+        <button
+          onClick={() => setListOpen(v => !v)}
+          className="flex items-center justify-between w-full px-5 py-3 text-[13px] font-semibold text-foreground bg-muted/40 hover:bg-muted/60 transition-colors">
+          <span>Detalhes dos NCMs/NBS configurados ({resumeItems.length})</span>
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", listOpen && "rotate-180")} />
+        </button>
+        {listOpen && (
+          <div className="divide-y divide-border">
+            {resumeItems.map(item => (
+              <div key={item.ncm}>
+                <div className="flex items-center justify-between px-5 py-3 bg-muted/20">
+                  <div>
+                    <span className="font-mono text-[13px] font-bold text-foreground">{item.ncm}</span>
+                    <span className="text-[13px] text-muted-foreground ml-2">— {item.desc}</span>
+                  </div>
+                  <button className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 hover:text-foreground">
+                    <Pencil className="h-3 w-3" /> Editar
+                  </button>
+                </div>
+                <div className="px-5 py-3 space-y-2 text-[12px]">
+                  {[
+                    { label: "Empresas",   value: "Empresa A · Empresa B" },
+                    { label: "Operações",  value: "Venda · Transferência" },
+                    { label: "Parceiros",  value: "Todos"                 },
+                    { label: "cClassTrib", value: (
+                      <span>
+                        <span className="text-muted-foreground">Não configurado</span>
+                        <span className="text-muted-foreground mx-1">→</span>
+                        <span className="font-semibold text-foreground">025 — Alíquota Reduzida IBS/CBS</span>
+                      </span>
+                    )},
+                  ].map(row => (
+                    <div key={row.label} className="flex items-center gap-2">
+                      <span className="w-24 text-muted-foreground font-medium">{row.label}:</span>
+                      <span className="text-foreground">{row.value}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="w-24 text-muted-foreground font-medium">Ação:</span>
+                    <span className={cn("text-[11px] font-bold px-2.5 py-0.5 rounded-full", item.actionCls)}>{item.action}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Conclusão (aparece após confirmar) ── */}
+      {confirmed && (
+        <div className="space-y-4">
+          <div className="flex flex-col items-center py-5">
+            <div className="h-16 w-16 rounded-full bg-success/15 flex items-center justify-center mb-4">
+              <CheckCircle2 className="h-9 w-9 text-success" />
+            </div>
+            <h2 className="text-[20px] font-bold text-foreground">Configuração realizada com sucesso!</h2>
+            <p className="text-[13px] text-muted-foreground mt-1">
+              {selectedRows.length} exceção{selectedRows.length !== 1 ? "ões" : ""} tributária{selectedRows.length !== 1 ? "s" : ""} gravada{selectedRows.length !== 1 ? "s" : ""} em 12/05/2026 às 14:32 por Ana Silva.
+            </p>
+          </div>
+
+          <SectionCard>
+            <button onClick={() => setLogOpen(v => !v)}
+              className="flex items-center justify-between w-full text-[13px] font-semibold text-foreground">
+              <span>Ver detalhes do log</span>
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", logOpen && "rotate-180")} />
+            </button>
+            {logOpen && (
+              <div className="mt-3 pt-3 border-t border-border space-y-1.5 text-[12px]">
+                {[
+                  ["ID Execução",        "EXC-2026-00847"             ],
+                  ["Usuário",            "ana.silva"                  ],
+                  ["Versão tabela CFF",  "12/05/2026"                 ],
+                  ["Tempo de execução",  "1,3s"                       ],
+                  ["Registros gravados", "6 (3 exceções × 2 empresas)"],
+                ].map(([label, val]) => (
+                  <div key={label} className="flex gap-2">
+                    <span className="w-40 text-muted-foreground font-medium">{label}:</span>
+                    <span className="font-mono text-foreground">{val}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AssistenteExcecoesPage() {
   const location = useLocation();
   const [screen, setScreen]             = useState<Screen>(1);
   const [wizardStep, setWizardStep]     = useState<WizardStep>(1);
-  const [period, setPeriod]             = useState<Period>("90");
+  const [period, setPeriod]             = useState<Period>("30");
   const [selected, setSelected]         = useState<Set<string>>(new Set());
   const [sortKey, setSortKey]           = useState<SortKey>("volume");
   const [sortDir, setSortDir]           = useState<SortDir>("desc");
@@ -314,6 +486,11 @@ export default function AssistenteExcecoesPage() {
   const [search, setSearch]             = useState("");
   const [showUndo, setShowUndo]         = useState(false);
   const [logOpen, setLogOpen]           = useState(false);
+  const [ufMunicOpt, setUfMunicOpt]               = useState<"all" | "ufs" | "municipios">("all");
+  const [ufSearch, setUfSearch]                   = useState("");
+  const [municipioSearch, setMunicipioSearch]     = useState("");
+  const [selectedUFs, setSelectedUFs]             = useState<Set<string>>(new Set());
+  const [selectedMunicipios, setSelectedMunicipios] = useState<Set<string>>(new Set());
   const [partnerOpt, setPartnerOpt]               = useState<"all" | "specific" | "group">("all");
   const [topOpt, setTopOpt]                       = useState<"all" | "specific" | "finalidade">("all");
   const [topSearch, setTopSearch]                 = useState("");
@@ -325,6 +502,7 @@ export default function AssistenteExcecoesPage() {
   const [empresas, setEmpresas]                   = useState(EMPRESAS_INIT);
   const [allEmpresas, setAllEmpresas]             = useState(false);
   const [selectedLogs, setSelectedLogs]           = useState<Set<string>>(new Set());
+  const [resumoConfirmado, setResumoConfirmado]   = useState(false);
 
   useEffect(() => {
     const state = location.state as {
@@ -336,6 +514,7 @@ export default function AssistenteExcecoesPage() {
       selAllTops?: boolean;
       selAllParceiros?: boolean;
       initialScreen?: Screen;
+      confirm?: boolean;
     } | null;
 
     if (state?.initialScreen) {
@@ -364,6 +543,9 @@ export default function AssistenteExcecoesPage() {
     }
     if (state.selAllParceiros) {
       setPartnerOpt("all");
+    }
+    if (state.confirm) {
+      setResumoConfirmado(true);
     }
   }, [location.state]);
 
@@ -412,6 +594,18 @@ export default function AssistenteExcecoesPage() {
     const q = grupoSearch.toLowerCase();
     return GRUPOS_PARCEIROS_LIST.filter(g => g.label.toLowerCase().includes(q) || g.id.includes(q));
   }, [grupoSearch]);
+
+  const filteredUFs = useMemo(() => {
+    if (!ufSearch.trim()) return UFS_LIST;
+    const q = ufSearch.toLowerCase();
+    return UFS_LIST.filter(u => u.label.toLowerCase().includes(q) || u.id.toLowerCase().includes(q));
+  }, [ufSearch]);
+
+  const filteredMunicipios = useMemo(() => {
+    if (!municipioSearch.trim()) return MUNICIPIOS_LIST;
+    const q = municipioSearch.toLowerCase();
+    return MUNICIPIOS_LIST.filter(m => m.label.toLowerCase().includes(q) || m.id.includes(q));
+  }, [municipioSearch]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -470,18 +664,35 @@ export default function AssistenteExcecoesPage() {
 
         {/* Seletor de período */}
         <div className="flex gap-2 mb-1.5">
-          {(["60", "90", "120"] as Period[]).map(p => (
-            <button key={p} onClick={() => setPeriod(p)}
-              className={cn(
-                "px-4 py-1.5 rounded-full text-[12px] font-semibold border transition-colors",
-                period === p
-                  ? "bg-primary border-primary text-primary-foreground"
-                  : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
-              )}
-            >
-              {p} dias{period === p ? " ✓" : ""}
-            </button>
-          ))}
+          {(["30", "60", "90"] as Period[]).map(p => {
+            const wip = p !== "30";
+            return (
+              <div key={p} className="relative group">
+                <button
+                  disabled={wip}
+                  onClick={() => !wip && setPeriod(p)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-[12px] font-semibold border transition-colors",
+                    wip
+                      ? "bg-muted border-border text-muted-foreground/50 cursor-not-allowed"
+                      : period === p
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                  )}
+                >
+                  {p} dias{!wip && period === p ? " ✓" : ""}
+                  {wip && <span className="ml-1.5 text-[10px]">🚧</span>}
+                </button>
+                {wip && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-20 pointer-events-none">
+                    <div className="bg-popover text-popover-foreground text-[11px] px-2.5 py-1.5 rounded-md shadow-md border border-border whitespace-nowrap">
+                      Em construção
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
         <p className="text-[11px] text-muted-foreground mb-4">
           Analisando documentos fiscais: NF-e · NFC-e · CT-e · CT-eOS · NFS-e · NF-Com
@@ -514,6 +725,11 @@ export default function AssistenteExcecoesPage() {
   // ── Screen 2 — Diagnóstico ────────────────────────────────────────────────
   const screen2 = (
     <div className="space-y-4">
+
+      <div className="rounded-lg px-4 py-3 flex items-start gap-2 text-[12px] bg-info/10 border border-info/30 text-info">
+        <Info className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Sugestões baseadas nas tabelas classTrib e anexos do CFF/SVRS, atualizadas em 12/05/2026.</span>
+      </div>
 
       <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-sm">
@@ -595,10 +811,71 @@ export default function AssistenteExcecoesPage() {
 
     if (wizardStep === 1) return (
       <div className="space-y-4">
-        <div className="rounded-lg px-4 py-3 flex items-start gap-2 text-[12px] bg-info/10 border border-info/30 text-info">
-          <Info className="h-4 w-4 shrink-0 mt-0.5" />
-          <span>As sugestões de classificação são baseadas na tabela classTrib do Portal da Conformidade Fácil (CFF/SVRS), atualizada em 12/05/2026.</span>
+        <h2 className="text-[16px] font-bold text-foreground">Para qual UF/Município de destino?</h2>
+        <div className="space-y-2">
+          {([
+            { val: "all",        label: "Todas as UFs/Municípios (sem restrição)", badge: "Recomendado" },
+            { val: "ufs",        label: "UFs específicas",                          badge: null          },
+            { val: "municipios", label: "Municípios específicos",                   badge: null          },
+          ] as const).map(opt => (
+            <label key={opt.val}
+              className={cn(
+                "flex items-center gap-3 border rounded-lg p-3.5 cursor-pointer transition-colors",
+                ufMunicOpt === opt.val ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+              )}
+              onClick={() => setUfMunicOpt(opt.val)}>
+              <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                ufMunicOpt === opt.val ? "border-primary" : "border-muted-foreground/40")}>
+                {ufMunicOpt === opt.val && <div className="h-2 w-2 rounded-full bg-primary" />}
+              </div>
+              <span className="text-[13px] font-medium text-foreground flex-1">{opt.label}</span>
+              {opt.badge && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-success/10 text-success">{opt.badge}</span>}
+            </label>
+          ))}
         </div>
+        {ufMunicOpt === "ufs" && (
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input value={ufSearch} onChange={e => setUfSearch(e.target.value)} placeholder="Buscar UF..." className="pl-8 text-[12px] h-9" />
+            </div>
+            <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
+              {filteredUFs.map(uf => (
+                <div key={uf.id} className="flex items-center gap-3 px-3 py-2.5">
+                  <Checkbox checked={selectedUFs.has(uf.id)}
+                    onCheckedChange={() => setSelectedUFs(prev => { const n = new Set(prev); n.has(uf.id) ? n.delete(uf.id) : n.add(uf.id); return n; })} />
+                  <span className="text-[11px] text-muted-foreground w-8 shrink-0 font-mono">{uf.id}</span>
+                  <span className="text-[12px] text-foreground">{uf.label}</span>
+                </div>
+              ))}
+              {filteredUFs.length === 0 && <p className="text-[12px] text-muted-foreground text-center py-4">Nenhum resultado encontrado.</p>}
+            </div>
+          </div>
+        )}
+        {ufMunicOpt === "municipios" && (
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input value={municipioSearch} onChange={e => setMunicipioSearch(e.target.value)} placeholder="Buscar município..." className="pl-8 text-[12px] h-9" />
+            </div>
+            <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
+              {filteredMunicipios.map(mun => (
+                <div key={mun.id} className="flex items-center gap-3 px-3 py-2.5">
+                  <Checkbox checked={selectedMunicipios.has(mun.id)}
+                    onCheckedChange={() => setSelectedMunicipios(prev => { const n = new Set(prev); n.has(mun.id) ? n.delete(mun.id) : n.add(mun.id); return n; })} />
+                  <span className="text-[11px] text-muted-foreground w-16 shrink-0 font-mono">{mun.id}</span>
+                  <span className="text-[12px] text-foreground">{mun.label}</span>
+                </div>
+              ))}
+              {filteredMunicipios.length === 0 && <p className="text-[12px] text-muted-foreground text-center py-4">Nenhum resultado encontrado.</p>}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    if (wizardStep === 2) return (
+      <div className="space-y-4">
         <h2 className="text-[16px] font-bold text-foreground">Confirme os NCMs/NBS para configuração</h2>
         <div className="space-y-3">
           {selectedRows.map(row => (
@@ -628,7 +905,7 @@ export default function AssistenteExcecoesPage() {
       </div>
     );
 
-    if (wizardStep === 2) return (
+    if (wizardStep === 3) return (
       <div className="space-y-4">
         <h2 className="text-[16px] font-bold text-foreground">Para quais empresas aplicar a exceção?</h2>
         <Toggle checked={allEmpresas} onChange={handleAllEmpresas} label="Selecionar todas as empresas do grupo" />
@@ -647,7 +924,7 @@ export default function AssistenteExcecoesPage() {
       </div>
     );
 
-    if (wizardStep === 3) return (
+    if (wizardStep === 4) return (
       <div className="space-y-4">
         <h2 className="text-[16px] font-bold text-foreground">Para quais tipos de operação?</h2>
         <div className="space-y-2">
@@ -712,7 +989,7 @@ export default function AssistenteExcecoesPage() {
       </div>
     );
 
-    if (wizardStep === 4) return (
+    if (wizardStep === 5) return (
       <div className="space-y-4">
         <h2 className="text-[16px] font-bold text-foreground">Para quais parceiros aplicar?</h2>
         <div className="space-y-2">
@@ -771,7 +1048,7 @@ export default function AssistenteExcecoesPage() {
       </div>
     );
 
-    // ── Etapa 5: Resumo da Configuração ──────────────────────────────────────
+    // ── Etapa 6: Resumo/Conclusão ─────────────────────────────────────────────
     const resumeItems = selectedRows.map(row => ({
       ncm: row.ncm,
       desc: row.descricao,
@@ -781,139 +1058,29 @@ export default function AssistenteExcecoesPage() {
         : "bg-success text-success-foreground",
     }));
 
-    if (wizardStep === 5) return (
-      <div className="space-y-5">
-        <div>
-          <h2 className="text-[16px] font-bold text-foreground">Resumo da Configuração</h2>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
-            Revise as regras antes de confirmar. Esta ação pode ser desfeita apenas durante esta sessão.
-          </p>
-        </div>
-
-        <div className="rounded-lg px-5 py-4 space-y-1.5 bg-success/10 border border-success/30">
-          <p className="text-[13px] font-semibold text-success">Resumo de impacto</p>
-          {[
-            `${selectedRows.length} NCM${selectedRows.length !== 1 ? "s" : ""}/NBS serão configurados`,
-            "2 empresas serão impactadas",
-            `Estimativa: ${fmtNum(selectedRows.reduce((s, r) => s + r.docs, 0))} documentos futuros passarão a calcular IBS/CBS com a nova classificação`,
-          ].map(t => (
-            <p key={t} className="text-[12px] flex items-center gap-2 text-success">
-              <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" /> {t}
-            </p>
-          ))}
-        </div>
-
-        {resumeItems.map(item => (
-          <div key={item.ncm} className="bg-card rounded-lg overflow-hidden border border-border card-shadow">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/40">
-              <div>
-                <span className="font-mono text-[13px] font-bold text-foreground">{item.ncm}</span>
-                <span className="text-[13px] text-muted-foreground ml-2">— {item.desc}</span>
-              </div>
-              <button className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 hover:text-foreground">
-                <Pencil className="h-3 w-3" /> Editar
-              </button>
-            </div>
-            <div className="px-5 py-4 space-y-2 text-[12px]">
-              {[
-                { label: "Empresas",   value: "Empresa A · Empresa B" },
-                { label: "Operações",  value: "Venda · Transferência" },
-                { label: "Parceiros",  value: "Todos"                 },
-                { label: "cClassTrib", value: (
-                  <span>
-                    <span className="text-muted-foreground">Não configurado</span>
-                    <span className="text-muted-foreground mx-1">→</span>
-                    <span className="font-semibold text-foreground">025 — Alíquota Reduzida IBS/CBS</span>
-                  </span>
-                )},
-              ].map(row => (
-                <div key={row.label} className="flex items-center gap-2">
-                  <span className="w-24 text-muted-foreground font-medium">{row.label}:</span>
-                  <span className="text-foreground">{row.value}</span>
-                </div>
-              ))}
-              <div className="flex items-center gap-2 pt-1">
-                <span className="w-24 text-muted-foreground font-medium">Ação:</span>
-                <span className={cn("text-[11px] font-bold px-2.5 py-0.5 rounded-full", item.actionCls)}>{item.action}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+    if (wizardStep === 6) return (
+      <ResumoConcluso
+        selectedRows={selectedRows}
+        resumeItems={resumeItems}
+        logOpen={logOpen}
+        setLogOpen={setLogOpen}
+        confirmed={resumoConfirmado}
+        onConfirm={() => setResumoConfirmado(true)}
+        onConcluir={() => { setScreen(1); setWizardStep(1); setResumoConfirmado(false); }}
+      />
     );
 
-    // ── Etapa 6: Conclusão ────────────────────────────────────────────────────
-    return (
-      <div className="space-y-5">
-        <div className="rounded-lg px-4 py-2.5 flex items-center gap-2 text-[12px] bg-warning/10 border border-warning/30 text-warning">
-          <span>💡</span>
-          <span><strong>Dica:</strong> Retorne ao Diagnóstico para configurar os 32 NCMs/NBS restantes. Volume estimado sem configuração: R$ 9,2M</span>
-        </div>
-
-        <div className="flex flex-col items-center py-6">
-          <div className="h-16 w-16 rounded-full bg-success/15 flex items-center justify-center mb-4">
-            <CheckCircle2 className="h-9 w-9 text-success" />
-          </div>
-          <h2 className="text-[20px] font-bold text-foreground">Configuração realizada com sucesso!</h2>
-          <p className="text-[13px] text-muted-foreground mt-1">
-            {selectedRows.length} exceção{selectedRows.length !== 1 ? "ões" : ""} tributária{selectedRows.length !== 1 ? "s" : ""} gravada{selectedRows.length !== 1 ? "s" : ""} em 12/05/2026 às 14:32 por Ana Silva.
-          </p>
-        </div>
-
-        <SectionCard className="p-0 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                {["NCM/NBS", "Descrição", "Ação", "Status"].map(h => (
-                  <TableHead key={h} className={cn("text-[11px] font-semibold uppercase tracking-wide text-muted-foreground", h === "NCM/NBS" && "pl-5")}>
-                    {h}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {selectedRows.map(r => (
-                <TableRow key={r.ncm}>
-                  <TableCell className="font-mono text-[12px] font-semibold text-foreground pl-5">{r.ncm}</TableCell>
-                  <TableCell className="text-[12px] text-foreground">{r.descricao}</TableCell>
-                  <TableCell><span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-success text-success-foreground">INCLUÍDA</span></TableCell>
-                  <TableCell className="text-[12px] font-semibold text-success">✅ Sucesso</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </SectionCard>
-
-        <SectionCard>
-          <button onClick={() => setLogOpen(v => !v)}
-            className="flex items-center justify-between w-full text-[13px] font-semibold text-foreground">
-            <span>Ver detalhes do log</span>
-            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", logOpen && "rotate-180")} />
-          </button>
-          {logOpen && (
-            <div className="mt-3 pt-3 border-t border-border space-y-1.5 text-[12px]">
-              {[
-                ["ID Execução",        "EXC-2026-00847"            ],
-                ["Usuário",            "ana.silva"                 ],
-                ["Versão tabela CFF",  "12/05/2026"                ],
-                ["Tempo de execução",  "1,3s"                      ],
-                ["Registros gravados", "6 (3 exceções × 2 empresas)"],
-              ].map(([label, val]) => (
-                <div key={label} className="flex gap-2">
-                  <span className="w-40 text-muted-foreground font-medium">{label}:</span>
-                  <span className="font-mono text-foreground">{val}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-
-      </div>
-    );
+    return null;
   }
 
   const screen3 = (
     <div className="space-y-4">
+      {wizardStep === 6 && resumoConfirmado && (
+        <div className="rounded-lg px-4 py-2.5 flex items-center gap-2 text-[12px] bg-warning/10 border border-warning/30 text-warning">
+          <span>💡</span>
+          <span><strong>Dica:</strong> Retorne ao Diagnóstico para configurar os 32 NCMs/NBS restantes. Volume estimado sem configuração: R$ 9,2M</span>
+        </div>
+      )}
       <SectionCard>
         {wizardContent()}
       </SectionCard>
@@ -1055,34 +1222,37 @@ export default function AssistenteExcecoesPage() {
                   </Button>
                 </>
               )}
-              {screen === 3 && wizardStep <= 5 && (
+              {screen === 3 && (
                 <>
-                  <Button variant="ghost" size="sm" className="text-muted-foreground"
-                    onClick={() => wizardStep > 1 ? setWizardStep(s => (s - 1) as WizardStep) : setScreen(2)}>
-                    Voltar
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-muted-foreground"
-                    onClick={() => setScreen(2)}>
-                    Cancelar
-                  </Button>
-                  {wizardStep <= 4 ? (
+                  {!resumoConfirmado && (
+                    <>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground"
+                        onClick={() => wizardStep > 1 ? setWizardStep(s => (s - 1) as WizardStep) : setScreen(2)}>
+                        Voltar
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground"
+                        onClick={() => setScreen(2)}>
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                  {wizardStep <= 5 ? (
                     <Button size="sm"
                       onClick={() => setWizardStep(s => (s + 1) as WizardStep)}>
-                      {wizardStep < 4 ? `Próximo: ${WIZARD_STEP_LABELS[wizardStep as 1 | 2 | 3]} →` : "Próximo: Resumo →"}
+                      {`Próximo: ${WIZARD_STEP_LABELS[wizardStep]} →`}
+                    </Button>
+                  ) : resumoConfirmado ? (
+                    <Button size="sm"
+                      onClick={() => { setScreen(1); setWizardStep(1); setResumoConfirmado(false); }}>
+                      Concluir
                     </Button>
                   ) : (
                     <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90 gap-1.5"
-                      onClick={() => setWizardStep(6 as WizardStep)}>
+                      onClick={() => setResumoConfirmado(true)}>
                       <CheckCheck className="h-3.5 w-3.5" /> Confirmar e Gravar
                     </Button>
                   )}
                 </>
-              )}
-              {screen === 3 && wizardStep === 6 && (
-                <Button size="sm"
-                  onClick={() => { setScreen(1); setWizardStep(1); }}>
-                  Concluir
-                </Button>
               )}
               {screen === 4 && (
                 <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground"

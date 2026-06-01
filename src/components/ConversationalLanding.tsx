@@ -630,6 +630,7 @@ export function ConversationalLanding() {
       quickReplies: [{ label: "Continuar", value: "continuar" }],
     });
 
+    // Etapa 1: UF/Município
     setPendingAction(async () => {
       navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
         state: { fromBIA: true, screen: 3, wizardStep: 1 },
@@ -641,7 +642,7 @@ export function ConversationalLanding() {
 
       addMessage({
         role: "bia",
-        content: "Selecione todas NCM/NBS para configuração. Posso seguir?",
+        content: "Para qual UF/Município de destino? Estou considerando todas as UFs/Municípios sem restrição (recomendado). Posso seguir?",
         tag: "insight",
         skill: "Consultor Tributário",
         quickReplies: [
@@ -650,11 +651,12 @@ export function ConversationalLanding() {
         ],
       });
 
-      setPendingAction(async (ans1: string) => {
-        if (ans1 === "nao") { setPendingAction(null); return; }
+      // Etapa 2: NCM/NBS
+      setPendingAction(async (ans0: string) => {
+        if (ans0 === "nao") { setPendingAction(null); return; }
 
         navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
-          state: { fromBIA: true, screen: 3, wizardStep: 2, selAllEmpresas: true },
+          state: { fromBIA: true, screen: 3, wizardStep: 2 },
         });
 
         setThinking(true);
@@ -663,7 +665,7 @@ export function ConversationalLanding() {
 
         addMessage({
           role: "bia",
-          content: "Selecionei todas as empresas do grupo. Posso seguir?",
+          content: "Confirme os NCMs/NBS selecionados para configuração. Posso seguir?",
           tag: "insight",
           skill: "Consultor Tributário",
           quickReplies: [
@@ -672,11 +674,12 @@ export function ConversationalLanding() {
           ],
         });
 
-        setPendingAction(async (ans2: string) => {
-          if (ans2 === "nao") { setPendingAction(null); return; }
+        // Etapa 3: Empresa
+        setPendingAction(async (ans1: string) => {
+          if (ans1 === "nao") { setPendingAction(null); return; }
 
           navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
-            state: { fromBIA: true, screen: 3, wizardStep: 3, selAllTops: true },
+            state: { fromBIA: true, screen: 3, wizardStep: 3, selAllEmpresas: true },
           });
 
           setThinking(true);
@@ -685,7 +688,7 @@ export function ConversationalLanding() {
 
           addMessage({
             role: "bia",
-            content: "Selecionei todas as TOPs (recomendado). Posso seguir?",
+            content: "Selecionei todas as empresas do grupo. Posso seguir?",
             tag: "insight",
             skill: "Consultor Tributário",
             quickReplies: [
@@ -694,11 +697,12 @@ export function ConversationalLanding() {
             ],
           });
 
-          setPendingAction(async (ans3: string) => {
-            if (ans3 === "nao") { setPendingAction(null); return; }
+          // Etapa 4: Operação (TOPs)
+          setPendingAction(async (ans2: string) => {
+            if (ans2 === "nao") { setPendingAction(null); return; }
 
             navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
-              state: { fromBIA: true, screen: 3, wizardStep: 4, selAllParceiros: true },
+              state: { fromBIA: true, screen: 3, wizardStep: 4, selAllTops: true },
             });
 
             setThinking(true);
@@ -707,7 +711,7 @@ export function ConversationalLanding() {
 
             addMessage({
               role: "bia",
-              content: "Selecionei todos os parceiros. Posso seguir?",
+              content: "Selecionei todas as TOPs (recomendado). Posso seguir?",
               tag: "insight",
               skill: "Consultor Tributário",
               quickReplies: [
@@ -716,11 +720,12 @@ export function ConversationalLanding() {
               ],
             });
 
-            setPendingAction(async (ans4: string) => {
-              if (ans4 === "nao") { setPendingAction(null); return; }
+            // Etapa 5: Parceiro
+            setPendingAction(async (ans3: string) => {
+              if (ans3 === "nao") { setPendingAction(null); return; }
 
               navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
-                state: { fromBIA: true, screen: 3, wizardStep: 5 },
+                state: { fromBIA: true, screen: 3, wizardStep: 5, selAllParceiros: true },
               });
 
               setThinking(true);
@@ -729,17 +734,18 @@ export function ConversationalLanding() {
 
               addMessage({
                 role: "bia",
-                content: "Confira o resumo na tela. Posso confirmar e gravar?",
+                content: "Selecionei todos os parceiros. Posso seguir?",
                 tag: "insight",
                 skill: "Consultor Tributário",
                 quickReplies: [
-                  { label: "Confirmar e Gravar", value: "confirmar" },
+                  { label: "Sim", value: "sim" },
                   { label: "Não", value: "nao" },
                 ],
               });
 
-              setPendingAction(async (ans5: string) => {
-                if (ans5 === "nao") { setPendingAction(null); return; }
+              // Etapa 6: Resumo/Conclusão
+              setPendingAction(async (ans4: string) => {
+                if (ans4 === "nao") { setPendingAction(null); return; }
 
                 navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
                   state: { fromBIA: true, screen: 3, wizardStep: 6 },
@@ -751,12 +757,35 @@ export function ConversationalLanding() {
 
                 addMessage({
                   role: "bia",
-                  content: "35 exceções tributárias gravadas em 12/05/2026 às 14:32 por Ana Silva.",
+                  content: "Confira o resumo e conclusão na tela. Posso confirmar e gravar?",
                   tag: "insight",
                   skill: "Consultor Tributário",
+                  quickReplies: [
+                    { label: "Confirmar e Gravar", value: "confirmar" },
+                    { label: "Não", value: "nao" },
+                  ],
                 });
 
-                setPendingAction(null);
+                setPendingAction(async (ans5: string) => {
+                  if (ans5 === "nao") { setPendingAction(null); return; }
+
+                  navigate(ERoutes.CONFIG_ASSISTENTE_EXCECOES, {
+                    state: { fromBIA: true, screen: 3, wizardStep: 6, confirm: true },
+                  });
+
+                  setThinking(true);
+                  await sleep(600);
+                  setThinking(false);
+
+                  addMessage({
+                    role: "bia",
+                    content: "35 exceções tributárias gravadas em 12/05/2026 às 14:32 por Ana Silva.",
+                    tag: "insight",
+                    skill: "Consultor Tributário",
+                  });
+
+                  setPendingAction(null);
+                });
               });
             });
           });
