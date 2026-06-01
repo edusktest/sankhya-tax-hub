@@ -1239,7 +1239,7 @@ export default function AssistenteExcecoesPage() {
                   {wizardStep <= 5 ? (
                     <Button size="sm"
                       onClick={() => setWizardStep(s => (s + 1) as WizardStep)}>
-                      {`Próximo: ${WIZARD_STEP_LABELS[wizardStep]} →`}
+                      {`Próximo: ${WIZARD_STEP_LABELS[wizardStep - 1]} →`}
                     </Button>
                   ) : resumoConfirmado ? (
                     <Button size="sm"
