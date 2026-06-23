@@ -11,7 +11,18 @@
       "Read(//c/Users/eduardol_sankhya/.claude/**)",
       "Bash(git fetch *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\eduardol_sankhya\\\\Documents\\\\VS Code\\\\sankhyaPRJ\\\\sankhya-tax-hub\\\\src\" -Recurse -Filter \"*.tsx\" -o -Filter \"*.ts\")",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(npx vite *)",
+      "Bash(which chromium-browser *)",
+      "Read(//usr/**)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Read(//c/Users/eduardol_sankhya/AppData/Local/Temp/**)",
+      "Bash(grep -E \"^\\\\s*\\(//|id:\\)\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(sed 's/.*id: \"//')",
+      "Bash(sed 's/\".*//')",
+      "Bash(python3)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('date'\\)||k.includes\\('Day'\\)\\)\\)\\)\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\eduardol_sankhya\\.claude"

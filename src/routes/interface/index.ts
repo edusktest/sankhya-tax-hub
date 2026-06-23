@@ -32,4 +32,5 @@ export enum ERoutes {
    MOVIMENTACOES_RECEITAS_MULTA_JUROS = "/movimentacoes/receitas/multa-juros",
    MOVIMENTACOES_DESPESAS_MOVIMENTO = "/movimentacoes/despesas/movimento",
    MOVIMENTACOES_DOCUMENTOS_MOVIMENTO = "/movimentacoes/documentos/movimento",
+   APURACAO_CONCILIACAO_FISCAL = "/apuracao-cbs/conciliacao-fiscal",
 }

@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   TrendingUp, ChevronRight, ExternalLink, Eye, Filter, X,
-  FileText, RefreshCw, FileStack,
+  FileText, RefreshCw, FileStack, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import { ERoutes } from "@/routes/interface";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +104,7 @@ interface MultaJurosReceita {
   // refs
   documentoFiscal:    DocumentoFiscalOrigem;
   notaDebito?:        NotaDebito;
+  pendencia?:         string;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -117,6 +118,7 @@ const EMPRESAS = [
 const PERIODOS = [
   { value: "2026-04", label: "Abril/2026" },
   { value: "2026-05", label: "Maio/2026" },
+  { value: "2026-06", label: "Junho/2026" },
 ];
 
 const MOCK: MultaJurosReceita[] = [
@@ -460,6 +462,106 @@ const MOCK: MultaJurosReceita[] = [
       statusDFe: "Autorizado",
     },
   },
+
+  // ── Cenário 1: Indústria Alfa — Concluído, Geração Pendente ──────────────
+  {
+    id: "mj_pen1",
+    dataNegociacao: "02/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Indústria Alfa S.A.",
+    parceiroCNPJ: "11.222.333/0001-44",
+    tipo: "Receita",
+    nroUnico: "100.099",
+    multa: 540.0, juros: 270.0,
+    totalIBSUF: 28.35, totalIBSMun: 28.35, totalCBS: 40.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
+    nroNota: "NF-001500", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "02/06/2026", dtVencimento: "02/05/2026",
+    vlrDesdobramento: 18000.0, vlrDesconto: 0, vlrBaixa: 18810.0, dataBaixa: "02/06/2026",
+    documentoFiscal: {
+      dataNegociacao: "02/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Indústria Alfa S.A.", parceiroCNPJ: "11.222.333/0001-44",
+      tipoMovimento: "Venda", numero: "1500",
+      chaveDFe: "35260601234567890001550010000015001000015000",
+      valor: 18000.0, totalIBSUF: 630.0, totalIBSMun: 630.0, totalCBS: 900.0,
+      empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "02/06/2026", dtFaturamento: "02/06/2026", dtMovimento: "02/06/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "100.099",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+  },
+
+  // ── PV-010 — Parcela 2 / Digital Supply (Concluído, Confirmada, Autorizado) ───
+  {
+    id: "mj-pv010",
+    dataNegociacao: "10/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Digital Supply Ltda",
+    parceiroCNPJ: "12.345.678/0001-55",
+    tipo: "Receita",
+    nroUnico: "100.803",
+    multa: 300.0, juros: 150.0,
+    totalIBSUF: 15.75, totalIBSMun: 15.75, totalCBS: 22.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
+    nroNota: "NF-001601", desdob: "002/002", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "05/06/2026", dtVencimento: "05/07/2026",
+    vlrDesdobramento: 10000.0, vlrDesconto: 0, vlrBaixa: 10450.0, dataBaixa: "10/06/2026",
+    documentoFiscal: {
+      dataNegociacao: "05/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Digital Supply Ltda", parceiroCNPJ: "12.345.678/0001-55",
+      tipoMovimento: "Venda", numero: "1601",
+      chaveDFe: "35260601234567890001550010000016011000016011",
+      valor: 20000.0, totalIBSUF: 700.0, totalIBSMun: 700.0, totalCBS: 1000.0,
+      empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "05/06/2026", dtFaturamento: "05/06/2026", dtMovimento: "05/06/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "100.801",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+      titulos: [
+        {
+          id: "td-100802",
+          dataNegociacao: "05/06/2026",
+          empresa: "001 - Sankhya Gestão de Negócios Ltda",
+          parceiroNome: "Digital Supply Ltda",
+          parceiroCNPJ: "12.345.678/0001-55",
+          tipo: "Receita",
+          tipoMovimento: "Venda",
+          nroUnico: "100.802",
+          vlrDesdobramento: 10000.0,
+          totalIBSUF: 350.0,
+          totalIBSMun: 350.0,
+          totalCBS: 500.0,
+        },
+        {
+          id: "td-100803",
+          dataNegociacao: "05/06/2026",
+          empresa: "001 - Sankhya Gestão de Negócios Ltda",
+          parceiroNome: "Digital Supply Ltda",
+          parceiroCNPJ: "12.345.678/0001-55",
+          tipo: "Receita",
+          tipoMovimento: "Venda",
+          nroUnico: "100.803",
+          vlrDesdobramento: 10000.0,
+          totalIBSUF: 350.0,
+          totalIBSMun: 350.0,
+          totalCBS: 500.0,
+        },
+      ],
+    },
+    notaDebito: {
+      dataNegociacao: "10/06/2026",
+      nroUnico: "ND-100.810",
+      nroNota: "ND-001602",
+      chaveDFe: "35260601234567890001550010000016021000016021",
+      chaveDFeOrigem: "35260601234567890001550010000016011000016011",
+      statusDFe: "Autorizado",
+    },
+  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -525,33 +627,40 @@ function ibsValue(v: number, status: StatusCalculo) {
   return status === "Concluído" ? brl(v) : "—";
 }
 
+function PendenciaIcon({ pendencia }: { pendencia?: string }) {
+  if (pendencia) {
+    return <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Pendência" />;
+  }
+  return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 type View = "list" | "detail" | "doc-fiscal";
 
 export default function MovimentacoesReceitasMultaJuros() {
+  const location = useLocation();
   const [view, setView]                 = useState<View>("list");
   const [selected, setSelected]         = useState<MultaJurosReceita | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [filtroPeriodo, setFiltroPeriodo] = useState("");
 
+  useEffect(() => {
+    const nroUnico = (location.state as { openNroUnico?: string } | null)?.openNroUnico;
+    if (!nroUnico) return;
+    const record = MOCK.find((r) => r.nroUnico === nroUnico);
+    if (record) { setSelected(record); setView("detail"); }
+  }, [location.state]);
+
   const hasFilter = filtroEmpresa !== "" || filtroPeriodo !== "";
 
   const rows = useMemo(() => {
-    if (!hasFilter) {
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      return MOCK.filter((r) => {
-        const [d, m, y] = r.dataNegociacao.split("/");
-        return new Date(Number(y), Number(m) - 1, Number(d)) >= cutoff;
-      });
-    }
     return MOCK.filter((r) => {
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
       const byPeriodo = !filtroPeriodo || dateToPeriod(r.dataNegociacao) === filtroPeriodo;
       return byEmpresa && byPeriodo;
     });
-  }, [filtroEmpresa, filtroPeriodo, hasFilter]);
+  }, [filtroEmpresa, filtroPeriodo]);
 
   if (view === "doc-fiscal" && selected) {
     return (
@@ -645,10 +754,11 @@ export default function MovimentacoesReceitasMultaJuros() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center">Pendências</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
-                    <TableHead className="text-[12px]">Tipo</TableHead>
+                    <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px] text-right">Multa</TableHead>
                     <TableHead className="text-[12px] text-right">Juros</TableHead>
@@ -664,14 +774,19 @@ export default function MovimentacoesReceitasMultaJuros() {
                 <TableBody>
                   {rows.map((r) => (
                     <TableRow key={r.id} className="hover:bg-muted/40 text-[13px]">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <PendenciaIcon pendencia={r.pendencia} />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
                         <div>{r.parceiroNome}</div>
                         <div className="text-[11px] text-muted-foreground">{r.parceiroCNPJ}</div>
                       </TableCell>
-                      <TableCell className="text-blue-700 dark:text-blue-400 font-medium">
-                        {r.tipo}
+                      <TableCell className="text-[13px] font-medium">
+                        {r.tipoMovimento}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.multa)}</TableCell>
@@ -706,7 +821,6 @@ export default function MovimentacoesReceitasMultaJuros() {
             </div>
             <p className="mt-3 text-[12px] text-muted-foreground">
               {rows.length} registro{rows.length !== 1 ? "s" : ""}
-              {!hasFilter && " · últimos 30 dias"}
             </p>
           </div>
         )}
@@ -773,6 +887,24 @@ function MultaJurosDetailView({
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
+
+        {/* Status do processo */}
+        <div className="flex items-center gap-6 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted-foreground">Cálculo</span>
+            <BadgeCalculo status={r.statusCalculo} />
+          </div>
+          <div className="h-px w-4 bg-border" />
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted-foreground">Geração da Nota</span>
+            <BadgeGeracao status={r.statusGeracaoNota} />
+          </div>
+          <div className="h-px w-4 bg-border" />
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted-foreground">Status DFe</span>
+            <BadgeDFe status={r.statusDFe} />
+          </div>
+        </div>
 
         {/* Resumo do Título */}
         <CollapsibleSection title="Resumo do Título">

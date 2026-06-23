@@ -50,7 +50,15 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
   {
     group: "Operações",
     items: [
-      { title: "Apuração CBS", url: ERoutes.APURACAO_CBS, icon: Calculator },
+      {
+        title: "Apuração CBS",
+        url: ERoutes.APURACAO_CBS,
+        icon: Calculator,
+        subItems: [
+          { title: "Apurações",          url: ERoutes.APURACAO_CBS                    },
+          { title: "Conciliação Fiscal", url: ERoutes.APURACAO_CONCILIACAO_FISCAL     },
+        ],
+      },
       { title: "Apuração IBS", url: ERoutes.APURACAO_IBS, icon: Calculator },
       { title: "Apuração IS",  url: ERoutes.APURACAO_IS,  icon: Calculator },
       {

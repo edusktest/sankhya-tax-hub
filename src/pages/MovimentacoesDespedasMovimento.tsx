@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ERoutes } from "@/routes/interface";
+
 import {
   TrendingDown,
   ChevronRight,
@@ -10,7 +11,18 @@ import {
   X,
   Upload,
   Link2,
+  FileText,
+  AlertTriangle,
+  CheckCircle2,
+  CalendarIcon,
 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +84,18 @@ interface TituloRef {
   tributosDevolvidos?: Tributo[];
 }
 
+interface PedidoTitulo {
+  id: string;
+  numero: string;
+  dataNegociacao: string;
+  empresa: string;
+  parceiroNome: string;
+  parceiroCNPJ: string;
+  nroUnico: string;
+  valor: number;
+  tipoOperacao: string;
+}
+
 interface DespesaMovimento {
   id: string;
   dataNegociacao: string;
@@ -100,6 +124,8 @@ interface DespesaMovimento {
   tributos: Tributo[];
   tituloRef?: TituloRef;
   documentos?: DocumentoTitulo[];
+  pedidoRef?: PedidoTitulo;
+  pendencia?: string;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -110,14 +136,6 @@ const EMPRESAS = [
   { cod: "003", nome: "Distribuidora Norte Ltda" },
 ];
 
-const PERIODOS = [
-  { value: "2026-01", label: "Janeiro/2026" },
-  { value: "2026-02", label: "Fevereiro/2026" },
-  { value: "2026-03", label: "Março/2026" },
-  { value: "2026-04", label: "Abril/2026" },
-  { value: "2026-05", label: "Maio/2026" },
-  { value: "2026-06", label: "Junho/2026" },
-];
 
 const MOCK: DespesaMovimento[] = [
   {
@@ -472,6 +490,48 @@ const MOCK: DespesaMovimento[] = [
     ],
   },
 
+  // ── Pedido de Compra – Fornecedor Alpha Ltda (R$ 200,00) ─────────────────────
+  {
+    id: "pedido-compra-xpto",
+    dataNegociacao: "01/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Fornecedor Alpha Ltda",
+    parceiroCNPJ: "11.222.333/0001-44",
+    nroUnico: "500.200",
+    tipo: "Despesa",
+    tipoMovimento: "Pedido de Compra",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 200.0,
+    totalIBSUF: 7.0,
+    totalIBSMun: 7.0,
+    totalCBS: 10.0,
+    nroNota: "—",
+    desdob: "001/001",
+    tipoOperacao: "2.001 - Pedido de Compra",
+    dtEntradaSaida: "01/06/2026",
+    dtVencimento: "01/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 200.0, dataBaixa: "01/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "5,00%", valor: 10.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "3,50%", valor:  7.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "3,50%", valor:  7.0, digitado: "Não" },
+    ],
+    documentos: [],
+    pedidoRef: {
+      id: "pedido-compra-xpto",
+      numero: "PC-001",
+      dataNegociacao: "01/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Fornecedor Alpha Ltda",
+      parceiroCNPJ: "11.222.333/0001-44",
+      nroUnico: "500.200",
+      valor: 200.0,
+      tipoOperacao: "2.001 - Pedido de Compra",
+    },
+    pendencia: "Esse título não tem um documento fiscal relacionado. Veja as opções disponíveis através do grupo Documentos do Título.",
+  },
+
   // ── Devolução total – Indústria Central Ltda (par com Receita 700.001) ─────
   {
     id: "8",
@@ -542,9 +602,21 @@ function saldo(tributos: Tributo[], imposto: string): string {
   return `${brl(Math.abs(net))} ${net > 0 ? "D" : "C"}`;
 }
 
-function dateToPeriod(date: string): string {
-  const [, m, y] = date.split("/");
-  return `${y}-${m}`;
+
+function PendenciaIcon({ pendencia }: { pendencia?: string }) {
+  if (pendencia) {
+    return <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Pendência" />;
+  }
+  return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+}
+
+function PendenciaAlerta({ pendencia }: { pendencia: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
+      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+      <p className="text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">{pendencia}</p>
+    </div>
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -554,25 +626,36 @@ export default function MovimentacoesDespedasMovimento() {
   const [selected, setSelected] = useState<DespesaMovimento | null>(null);
   const [selectedRef, setSelectedRef] = useState<TituloRef | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
-  const [filtroPeriodo, setFiltroPeriodo] = useState("");
+  const [filtroDataDe, setFiltroDataDe] = useState<Date | undefined>(undefined);
+  const [filtroDataAte, setFiltroDataAte] = useState<Date | undefined>(undefined);
+  const [filtroTipoTitulo, setFiltroTipoTitulo] = useState("");
+  const [filtroPendencia, setFiltroPendencia] = useState("");
 
-  const hasFilter = filtroEmpresa !== "" || filtroPeriodo !== "";
+  const hasFilter = filtroEmpresa !== "" || filtroDataDe !== undefined || filtroDataAte !== undefined || filtroTipoTitulo !== "" || filtroPendencia !== "";
+
+  const TIPOS_TITULO = useMemo(() => Array.from(new Set(MOCK.map(r => r.tipoTitulo))).sort(), []);
 
   const rows = useMemo(() => {
-    if (!hasFilter) {
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      return MOCK.filter((r) => {
-        const [d, m, y] = r.dataNegociacao.split("/");
-        return new Date(Number(y), Number(m) - 1, Number(d)) >= cutoff;
-      });
-    }
+    const parseDate = (s: string) => {
+      const [d, m, y] = s.split("/");
+      return new Date(Number(y), Number(m) - 1, Number(d));
+    };
     return MOCK.filter((r) => {
+      const dt = parseDate(r.dataNegociacao);
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const byPeriodo = !filtroPeriodo || dateToPeriod(r.dataNegociacao) === filtroPeriodo;
-      return byEmpresa && byPeriodo;
+      const byDe = !filtroDataDe || dt >= filtroDataDe;
+      const byAte = !filtroDataAte || dt <= filtroDataAte;
+      const byTipoTitulo = !filtroTipoTitulo || r.tipoTitulo === filtroTipoTitulo;
+      const byPendencia = !filtroPendencia || (filtroPendencia === "sim" ? !!r.pendencia : !r.pendencia);
+      return byEmpresa && byDe && byAte && byTipoTitulo && byPendencia;
     });
-  }, [filtroEmpresa, filtroPeriodo, hasFilter]);
+  }, [filtroEmpresa, filtroDataDe, filtroDataAte, filtroTipoTitulo, filtroPendencia]);
+
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [rows]);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (view === "ref-detail" && selectedRef && selected) {
     return (
@@ -619,7 +702,7 @@ export default function MovimentacoesDespedasMovimento() {
 
           <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
             <SelectTrigger className="w-[280px] h-8 text-[13px]">
-              <SelectValue placeholder="Empresa" />
+              <SelectValue placeholder="Empresas" />
             </SelectTrigger>
             <SelectContent>
               {EMPRESAS.map((e) => (
@@ -630,22 +713,60 @@ export default function MovimentacoesDespedasMovimento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroPeriodo} onValueChange={setFiltroPeriodo}>
-            <SelectTrigger className="w-[180px] h-8 text-[13px]">
-              <SelectValue placeholder="Período" />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroDataDe && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {filtroDataDe ? format(filtroDataDe, "dd/MM/yyyy") : "De"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={filtroDataDe} onSelect={setFiltroDataDe} initialFocus />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroDataAte && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {filtroDataAte ? format(filtroDataAte, "dd/MM/yyyy") : "Até"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={filtroDataAte} onSelect={setFiltroDataAte} initialFocus />
+            </PopoverContent>
+          </Popover>
+
+          <Select value={filtroTipoTitulo} onValueChange={setFiltroTipoTitulo}>
+            <SelectTrigger className="w-[160px] h-8 text-[13px]">
+              <SelectValue placeholder="Tipo Título" />
             </SelectTrigger>
             <SelectContent>
-              {PERIODOS.map((p) => (
-                <SelectItem key={p.value} value={p.value} className="text-[13px]">
-                  {p.label}
-                </SelectItem>
+              {TIPOS_TITULO.map((t) => (
+                <SelectItem key={t} value={t} className="text-[13px]">{t}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroPendencia} onValueChange={setFiltroPendencia}>
+            <SelectTrigger className="w-[140px] h-8 text-[13px]">
+              <SelectValue placeholder="Pendência" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sim" className="text-[13px]">Sim</SelectItem>
+              <SelectItem value="nao" className="text-[13px]">Não</SelectItem>
             </SelectContent>
           </Select>
 
           {hasFilter && (
             <button
-              onClick={() => { setFiltroEmpresa(""); setFiltroPeriodo(""); }}
+              onClick={() => { setFiltroEmpresa(""); setFiltroDataDe(undefined); setFiltroDataAte(undefined); setFiltroTipoTitulo(""); setFiltroPendencia(""); }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-3 w-3" />
@@ -670,10 +791,11 @@ export default function MovimentacoesDespedasMovimento() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center">Pendências</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
-                    <TableHead className="text-[12px]">Tipo</TableHead>
+                    <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
@@ -684,23 +806,21 @@ export default function MovimentacoesDespedasMovimento() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r) => (
+                  {pageRows.map((r) => (
                     <TableRow key={r.id} className="hover:bg-muted/40 text-[13px]">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <PendenciaIcon pendencia={r.pendencia} />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
                         <div>{r.parceiroNome}</div>
                         <div className="text-[11px] text-muted-foreground">{r.parceiroCNPJ}</div>
                       </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-[13px] font-medium",
-                          r.tipo === "Receita"
-                            ? "text-blue-700 dark:text-blue-400"
-                            : "text-red-700 dark:text-red-400"
-                        )}
-                      >
-                        {r.tipo}
+                      <TableCell className="text-[13px] font-medium">
+                        {r.tipoMovimento}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
                       <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
@@ -724,10 +844,52 @@ export default function MovimentacoesDespedasMovimento() {
                 </TableBody>
               </Table>
             </div>
-            <p className="mt-3 text-[12px] text-muted-foreground">
-              {rows.length} registro{rows.length !== 1 ? "s" : ""}
-              {!hasFilter && " · últimos 30 dias"}
-            </p>
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <p className="text-[12px] text-muted-foreground">
+                {rows.length} registro{rows.length !== 1 ? "s" : ""}
+                {totalPages > 1 && ` · página ${page} de ${totalPages}`}
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === 1}
+                    onClick={() => setPage(1)}
+                  >
+                    «
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    ‹
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    ›
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === totalPages}
+                    onClick={() => setPage(totalPages)}
+                  >
+                    »
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -953,6 +1115,11 @@ function DetailView({
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
+        {/* Alerta de pendência */}
+        {r.pendencia && (
+          <PendenciaAlerta pendencia={r.pendencia} />
+        )}
+
         {/* Resumo do Título */}
         <CollapsibleSection title="Resumo do Título">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -990,6 +1157,65 @@ function DetailView({
           </div>
         </CollapsibleSection>
 
+        {/* Pedido do Título */}
+        <CollapsibleSection title="Pedido do Título">
+          {r.pedidoRef ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px]">Número</TableHead>
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Empresa</TableHead>
+                    <TableHead className="text-[12px]">Parceiro</TableHead>
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Tipo Operação</TableHead>
+                    <TableHead className="text-[12px] text-right">Valor</TableHead>
+                    <TableHead className="text-[12px] text-center">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="text-[13px]">
+                    <TableCell className="font-mono font-medium">{r.pedidoRef.numero}</TableCell>
+                    <TableCell className="font-mono text-[12px]">{r.pedidoRef.dataNegociacao}</TableCell>
+                    <TableCell>{r.pedidoRef.empresa}</TableCell>
+                    <TableCell>
+                      <div>{r.pedidoRef.parceiroNome}</div>
+                      <div className="text-[11px] text-muted-foreground">{r.pedidoRef.parceiroCNPJ}</div>
+                    </TableCell>
+                    <TableCell className="font-mono">{r.pedidoRef.nroUnico}</TableCell>
+                    <TableCell>{r.pedidoRef.tipoOperacao}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.pedidoRef.valor)}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[12px] gap-1"
+                        onClick={() =>
+                          navigate(ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO, {
+                            state: { openNroUnico: r.pedidoRef!.id },
+                          })
+                        }
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Detalhar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
+              <p className="text-[13px] text-muted-foreground">Não existe um pedido relacionado</p>
+              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                <Link2 className="h-3.5 w-3.5" />
+                Relacionar documento
+              </Button>
+            </div>
+          )}
+        </CollapsibleSection>
+
         {/* Documentos do Título */}
         <CollapsibleSection title="Documentos do Título">
           {r.documentos && r.documentos.length > 0 ? (
@@ -997,6 +1223,7 @@ function DetailView({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center">Pendências</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
                     <TableHead className="text-[12px]">Chave DFe</TableHead>
@@ -1008,6 +1235,11 @@ function DetailView({
                 <TableBody>
                   {r.documentos.map((doc, i) => (
                     <TableRow key={i} className="text-[13px]">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono">{doc.nroUnico}</TableCell>
                       <TableCell className="font-mono">{doc.nroNota}</TableCell>
                       <TableCell className="max-w-[200px]">
@@ -1040,7 +1272,7 @@ function DetailView({
           ) : (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um documento fiscal relacionado</p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-center">
                 <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
                   <Upload className="h-3.5 w-3.5" />
                   Importar XML
@@ -1049,6 +1281,12 @@ function DetailView({
                   <Link2 className="h-3.5 w-3.5" />
                   Relacionar documento
                 </Button>
+                {r.pedidoRef && (
+                  <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                    <FileText className="h-3.5 w-3.5" />
+                    Gerar Nota de Débito
+                  </Button>
+                )}
               </div>
             </div>
           )}

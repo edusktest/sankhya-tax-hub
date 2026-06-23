@@ -18,6 +18,7 @@ import MovimentacoesReceitasMovimento from "./pages/MovimentacoesReceitasMovimen
 import MovimentacoesReceitasMultaJuros from "./pages/MovimentacoesReceitasMultaJuros";
 import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
 import MovimentacoesDocumentosMovimento from "./pages/MovimentacoesDocumentosMovimento";
+import ConciliacaoFiscal from "./pages/ConciliacaoFiscal";
 import NotFound from "./pages/NotFound";
 import { ERoutes } from "@/routes/interface";
 
@@ -73,6 +74,7 @@ const App = () => (
             <Route path={ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS} element={<MovimentacoesReceitasMultaJuros />} />
             <Route path={ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO} element={<MovimentacoesDespedasMovimento />} />
             <Route path={ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO} element={<MovimentacoesDocumentosMovimento />} />
+            <Route path={ERoutes.APURACAO_CONCILIACAO_FISCAL} element={<ConciliacaoFiscal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

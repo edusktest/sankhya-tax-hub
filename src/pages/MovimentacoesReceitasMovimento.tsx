@@ -8,9 +8,19 @@ import {
   Eye,
   Filter,
   X,
-  Upload,
   Link2,
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+  CalendarIcon,
 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +82,29 @@ interface TituloRef {
   tributosDevolvidos?: Tributo[];
 }
 
+interface PedidoTitulo {
+  id: string;
+  numero: string;
+  dataNegociacao: string;
+  empresa: string;
+  parceiroNome: string;
+  parceiroCNPJ: string;
+  nroUnico: string;
+  valor: number;
+  tipoOperacao: string;
+}
+
+interface GuiaTituloItem {
+  nroUnico: string;
+  tipoMovimento: string;
+  tipoTitulo: string;
+  valor: number;
+}
+
+interface ConciliacaoApuracaoAssistida {
+  guias: GuiaTituloItem[];
+}
+
 interface ReceitaMovimento {
   id: string;
   dataNegociacao: string;
@@ -102,6 +135,9 @@ interface ReceitaMovimento {
   tributosMultaJuros?: Tributo[];
   tituloRef?: TituloRef;
   documentos?: DocumentoTitulo[];
+  pedidoRef?: PedidoTitulo;
+  conciliacaoApuracaoAssistida?: ConciliacaoApuracaoAssistida;
+  pendencia?: string;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -112,13 +148,6 @@ const EMPRESAS = [
   { cod: "003", nome: "Distribuidora Norte Ltda" },
 ];
 
-const PERIODOS = [
-  { value: "2026-01", label: "Janeiro/2026" },
-  { value: "2026-02", label: "Fevereiro/2026" },
-  { value: "2026-03", label: "Março/2026" },
-  { value: "2026-04", label: "Abril/2026" },
-  { value: "2026-05", label: "Maio/2026" },
-];
 
 const MOCK: ReceitaMovimento[] = [
   {
@@ -152,7 +181,7 @@ const MOCK: ReceitaMovimento[] = [
       { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 24500, baseReduzida: 0, aliquota: "3,50%", valor:  857.5, digitado: "Não" },
     ],
     documentos: [
-      { nroUnico: "100.001", nroNota: "NF-001234", chaveDFe: "35260101234567890001550010000012341000012340", statusDFe: "Autorizado", finalidade: "Normal" },
+      { nroUnico: "100.000", nroNota: "NF-001234", chaveDFe: "35260101234567890001550010000012341000012340", statusDFe: "Autorizado", finalidade: "Normal" },
     ],
   },
   {
@@ -327,9 +356,102 @@ const MOCK: ReceitaMovimento[] = [
       { imposto: "IBS Mun", incidencia: "Multa e Juros", cst: "01", base: 8500, baseReduzida: 0, aliquota: "3,50%", valor: 297.5,  digitado: "Não" },
     ],
     documentos: [
-      { nroUnico: "200.020", nroNota: "NF-002200", chaveDFe: "35260502345678901002550010000022001000022000", statusDFe: "Autorizado", finalidade: "Normal" },
+      { nroUnico: "200.019", nroNota: "NF-002200", chaveDFe: "35260502345678901002550010000022001000022000", statusDFe: "Autorizado", finalidade: "Normal" },
     ],
   },
+
+  // ── Venda A Prazo – NF-002200 / Comércio Leste (3 parcelas do doc 200.020) ───
+  {
+    id: "t2200-1",
+    dataNegociacao: "07/05/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Comércio Leste Ltda",
+    parceiroCNPJ: "77.888.999/0001-55",
+    nroUnico: "200.021",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 9933.34,
+    totalIBSUF: 347.67,
+    totalIBSMun: 347.67,
+    totalCBS: 496.67,
+    nroNota: "NF-002200",
+    desdob: "001/003",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "07/05/2026",
+    dtVencimento: "07/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 9933.34, baseReduzida: 0, aliquota: "5,00%", valor: 496.67, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 9933.34, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 9933.34, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "200.020", nroNota: "NF-002200", chaveDFe: "35260267890100000123550010000022001234567891", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+  },
+  {
+    id: "t2200-2",
+    dataNegociacao: "07/05/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Comércio Leste Ltda",
+    parceiroCNPJ: "77.888.999/0001-55",
+    nroUnico: "200.022",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 9933.33,
+    totalIBSUF: 347.67,
+    totalIBSMun: 347.67,
+    totalCBS: 496.67,
+    nroNota: "NF-002200",
+    desdob: "002/003",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "07/05/2026",
+    dtVencimento: "07/07/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "5,00%", valor: 496.67, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.67, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "200.020", nroNota: "NF-002200", chaveDFe: "35260267890100000123550010000022001234567891", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+  },
+  {
+    id: "t2200-3",
+    dataNegociacao: "07/05/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Comércio Leste Ltda",
+    parceiroCNPJ: "77.888.999/0001-55",
+    nroUnico: "200.023",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 9933.33,
+    totalIBSUF: 347.66,
+    totalIBSMun: 347.66,
+    totalCBS: 496.66,
+    nroNota: "NF-002200",
+    desdob: "003/003",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "07/05/2026",
+    dtVencimento: "07/08/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "5,00%", valor: 496.66, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.66, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 9933.33, baseReduzida: 0, aliquota: "3,50%", valor: 347.66, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "200.020", nroNota: "NF-002200", chaveDFe: "35260267890100000123550010000022001234567891", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+  },
+
   {
     id: "7",
     dataNegociacao: "16/05/2026",
@@ -495,10 +617,11 @@ const MOCK: ReceitaMovimento[] = [
     ],
   },
 
-  // ── Venda – Logística Express Ltda (imposto quitado via DARF/DAE/DAM) ───────
+  // ── Venda – Logística Express Ltda (imposto quitado via DARF/DAR — 3 parcelas) ─
+  // Parcela 1 — vencimento 20/05/2026 — imposto QUITADO (baixa realizada)
   {
-    id: "10",
-    dataNegociacao: "25/05/2026",
+    id: "10a",
+    dataNegociacao: "05/05/2026",
     empresa: "001 - Sankhya Gestão de Negócios Ltda",
     empresaCod: "001",
     parceiroNome: "Logística Express Ltda",
@@ -507,26 +630,112 @@ const MOCK: ReceitaMovimento[] = [
     tipo: "Receita",
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
-    vlrDesdobramento: 15000.0,
-    totalIBSUF: 525.0,
-    totalIBSMun: 525.0,
-    totalCBS: 750.0,
+    vlrDesdobramento: 5000.0,
+    totalIBSUF: 175.0,
+    totalIBSMun: 175.0,
+    totalCBS: 250.0,
     nroNota: "NF-001325",
-    desdob: "001/001",
+    desdob: "001/003",
     tipoOperacao: "1.201 - Recebimento",
-    dtEntradaSaida: "25/05/2026",
-    dtVencimento: "30/06/2026",
-    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    dtEntradaSaida: "05/05/2026",
+    dtVencimento: "20/05/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 5000.0, dataBaixa: "20/05/2026",
     tributos: [
-      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "5,00%", valor:  750.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor:  525.0, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor:  525.0, digitado: "Não" },
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "5,00%", valor: 250.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "3,50%", valor: 175.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "3,50%", valor: 175.0, digitado: "Não" },
+    ],
+    // Imposto quitado via guia — baixa integral desta parcela
+    tributosDevolvidos: [
+      { imposto: "CBS",     incidencia: "DARF", cst: "01", base: -5000, baseReduzida: 0, aliquota: "5,00%", valor: -250.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "DAR",  cst: "01", base: -5000, baseReduzida: 0, aliquota: "3,50%", valor: -175.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "DAR",  cst: "01", base: -5000, baseReduzida: 0, aliquota: "3,50%", valor: -175.0, digitado: "Não" },
+    ],
+    conciliacaoApuracaoAssistida: {
+      guias: [
+        { nroUnico: "100.006", tipoMovimento: "Despesa", tipoTitulo: "DARF", valor: 250.0 },
+        { nroUnico: "100.006", tipoMovimento: "Despesa", tipoTitulo: "DAR",  valor: 175.0 },
+        { nroUnico: "100.006", tipoMovimento: "Despesa", tipoTitulo: "DAR",  valor: 175.0 },
+      ],
+    },
+    documentos: [
+      { nroUnico: "100.006", nroNota: "NF-001325", chaveDFe: "35260501234567890001550010000013251000013250", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+  },
+  // Parcela 2 — vencimento 20/06/2026 — imposto QUITADO
+  {
+    id: "10b",
+    dataNegociacao: "05/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Logística Express Ltda",
+    parceiroCNPJ: "88.999.000/0001-44",
+    nroUnico: "100.006",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 5000.0,
+    totalIBSUF: 175.0,
+    totalIBSMun: 175.0,
+    totalCBS: 250.0,
+    nroNota: "NF-001325",
+    desdob: "002/003",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "05/05/2026",
+    dtVencimento: "20/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 5000.0, dataBaixa: "20/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "5,00%", valor: 250.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "3,50%", valor: 175.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "3,50%", valor: 175.0, digitado: "Não" },
     ],
     tributosDevolvidos: [
-      { imposto: "CBS",     incidencia: "DARF", cst: "01", base: -15000, baseReduzida: 0, aliquota: "5,00%", valor: -750.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "DAR",  cst: "01", base: -15000, baseReduzida: 0, aliquota: "3,50%", valor: -525.0, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "DAR",  cst: "01", base: -15000, baseReduzida: 0, aliquota: "3,50%", valor: -525.0, digitado: "Não" },
+      { imposto: "CBS",     incidencia: "DARF", cst: "01", base: -5000, baseReduzida: 0, aliquota: "5,00%", valor: -250.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "DAR",  cst: "01", base: -5000, baseReduzida: 0, aliquota: "3,50%", valor: -175.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "DAR",  cst: "01", base: -5000, baseReduzida: 0, aliquota: "3,50%", valor: -175.0, digitado: "Não" },
     ],
+    conciliacaoApuracaoAssistida: {
+      guias: [
+        { nroUnico: "100.006", tipoMovimento: "Despesa", tipoTitulo: "DARF", valor: 250.0 },
+        { nroUnico: "100.006", tipoMovimento: "Despesa", tipoTitulo: "DAR",  valor: 175.0 },
+        { nroUnico: "100.006", tipoMovimento: "Despesa", tipoTitulo: "DAR",  valor: 175.0 },
+      ],
+    },
+    documentos: [
+      { nroUnico: "100.006", nroNota: "NF-001325", chaveDFe: "35260501234567890001550010000013251000013250", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+  },
+  // Parcela 3 — vencimento 20/07/2026 — saldo devedor pendente
+  {
+    id: "10c",
+    dataNegociacao: "05/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Logística Express Ltda",
+    parceiroCNPJ: "88.999.000/0001-44",
+    nroUnico: "100.006",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 5000.0,
+    totalIBSUF: 175.0,
+    totalIBSMun: 175.0,
+    totalCBS: 250.0,
+    nroNota: "NF-001325",
+    desdob: "003/003",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "05/05/2026",
+    dtVencimento: "20/07/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "5,00%", valor: 250.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "3,50%", valor: 175.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 5000, baseReduzida: 0, aliquota: "3,50%", valor: 175.0, digitado: "Não" },
+    ],
+    // Sem tributosDevolvidos — imposto ainda não quitado nesta parcela
+    conciliacaoApuracaoAssistida: {
+      guias: [],
+    },
     documentos: [
       { nroUnico: "100.006", nroNota: "NF-001325", chaveDFe: "35260501234567890001550010000013251000013250", statusDFe: "Autorizado", finalidade: "Normal" },
     ],
@@ -584,6 +793,494 @@ const MOCK: ReceitaMovimento[] = [
     ],
   },
 
+  // ── Cenário 1: Receita com multa e juros — sem Nota de Débito/Crédito gerada ──
+  {
+    id: "pen1",
+    dataNegociacao: "02/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Indústria Alfa S.A.",
+    parceiroCNPJ: "11.222.333/0001-44",
+    nroUnico: "100.099",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 18000.0,
+    totalIBSUF: 630.0,
+    totalIBSMun: 630.0,
+    totalCBS: 900.0,
+    nroNota: "NF-001500",
+    desdob: "001/001",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "02/06/2026",
+    dtVencimento: "02/05/2026",
+    vlrDesconto: 0,
+    vlrMulta: 540.0,
+    vlrJuros: 270.0,
+    vlrBaixa: 18810.0,
+    dataBaixa: "02/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 18000, baseReduzida: 0, aliquota: "5,00%", valor: 900.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
+    ],
+    tributosMultaJuros: [
+      { imposto: "CBS",     incidencia: "Multa e Juros", cst: "01", base: 810, baseReduzida: 0, aliquota: "5,00%", valor: 40.5,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Multa e Juros", cst: "01", base: 810, baseReduzida: 0, aliquota: "3,50%", valor: 28.35, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Multa e Juros", cst: "01", base: 810, baseReduzida: 0, aliquota: "3,50%", valor: 28.35, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.099", nroNota: "NF-001500", chaveDFe: "35260601234567890001550010000015001000015000", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+    pendencia: "Esse título foi recebido com multa e juros. É necessário gerar uma Nota de Débito.",
+  },
+
+  // ── Antecipação – Janeiro (ND-000101 / R$ 20,00) ────────────────────────────
+  {
+    id: "ant1",
+    dataNegociacao: "15/01/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Comércio Brasil Ltda",
+    parceiroCNPJ: "45.678.901/0001-23",
+    nroUnico: "100.101",
+    tipo: "Receita",
+    tipoMovimento: "Antecipação",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 20.0,
+    totalIBSUF: 0.7,
+    totalIBSMun: 0.7,
+    totalCBS: 1.0,
+    nroNota: "ND-000101",
+    desdob: "001/001",
+    tipoOperacao: "1.209 - Antecipação",
+    dtEntradaSaida: "15/01/2026",
+    dtVencimento: "15/01/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 20.0, dataBaixa: "15/01/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 20, baseReduzida: 0, aliquota: "5,00%", valor: 1.0,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 20, baseReduzida: 0, aliquota: "3,50%", valor: 0.7,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 20, baseReduzida: 0, aliquota: "3,50%", valor: 0.7,  digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.101", nroNota: "ND-000101", chaveDFe: "35260101234567890001550010000001010000010101", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+  },
+
+  // ── Antecipação – Fevereiro (ND-000102 / R$ 30,00) ──────────────────────────
+  {
+    id: "ant2",
+    dataNegociacao: "10/02/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Comércio Brasil Ltda",
+    parceiroCNPJ: "45.678.901/0001-23",
+    nroUnico: "100.102",
+    tipo: "Receita",
+    tipoMovimento: "Antecipação",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 30.0,
+    totalIBSUF: 1.05,
+    totalIBSMun: 1.05,
+    totalCBS: 1.5,
+    nroNota: "ND-000102",
+    desdob: "001/001",
+    tipoOperacao: "1.209 - Antecipação",
+    dtEntradaSaida: "10/02/2026",
+    dtVencimento: "10/02/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 30.0, dataBaixa: "10/02/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "5,00%", valor: 1.5,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "3,50%", valor: 1.05, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "3,50%", valor: 1.05, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.102", nroNota: "ND-000102", chaveDFe: "35260201234567890001550010000001020000010201", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+  },
+
+  // ── Pedido de Venda – Título XPTO (R$ 100,00 / venc 01/06/2026) ─────────────
+  {
+    id: "xpto",
+    dataNegociacao: "01/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Comércio Brasil Ltda",
+    parceiroCNPJ: "45.678.901/0001-23",
+    nroUnico: "100.200",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 100.0,
+    totalIBSUF: 3.5,
+    totalIBSMun: 3.5,
+    totalCBS: 5.0,
+    nroNota: "—",
+    desdob: "001/001",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "01/06/2026",
+    dtVencimento: "01/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 100.0, dataBaixa: "01/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 100, baseReduzida: 0, aliquota: "5,00%", valor: 5.0,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 100, baseReduzida: 0, aliquota: "3,50%", valor: 3.5,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 100, baseReduzida: 0, aliquota: "3,50%", valor: 3.5,  digitado: "Não" },
+    ],
+    documentos: [],
+    pedidoRef: {
+      id: "pedido-xpto",
+      numero: "PV-001",
+      dataNegociacao: "01/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Comércio Brasil Ltda",
+      parceiroCNPJ: "45.678.901/0001-23",
+      nroUnico: "100.200",
+      valor: 500.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+    pendencia: "Esse título não tem um documento fiscal relacionado. Veja as opções disponíveis através do grupo Documentos do Título.",
+  },
+
+  // ── Pedido de Venda – Título 100.201 (R$ 150,00 / venc 01/07/2026) ──────────
+  {
+    id: "xpto-2",
+    dataNegociacao: "01/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Comércio Brasil Ltda",
+    parceiroCNPJ: "45.678.901/0001-23",
+    nroUnico: "100.201",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 150.0,
+    totalIBSUF: 5.25,
+    totalIBSMun: 5.25,
+    totalCBS: 7.5,
+    nroNota: "—",
+    desdob: "002/003",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "01/06/2026",
+    dtVencimento: "01/07/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 150, baseReduzida: 0, aliquota: "5,00%", valor: 7.5,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 150, baseReduzida: 0, aliquota: "3,50%", valor: 5.25, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 150, baseReduzida: 0, aliquota: "3,50%", valor: 5.25, digitado: "Não" },
+    ],
+    documentos: [],
+    pedidoRef: {
+      id: "pedido-xpto",
+      numero: "PV-001",
+      dataNegociacao: "01/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Comércio Brasil Ltda",
+      parceiroCNPJ: "45.678.901/0001-23",
+      nroUnico: "100.201",
+      valor: 500.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – Título 100.202 (R$ 250,00 / venc 01/08/2026) ──────────
+  {
+    id: "xpto-3",
+    dataNegociacao: "01/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Comércio Brasil Ltda",
+    parceiroCNPJ: "45.678.901/0001-23",
+    nroUnico: "100.202",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 250.0,
+    totalIBSUF: 8.75,
+    totalIBSMun: 8.75,
+    totalCBS: 12.5,
+    nroNota: "—",
+    desdob: "003/003",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "01/06/2026",
+    dtVencimento: "01/08/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 250, baseReduzida: 0, aliquota: "5,00%", valor: 12.5, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 250, baseReduzida: 0, aliquota: "3,50%", valor: 8.75, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 250, baseReduzida: 0, aliquota: "3,50%", valor: 8.75, digitado: "Não" },
+    ],
+    documentos: [],
+    pedidoRef: {
+      id: "pedido-xpto",
+      numero: "PV-001",
+      dataNegociacao: "01/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Comércio Brasil Ltda",
+      parceiroCNPJ: "45.678.901/0001-23",
+      nroUnico: "100.202",
+      valor: 500.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – PV-002 Parcela 1 (R$ 400,00 / venc 01/05/2026) ────────
+  {
+    id: "pv002-t1",
+    dataNegociacao: "15/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Tech Solutions S.A.",
+    parceiroCNPJ: "67.890.123/0001-45",
+    nroUnico: "100.401",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 400.0,
+    totalIBSUF: 14.0,
+    totalIBSMun: 14.0,
+    totalCBS: 20.0,
+    nroNota: "ND-0301",
+    desdob: "001/002",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "15/05/2026",
+    dtVencimento: "01/05/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 400.0, dataBaixa: "01/05/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "5,00%", valor: 20.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "3,50%", valor: 14.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "3,50%", valor: 14.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.401", nroNota: "ND-0301", chaveDFe: "35260501234567890001550010000003011234560301", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "pedido-pv002",
+      numero: "PV-002",
+      dataNegociacao: "15/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Tech Solutions S.A.",
+      parceiroCNPJ: "67.890.123/0001-45",
+      nroUnico: "100.400",
+      valor: 800.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – PV-002 Parcela 2 (R$ 400,00 / venc 01/06/2026) ────────
+  {
+    id: "pv002-t2",
+    dataNegociacao: "15/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Tech Solutions S.A.",
+    parceiroCNPJ: "67.890.123/0001-45",
+    nroUnico: "100.402",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 400.0,
+    totalIBSUF: 14.0,
+    totalIBSMun: 14.0,
+    totalCBS: 20.0,
+    nroNota: "ND-0302",
+    desdob: "002/002",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "15/05/2026",
+    dtVencimento: "01/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 400.0, dataBaixa: "01/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "5,00%", valor: 20.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "3,50%", valor: 14.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "3,50%", valor: 14.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.402", nroNota: "ND-0302", chaveDFe: "35260601234567890001550010000003021234560302", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "pedido-pv002",
+      numero: "PV-002",
+      dataNegociacao: "15/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Tech Solutions S.A.",
+      parceiroCNPJ: "67.890.123/0001-45",
+      nroUnico: "100.400",
+      valor: 800.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – PV-003 Parcela 1 (R$ 450,00 / venc 01/05/2026) ────────
+  {
+    id: "pv003-t1",
+    dataNegociacao: "20/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Varejo Central S.A.",
+    parceiroCNPJ: "98.765.432/0001-11",
+    nroUnico: "100.501",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 450.0,
+    totalIBSUF: 15.75,
+    totalIBSMun: 15.75,
+    totalCBS: 22.5,
+    nroNota: "ND-0401",
+    desdob: "001/002",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "20/05/2026",
+    dtVencimento: "01/05/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 450.0, dataBaixa: "01/05/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "5,00%", valor: 22.5,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.501", nroNota: "ND-0401", chaveDFe: "35260501234567890001550010000004011234560401", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "pedido-pv003",
+      numero: "PV-003",
+      dataNegociacao: "20/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Varejo Central S.A.",
+      parceiroCNPJ: "98.765.432/0001-11",
+      nroUnico: "100.500",
+      valor: 900.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – PV-003 Parcela 2 (R$ 450,00 / venc 01/06/2026) ────────
+  {
+    id: "pv003-t2",
+    dataNegociacao: "20/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Varejo Central S.A.",
+    parceiroCNPJ: "98.765.432/0001-11",
+    nroUnico: "100.502",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 450.0,
+    totalIBSUF: 15.75,
+    totalIBSMun: 15.75,
+    totalCBS: 22.5,
+    nroNota: "ND-0402",
+    desdob: "002/002",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "20/05/2026",
+    dtVencimento: "01/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 450.0, dataBaixa: "01/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "5,00%", valor: 22.5,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.502", nroNota: "ND-0402", chaveDFe: "35260601234567890001550010000004021234560402", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "pedido-pv003",
+      numero: "PV-003",
+      dataNegociacao: "20/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Varejo Central S.A.",
+      parceiroCNPJ: "98.765.432/0001-11",
+      nroUnico: "100.500",
+      valor: 900.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – PV-004 Parcela 1 (R$ 600,00 / antecipação / ND-0501) ────
+  {
+    id: "pv004-t1",
+    dataNegociacao: "25/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Logística Express Ltda",
+    parceiroCNPJ: "88.999.000/0001-44",
+    nroUnico: "100.601",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 600.0,
+    totalIBSUF: 21.0,
+    totalIBSMun: 21.0,
+    totalCBS: 30.0,
+    nroNota: "ND-0501",
+    desdob: "001/002",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "25/05/2026",
+    dtVencimento: "01/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 600.0, dataBaixa: "01/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "5,00%", valor: 30.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "3,50%", valor: 21.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "3,50%", valor: 21.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.601", nroNota: "ND-0501", chaveDFe: "35260601234567890001550010000005011234560501", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "pedido-pv004",
+      numero: "PV-004",
+      dataNegociacao: "25/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Logística Express Ltda",
+      parceiroCNPJ: "88.999.000/0001-44",
+      nroUnico: "100.600",
+      valor: 1200.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── Pedido de Venda – PV-004 Parcela 2 (R$ 600,00 / fornecimento / NF-1201) ──
+  {
+    id: "pv004-t2",
+    dataNegociacao: "25/05/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Logística Express Ltda",
+    parceiroCNPJ: "88.999.000/0001-44",
+    nroUnico: "100.602",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 600.0,
+    totalIBSUF: 21.0,
+    totalIBSMun: 21.0,
+    totalCBS: 30.0,
+    nroNota: "NF-1201",
+    desdob: "002/002",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "25/05/2026",
+    dtVencimento: "10/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 600.0, dataBaixa: "10/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "5,00%", valor: 30.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "3,50%", valor: 21.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "3,50%", valor: 21.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.602", nroNota: "NF-1201", chaveDFe: "35260601234567890001550010000012011234561201", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+    pedidoRef: {
+      id: "pedido-pv004",
+      numero: "PV-004",
+      dataNegociacao: "25/05/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Logística Express Ltda",
+      parceiroCNPJ: "88.999.000/0001-44",
+      nroUnico: "100.600",
+      valor: 1200.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
   // ── Venda – sem documento fiscal ─────────────────────────────────────────
   {
     id: "t14",
@@ -612,6 +1309,143 @@ const MOCK: ReceitaMovimento[] = [
       { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 15000, baseReduzida: 0, aliquota: "3,50%", valor: 525.0,  digitado: "Não" },
     ],
     documentos: [],
+    pendencia: "Esse título não tem um documento fiscal relacionado. Importe um XML ou relacione com um documento existente, através do grupo Documentos do Título.",
+  },
+
+  // ── PV-010 — Parcela 1 (R$ 10.000,00 / sem multa e juros) ────────────────────
+  {
+    id: "pv010-t1",
+    dataNegociacao: "05/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Digital Supply Ltda",
+    parceiroCNPJ: "12.345.678/0001-55",
+    nroUnico: "100.802",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 10000.0,
+    totalIBSUF: 350.0,
+    totalIBSMun: 350.0,
+    totalCBS: 500.0,
+    nroNota: "NF-001601",
+    desdob: "001/002",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "05/06/2026",
+    dtVencimento: "05/07/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 10000.0, dataBaixa: "10/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "5,00%", valor: 500.0, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "3,50%", valor: 350.0, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "3,50%", valor: 350.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.801", nroNota: "NF-001601", chaveDFe: "35260601234567890001550010000016011000016011", statusDFe: "Autorizado", finalidade: "Normal" },
+    ],
+    pedidoRef: {
+      id: "pv-010",
+      numero: "PV-010",
+      dataNegociacao: "05/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Digital Supply Ltda",
+      parceiroCNPJ: "12.345.678/0001-55",
+      nroUnico: "100.800",
+      valor: 20000.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── PV-010 — Parcela 2 (R$ 10.000,00 / com multa e juros) ────────────────────
+  {
+    id: "pv010-t2",
+    dataNegociacao: "05/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Digital Supply Ltda",
+    parceiroCNPJ: "12.345.678/0001-55",
+    nroUnico: "100.803",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 10000.0,
+    totalIBSUF: 350.0,
+    totalIBSMun: 350.0,
+    totalCBS: 500.0,
+    nroNota: "NF-001601",
+    desdob: "002/002",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "05/06/2026",
+    dtVencimento: "05/07/2026",
+    vlrDesconto: 0, vlrMulta: 300.0, vlrJuros: 150.0, vlrBaixa: 10450.0, dataBaixa: "10/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "5,00%", valor: 500.0,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "3,50%", valor: 350.0,  digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "3,50%", valor: 350.0,  digitado: "Não" },
+    ],
+    tributosMultaJuros: [
+      { imposto: "CBS",     incidencia: "Multa e Juros", cst: "01", base: 450, baseReduzida: 0, aliquota: "5,00%", valor: 22.5,  digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Multa e Juros", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Multa e Juros", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "100.801", nroNota: "NF-001601", chaveDFe: "35260601234567890001550010000016011000016011", statusDFe: "Autorizado", finalidade: "Normal" },
+      { nroUnico: "100.810", nroNota: "ND-001602", chaveDFe: "35260601234567890001550010000016021000016021", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "pv-010",
+      numero: "PV-010",
+      dataNegociacao: "05/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Digital Supply Ltda",
+      parceiroCNPJ: "12.345.678/0001-55",
+      nroUnico: "100.800",
+      valor: 20000.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+    pendencia: "Esse título foi recebido com multa e juros. É necessário gerar uma Nota de Débito.",
+  },
+
+  // ── Pedido de Venda – PV-072 / Fênix Serviços (R$ 72,00 / venc 16/06/2026 pago) ─
+  {
+    id: "sc-ant-72",
+    dataNegociacao: "16/06/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Fênix Serviços Ltda",
+    parceiroCNPJ: "12.876.543/0001-21",
+    nroUnico: "150.001",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 72.0,
+    totalIBSUF: 2.52,
+    totalIBSMun: 2.52,
+    totalCBS: 3.60,
+    nroNota: "ND-000072",
+    desdob: "001/001",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    dtEntradaSaida: "16/06/2026",
+    dtVencimento: "16/06/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 72.0, dataBaixa: "16/06/2026",
+    tributos: [
+      { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "5,00%", valor: 3.60, digitado: "Não" },
+      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "3,50%", valor: 2.52, digitado: "Não" },
+      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "3,50%", valor: 2.52, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "150.002", nroNota: "ND-000072", chaveDFe: "35260601234567890001550010000000072123456720", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id: "sc-pv-72",
+      numero: "PV-072",
+      dataNegociacao: "16/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Fênix Serviços Ltda",
+      parceiroCNPJ: "12.876.543/0001-21",
+      nroUnico: "150.001",
+      valor: 72.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
   },
 ];
 
@@ -630,9 +1464,39 @@ function saldo(tributos: Tributo[], tributosDevolvidos: Tributo[] | undefined, t
   return `${brl(Math.abs(net))} ${net > 0 ? "D" : "C"}`;
 }
 
-function dateToPeriod(date: string): string {
-  const [, m, y] = date.split("/");
-  return `${y}-${m}`;
+
+function PendenciaIcon({ pendencia }: { pendencia?: string }) {
+  if (pendencia) {
+    return <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Pendência" />;
+  }
+  return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+}
+
+function PendenciaAlerta({ pendencia, navigate, nroUnico }: { pendencia: string; navigate: ReturnType<typeof useNavigate>; nroUnico: string }) {
+  const isMJ = pendencia.includes("multa e juros");
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
+      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+      <p className="text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">
+        {pendencia}
+        {isMJ && (
+          <>
+            {" "}
+            <button
+              className="underline font-medium hover:text-amber-900 dark:hover:text-amber-200 transition-colors"
+              onClick={() =>
+                navigate(ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS, {
+                  state: { openNroUnico: nroUnico },
+                })
+              }
+            >
+              Acesse Receitas — Multa e Juros
+            </button>
+          </>
+        )}
+      </p>
+    </div>
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -643,6 +1507,10 @@ export default function MovimentacoesReceitasMovimento() {
   const [selected, setSelected] = useState<ReceitaMovimento | null>(null);
   const [selectedRef, setSelectedRef] = useState<TituloRef | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
+  const [filtroDataDe, setFiltroDataDe] = useState<Date | undefined>(undefined);
+  const [filtroDataAte, setFiltroDataAte] = useState<Date | undefined>(undefined);
+  const [filtroTipoTitulo, setFiltroTipoTitulo] = useState("");
+  const [filtroPendencia, setFiltroPendencia] = useState("");
 
   useEffect(() => {
     const nroUnico = (location.state as { openNroUnico?: string } | null)?.openNroUnico;
@@ -650,25 +1518,32 @@ export default function MovimentacoesReceitasMovimento() {
     const record = MOCK.find((r) => r.nroUnico === nroUnico);
     if (record) { setSelected(record); setView("detail"); }
   }, [location.state]);
-  const [filtroPeriodo, setFiltroPeriodo] = useState("");
 
-  const hasFilter = filtroEmpresa !== "" || filtroPeriodo !== "";
+  const hasFilter = filtroEmpresa !== "" || filtroDataDe !== undefined || filtroDataAte !== undefined || filtroTipoTitulo !== "" || filtroPendencia !== "";
+
+  const TIPOS_TITULO = useMemo(() => Array.from(new Set(MOCK.map(r => r.tipoTitulo))).sort(), []);
 
   const rows = useMemo(() => {
-    if (!hasFilter) {
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      return MOCK.filter((r) => {
-        const [d, m, y] = r.dataNegociacao.split("/");
-        return new Date(Number(y), Number(m) - 1, Number(d)) >= cutoff;
-      });
-    }
+    const parseDate = (s: string) => {
+      const [d, m, y] = s.split("/");
+      return new Date(Number(y), Number(m) - 1, Number(d));
+    };
     return MOCK.filter((r) => {
+      const dt = parseDate(r.dataNegociacao);
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const byPeriodo = !filtroPeriodo || dateToPeriod(r.dataNegociacao) === filtroPeriodo;
-      return byEmpresa && byPeriodo;
+      const byDe = !filtroDataDe || dt >= filtroDataDe;
+      const byAte = !filtroDataAte || dt <= filtroDataAte;
+      const byTipoTitulo = !filtroTipoTitulo || r.tipoTitulo === filtroTipoTitulo;
+      const byPendencia = !filtroPendencia || (filtroPendencia === "sim" ? !!r.pendencia : !r.pendencia);
+      return byEmpresa && byDe && byAte && byTipoTitulo && byPendencia;
     });
-  }, [filtroEmpresa, filtroPeriodo, hasFilter]);
+  }, [filtroEmpresa, filtroDataDe, filtroDataAte, filtroTipoTitulo, filtroPendencia]);
+
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [rows]);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (view === "ref-detail" && selectedRef && selected) {
     return (
@@ -715,7 +1590,7 @@ export default function MovimentacoesReceitasMovimento() {
 
           <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
             <SelectTrigger className="w-[280px] h-8 text-[13px]">
-              <SelectValue placeholder="Empresa" />
+              <SelectValue placeholder="Empresas" />
             </SelectTrigger>
             <SelectContent>
               {EMPRESAS.map((e) => (
@@ -726,22 +1601,62 @@ export default function MovimentacoesReceitasMovimento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroPeriodo} onValueChange={setFiltroPeriodo}>
-            <SelectTrigger className="w-[180px] h-8 text-[13px]">
-              <SelectValue placeholder="Período" />
+          {/* Período De */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroDataDe && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {filtroDataDe ? format(filtroDataDe, "dd/MM/yyyy") : "De"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={filtroDataDe} onSelect={setFiltroDataDe} initialFocus />
+            </PopoverContent>
+          </Popover>
+
+          {/* Período Até */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroDataAte && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {filtroDataAte ? format(filtroDataAte, "dd/MM/yyyy") : "Até"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={filtroDataAte} onSelect={setFiltroDataAte} initialFocus />
+            </PopoverContent>
+          </Popover>
+
+          <Select value={filtroTipoTitulo} onValueChange={setFiltroTipoTitulo}>
+            <SelectTrigger className="w-[160px] h-8 text-[13px]">
+              <SelectValue placeholder="Tipo Título" />
             </SelectTrigger>
             <SelectContent>
-              {PERIODOS.map((p) => (
-                <SelectItem key={p.value} value={p.value} className="text-[13px]">
-                  {p.label}
-                </SelectItem>
+              {TIPOS_TITULO.map((t) => (
+                <SelectItem key={t} value={t} className="text-[13px]">{t}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroPendencia} onValueChange={setFiltroPendencia}>
+            <SelectTrigger className="w-[140px] h-8 text-[13px]">
+              <SelectValue placeholder="Pendência" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sim" className="text-[13px]">Sim</SelectItem>
+              <SelectItem value="nao" className="text-[13px]">Não</SelectItem>
             </SelectContent>
           </Select>
 
           {hasFilter && (
             <button
-              onClick={() => { setFiltroEmpresa(""); setFiltroPeriodo(""); }}
+              onClick={() => { setFiltroEmpresa(""); setFiltroDataDe(undefined); setFiltroDataAte(undefined); setFiltroTipoTitulo(""); setFiltroPendencia(""); }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-3 w-3" />
@@ -766,10 +1681,11 @@ export default function MovimentacoesReceitasMovimento() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center">Pendências</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
-                    <TableHead className="text-[12px]">Tipo</TableHead>
+                    <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
@@ -780,23 +1696,21 @@ export default function MovimentacoesReceitasMovimento() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r) => (
+                  {pageRows.map((r) => (
                     <TableRow key={r.id} className="hover:bg-muted/40 text-[13px]">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <PendenciaIcon pendencia={r.pendencia} />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
                         <div>{r.parceiroNome}</div>
                         <div className="text-[11px] text-muted-foreground">{r.parceiroCNPJ}</div>
                       </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-[13px] font-medium",
-                          r.tipo === "Receita"
-                            ? "text-blue-700 dark:text-blue-400"
-                            : "text-red-700 dark:text-red-400"
-                        )}
-                      >
-                        {r.tipo}
+                      <TableCell className="text-[13px] font-medium">
+                        {r.tipoMovimento}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
                       <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
@@ -820,10 +1734,52 @@ export default function MovimentacoesReceitasMovimento() {
                 </TableBody>
               </Table>
             </div>
-            <p className="mt-3 text-[12px] text-muted-foreground">
-              {rows.length} registro{rows.length !== 1 ? "s" : ""}
-              {!hasFilter && " · últimos 30 dias"}
-            </p>
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <p className="text-[12px] text-muted-foreground">
+                {rows.length} registro{rows.length !== 1 ? "s" : ""}
+                {totalPages > 1 && ` · página ${page} de ${totalPages}`}
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === 1}
+                    onClick={() => setPage(1)}
+                  >
+                    «
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    ‹
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    ›
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[12px] px-2"
+                    disabled={page === totalPages}
+                    onClick={() => setPage(totalPages)}
+                  >
+                    »
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1080,6 +2036,11 @@ function DetailView({
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
+        {/* Alerta de pendência */}
+        {r.pendencia && (
+          <PendenciaAlerta pendencia={r.pendencia} navigate={navigate} nroUnico={r.nroUnico} />
+        )}
+
         {/* Resumo do Título */}
         <CollapsibleSection title="Resumo do Título">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1117,6 +2078,65 @@ function DetailView({
           </div>
         </CollapsibleSection>
 
+        {/* Pedido do Título */}
+        <CollapsibleSection title="Pedido do Título">
+          {r.pedidoRef ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px]">Número</TableHead>
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Empresa</TableHead>
+                    <TableHead className="text-[12px]">Parceiro</TableHead>
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Tipo Operação</TableHead>
+                    <TableHead className="text-[12px] text-right">Valor</TableHead>
+                    <TableHead className="text-[12px] text-center">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="text-[13px]">
+                    <TableCell className="font-mono font-medium">{r.pedidoRef.numero}</TableCell>
+                    <TableCell className="font-mono text-[12px]">{r.pedidoRef.dataNegociacao}</TableCell>
+                    <TableCell>{r.pedidoRef.empresa}</TableCell>
+                    <TableCell>
+                      <div>{r.pedidoRef.parceiroNome}</div>
+                      <div className="text-[11px] text-muted-foreground">{r.pedidoRef.parceiroCNPJ}</div>
+                    </TableCell>
+                    <TableCell className="font-mono">{r.pedidoRef.nroUnico}</TableCell>
+                    <TableCell>{r.pedidoRef.tipoOperacao}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.pedidoRef.valor)}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[12px] gap-1"
+                        onClick={() =>
+                          navigate(ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO, {
+                            state: { openNroUnico: r.pedidoRef!.id },
+                          })
+                        }
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Detalhar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
+              <p className="text-[13px] text-muted-foreground">Não existe um pedido relacionado</p>
+              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                <Link2 className="h-3.5 w-3.5" />
+                Relacionar documento
+              </Button>
+            </div>
+          )}
+        </CollapsibleSection>
+
         {/* Documentos do Título */}
         <CollapsibleSection title="Documentos do Título">
           {r.documentos && r.documentos.length > 0 ? (
@@ -1124,6 +2144,7 @@ function DetailView({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center">Pendências</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
                     <TableHead className="text-[12px]">Chave DFe</TableHead>
@@ -1135,6 +2156,11 @@ function DetailView({
                 <TableBody>
                   {r.documentos.map((doc, i) => (
                     <TableRow key={i} className="text-[13px]">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono">{doc.nroUnico}</TableCell>
                       <TableCell className="font-mono">{doc.nroNota}</TableCell>
                       <TableCell className="max-w-[200px]">
@@ -1164,19 +2190,17 @@ function DetailView({
                 </TableBody>
               </Table>
             </div>
-          ) : (
+          ) : r.vlrBaixa > 0 ? (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um documento fiscal relacionado</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                  <Upload className="h-3.5 w-3.5" />
-                  Importar XML
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                  <Link2 className="h-3.5 w-3.5" />
-                  Relacionar documento
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                Gerar Nota de Débito
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-muted/20 p-6 flex items-center justify-center">
+              <p className="text-[13px] text-muted-foreground">Não existe um documento fiscal relacionado</p>
             </div>
           )}
         </CollapsibleSection>
@@ -1257,8 +2281,61 @@ function DetailView({
           />
         </CollapsibleSection>
 
+        {/* Guias do Título */}
+        {r.conciliacaoApuracaoAssistida && (
+          <ConciliacaoSection conciliacao={r.conciliacaoApuracaoAssistida} />
+        )}
+
       </div>
     </div>
+  );
+}
+
+// ─── Guias do Título ──────────────────────────────────────────────────────────
+
+function ConciliacaoSection({ conciliacao: c }: { conciliacao: ConciliacaoApuracaoAssistida }) {
+  return (
+    <CollapsibleSection title="Guias do Título">
+      {c.guias.length === 0 ? (
+        <div className="rounded-lg border bg-muted/20 p-6 flex items-center justify-center">
+          <p className="text-[13px] text-muted-foreground">Nenhuma guia de pagamento encontrada para este título.</p>
+        </div>
+      ) : (
+        <div className="rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead className="text-[12px]">Nro Único</TableHead>
+                <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
+                <TableHead className="text-[12px]">Tipo Título</TableHead>
+                <TableHead className="text-[12px] text-right">Valor</TableHead>
+                <TableHead className="text-[12px] text-center">Ação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {c.guias.map((g, i) => (
+                <TableRow key={i} className="text-[13px]">
+                  <TableCell className="font-mono">{g.nroUnico}</TableCell>
+                  <TableCell
+                    className="font-medium text-red-700 dark:text-red-400"
+                  >
+                    {g.tipoMovimento}
+                  </TableCell>
+                  <TableCell><TipoTituloBadge tipo={g.tipoTitulo} /></TableCell>
+                  <TableCell className="text-right font-mono">{brl(g.valor)}</TableCell>
+                  <TableCell className="text-center">
+                    <Button size="sm" variant="outline" className="h-7 text-[12px] gap-1" disabled>
+                      <Eye className="h-3.5 w-3.5" />
+                      Detalhar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </CollapsibleSection>
   );
 }
 
