@@ -22,10 +22,13 @@
       "Bash(sed 's/.*id: \"//')",
       "Bash(sed 's/\".*//')",
       "Bash(python3)",
-      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('date'\\)||k.includes\\('Day'\\)\\)\\)\\)\")"
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('date'\\)||k.includes\\('Day'\\)\\)\\)\\)\")",
+      "Bash(ls \"C:/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/Movimentações_financeiras\" 2>/dev/null && echo \"EXISTS\" || echo \"NOT FOUND\")",
+      "Read(//c/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/Movimentações_financeiras/**)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\eduardol_sankhya\\.claude"
+      "C:\\Users\\eduardol_sankhya\\.claude",
+      "C:\\Users\\eduardol_sankhya\\Documents\\VS Code\\sankhyaPRJ\\portalreformatributaria\\Movimentações_financeiras"
     ]
   }
 }

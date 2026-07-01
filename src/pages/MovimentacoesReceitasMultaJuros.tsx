@@ -82,6 +82,7 @@ interface MultaJurosReceita {
   parceiroNome:       string;
   parceiroCNPJ:       string;
   tipo:               "Receita";
+  tipoMovimento:      string;
   nroUnico:           string;
   multa:              number;
   juros:              number;
@@ -115,11 +116,7 @@ const EMPRESAS = [
   { cod: "003", nome: "Distribuidora Norte Ltda" },
 ];
 
-const PERIODOS = [
-  { value: "2026-04", label: "Abril/2026" },
-  { value: "2026-05", label: "Maio/2026" },
-  { value: "2026-06", label: "Junho/2026" },
-];
+const TIPOS_MOVIMENTO = ["Venda", "Prestação de Serviço"];
 
 const MOCK: MultaJurosReceita[] = [
   // ── 1 · Cálculo: Pendente ─────────────────────────────────────────────────
@@ -131,6 +128,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Grupo Nexus S.A.",
     parceiroCNPJ: "23.456.789/0001-01",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "100.010",
     multa: 450.0, juros: 230.0,
     totalIBSUF: 23.8, totalIBSMun: 23.8, totalCBS: 34.0,
@@ -162,6 +160,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Comércio Leste Ltda",
     parceiroCNPJ: "77.888.999/0001-55",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "200.030",
     multa: 1200.0, juros: 650.0,
     totalIBSUF: 64.75, totalIBSMun: 64.75, totalCBS: 92.5,
@@ -193,6 +192,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Distribuidora Beta S.A.",
     parceiroCNPJ: "55.666.777/0001-88",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "500.008",
     multa: 850.0, juros: 320.0,
     totalIBSUF: 40.95, totalIBSMun: 40.95, totalCBS: 58.5,
@@ -224,6 +224,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Materiais Omega S.A.",
     parceiroCNPJ: "88.999.000/0001-33",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "600.025",
     multa: 2100.0, juros: 980.0,
     totalIBSUF: 107.8, totalIBSMun: 107.8, totalCBS: 154.0,
@@ -255,6 +256,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Comércio Leste Ltda",
     parceiroCNPJ: "77.888.999/0001-55",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "200.040",
     multa: 1800.0, juros: 720.0,
     totalIBSUF: 88.2, totalIBSMun: 88.2, totalCBS: 126.0,
@@ -293,6 +295,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Grupo Nexus S.A.",
     parceiroCNPJ: "23.456.789/0001-01",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "100.015",
     multa: 3500.0, juros: 1200.0,
     totalIBSUF: 164.5, totalIBSMun: 164.5, totalCBS: 235.0,
@@ -331,6 +334,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Transportes Sul S.A.",
     parceiroCNPJ: "11.222.333/0001-44",
     tipo: "Receita",
+    tipoMovimento: "Prestação de Serviço",
     nroUnico: "300.011",
     multa: 980.0, juros: 410.0,
     totalIBSUF: 48.3, totalIBSMun: 48.3, totalCBS: 69.0,
@@ -362,6 +366,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Comércio Leste Ltda",
     parceiroCNPJ: "77.888.999/0001-55",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "200.050",
     multa: 6200.0, juros: 2300.0,
     totalIBSUF: 297.5, totalIBSMun: 297.5, totalCBS: 425.0,
@@ -417,6 +422,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Transportes Delta S.A.",
     parceiroCNPJ: "22.333.444/0001-66",
     tipo: "Receita",
+    tipoMovimento: "Prestação de Serviço",
     nroUnico: "400.010",
     multa: 360.0, juros: 180.0,
     totalIBSUF: 18.9, totalIBSMun: 18.9, totalCBS: 27.0,
@@ -472,6 +478,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Indústria Alfa S.A.",
     parceiroCNPJ: "11.222.333/0001-44",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "100.099",
     multa: 540.0, juros: 270.0,
     totalIBSUF: 28.35, totalIBSMun: 28.35, totalCBS: 40.5,
@@ -503,6 +510,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Digital Supply Ltda",
     parceiroCNPJ: "12.345.678/0001-55",
     tipo: "Receita",
+    tipoMovimento: "Venda",
     nroUnico: "100.803",
     multa: 300.0, juros: 150.0,
     totalIBSUF: 15.75, totalIBSMun: 15.75, totalCBS: 22.5,
@@ -569,9 +577,9 @@ const MOCK: MultaJurosReceita[] = [
 const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-function dateToPeriod(date: string): string {
-  const [, m, y] = date.split("/");
-  return `${y}-${m}`;
+function parseDate(date: string): Date {
+  const [d, m, y] = date.split("/");
+  return new Date(Number(y), Number(m) - 1, Number(d));
 }
 
 function BadgeCalculo({ status }: { status: StatusCalculo }) {
@@ -643,7 +651,12 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [view, setView]                 = useState<View>("list");
   const [selected, setSelected]         = useState<MultaJurosReceita | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
-  const [filtroPeriodo, setFiltroPeriodo] = useState("");
+  const [filtroDe, setFiltroDe] = useState("");
+  const [filtroAte, setFiltroAte] = useState("");
+  const [filtroCalculo, setFiltroCalculo] = useState("");
+  const [filtroGeracao, setFiltroGeracao] = useState("");
+  const [filtroDFe, setFiltroDFe] = useState("");
+  const [filtroTipoMovimento, setFiltroTipoMovimento] = useState("");
 
   useEffect(() => {
     const nroUnico = (location.state as { openNroUnico?: string } | null)?.openNroUnico;
@@ -652,15 +665,24 @@ export default function MovimentacoesReceitasMultaJuros() {
     if (record) { setSelected(record); setView("detail"); }
   }, [location.state]);
 
-  const hasFilter = filtroEmpresa !== "" || filtroPeriodo !== "";
+  const hasFilter = filtroEmpresa !== "" || filtroDe !== "" || filtroAte !== "" ||
+    filtroCalculo !== "" || filtroGeracao !== "" || filtroDFe !== "" || filtroTipoMovimento !== "";
 
   const rows = useMemo(() => {
+    const de = filtroDe ? new Date(filtroDe) : null;
+    const ate = filtroAte ? new Date(filtroAte) : null;
     return MOCK.filter((r) => {
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const byPeriodo = !filtroPeriodo || dateToPeriod(r.dataNegociacao) === filtroPeriodo;
-      return byEmpresa && byPeriodo;
+      const dt = parseDate(r.dataNegociacao);
+      const byDe = !de || dt >= de;
+      const byAte = !ate || dt <= ate;
+      const byCalculo = !filtroCalculo || r.statusCalculo === filtroCalculo;
+      const byGeracao = !filtroGeracao || r.statusGeracaoNota === filtroGeracao;
+      const byDFe = !filtroDFe || r.statusDFe === filtroDFe;
+      const byTipo = !filtroTipoMovimento || r.tipoMovimento === filtroTipoMovimento;
+      return byEmpresa && byDe && byAte && byCalculo && byGeracao && byDFe && byTipo;
     });
-  }, [filtroEmpresa, filtroPeriodo]);
+  }, [filtroEmpresa, filtroDe, filtroAte, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento]);
 
   if (view === "doc-fiscal" && selected) {
     return (
@@ -703,8 +725,10 @@ export default function MovimentacoesReceitasMultaJuros() {
       <div className="px-6 py-3 border-b bg-muted/30 shrink-0">
         <div className="flex items-center gap-3 flex-wrap">
           <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+
+          {/* Empresa */}
           <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
-            <SelectTrigger className="w-[280px] h-8 text-[13px]">
+            <SelectTrigger className="w-[260px] h-8 text-[13px]">
               <SelectValue placeholder="Empresa" />
             </SelectTrigger>
             <SelectContent>
@@ -715,21 +739,84 @@ export default function MovimentacoesReceitasMultaJuros() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filtroPeriodo} onValueChange={setFiltroPeriodo}>
-            <SelectTrigger className="w-[180px] h-8 text-[13px]">
-              <SelectValue placeholder="Período" />
+
+          {/* De */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] text-muted-foreground">De</span>
+            <input
+              type="date"
+              value={filtroDe}
+              onChange={(e) => setFiltroDe(e.target.value)}
+              className="h-8 text-[13px] rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            />
+          </div>
+
+          {/* Até */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] text-muted-foreground">Até</span>
+            <input
+              type="date"
+              value={filtroAte}
+              onChange={(e) => setFiltroAte(e.target.value)}
+              className="h-8 text-[13px] rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            />
+          </div>
+
+          {/* Cálculo */}
+          <Select value={filtroCalculo} onValueChange={setFiltroCalculo}>
+            <SelectTrigger className="w-[145px] h-8 text-[13px]">
+              <SelectValue placeholder="Cálculo" />
             </SelectTrigger>
             <SelectContent>
-              {PERIODOS.map((p) => (
-                <SelectItem key={p.value} value={p.value} className="text-[13px]">
-                  {p.label}
-                </SelectItem>
+              {(["Pendente", "Calculando", "Concluído"] as StatusCalculo[]).map((s) => (
+                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Geração da Nota */}
+          <Select value={filtroGeracao} onValueChange={setFiltroGeracao}>
+            <SelectTrigger className="w-[175px] h-8 text-[13px]">
+              <SelectValue placeholder="Geração da Nota" />
+            </SelectTrigger>
+            <SelectContent>
+              {(["Pendente", "Em geração", "Confirmada", "Não configurado"] as StatusGeracaoNota[]).map((s) => (
+                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Status DFe */}
+          <Select value={filtroDFe} onValueChange={setFiltroDFe}>
+            <SelectTrigger className="w-[200px] h-8 text-[13px]">
+              <SelectValue placeholder="Status DFe" />
+            </SelectTrigger>
+            <SelectContent>
+              {(["Não enviado", "Aguardando autorização", "Erro", "Autorizado"] as StatusDFe[]).map((s) => (
+                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Tipo de Movimento */}
+          <Select value={filtroTipoMovimento} onValueChange={setFiltroTipoMovimento}>
+            <SelectTrigger className="w-[185px] h-8 text-[13px]">
+              <SelectValue placeholder="Tipo de Movimento" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIPOS_MOVIMENTO.map((t) => (
+                <SelectItem key={t} value={t} className="text-[13px]">{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {hasFilter && (
             <button
-              onClick={() => { setFiltroEmpresa(""); setFiltroPeriodo(""); }}
+              onClick={() => {
+                setFiltroEmpresa(""); setFiltroDe(""); setFiltroAte("");
+                setFiltroCalculo(""); setFiltroGeracao(""); setFiltroDFe("");
+                setFiltroTipoMovimento("");
+              }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-3 w-3" />
