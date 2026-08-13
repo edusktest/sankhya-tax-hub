@@ -17,6 +17,7 @@ interface BIAChatContextValue {
   hasInteracted: boolean;
   immediateLayout: boolean;
   navOpenOnStart: boolean;
+  eipMode: boolean;
   pendingAction: ((input: string) => void) | null;
   setIsOpen: (v: boolean) => void;
   setThinking: (v: boolean) => void;
@@ -24,6 +25,7 @@ interface BIAChatContextValue {
   addMessage: (msg: BIAMessage) => void;
   sendInsight: (content: string, tag?: BIAMessage["tag"], skill?: BIASkill) => void;
   skipToLayout: () => void;
+  setEipMode: (v: boolean) => void;
 }
 
 const BIAChatContext = createContext<BIAChatContextValue | null>(null);
@@ -61,7 +63,15 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [immediateLayout, setImmediateLayout] = useState(false);
   const [navOpenOnStart, setNavOpenOnStart] = useState(false);
+  const [eipMode, setEipModeState] = useState(() =>
+    localStorage.getItem("sankhya-layout-mode") === "eip"
+  );
   const [pendingAction, setPendingActionState] = useState<((input: string) => void) | null>(null);
+
+  function setEipMode(v: boolean) {
+    localStorage.setItem("sankhya-layout-mode", v ? "eip" : "portal");
+    setEipModeState(v);
+  }
 
   function addMessage(msg: BIAMessage) {
     if (msg.role === "user") setHasInteracted(true);
@@ -86,9 +96,9 @@ export function BIAChatProvider({ children }: { children: ReactNode }) {
 
   return (
     <BIAChatContext.Provider value={{
-      messages, isOpen, thinking, hasInteracted, immediateLayout, navOpenOnStart, pendingAction,
+      messages, isOpen, thinking, hasInteracted, immediateLayout, navOpenOnStart, eipMode, pendingAction,
       setIsOpen, setThinking, setPendingAction,
-      addMessage, sendInsight, skipToLayout,
+      addMessage, sendInsight, skipToLayout, setEipMode,
     }}>
       {children}
     </BIAChatContext.Provider>

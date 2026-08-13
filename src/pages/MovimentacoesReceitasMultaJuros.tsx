@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   TrendingUp, ChevronRight, ExternalLink, Eye, Filter, X,
-  FileText, RefreshCw, FileStack, AlertTriangle, CheckCircle2,
+  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, Calculator,
 } from "lucide-react";
 import { ERoutes } from "@/routes/interface";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,8 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type StatusCalculo      = "Pendente" | "Calculando" | "Concluído";
-type StatusGeracaoNota  = "Pendente" | "Em geração" | "Confirmada" | "Não configurado";
+type StatusCalculo      = "Pendente" | "Processando" | "Concluído" | "Não configurado";
+type StatusGeracaoNota  = "Pendente" | "Processando" | "Confirmada" | "Não configurado";
 type StatusDFe          = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado";
 
 interface NotaDebito {
@@ -116,7 +116,7 @@ const EMPRESAS = [
   { cod: "003", nome: "Distribuidora Norte Ltda" },
 ];
 
-const TIPOS_MOVIMENTO = ["Venda", "Prestação de Serviço"];
+const TIPOS_MOVIMENTO = ["Venda", "Pedido de Venda"];
 
 const MOCK: MultaJurosReceita[] = [
   // ── 1 · Cálculo: Pendente ─────────────────────────────────────────────────
@@ -131,7 +131,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.010",
     multa: 450.0, juros: 230.0,
-    totalIBSUF: 23.8, totalIBSMun: 23.8, totalCBS: 34.0,
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
     statusCalculo: "Pendente", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-001234", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "28/04/2026", dtVencimento: "25/04/2026",
@@ -163,8 +163,8 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "200.030",
     multa: 1200.0, juros: 650.0,
-    totalIBSUF: 64.75, totalIBSMun: 64.75, totalCBS: 92.5,
-    statusCalculo: "Calculando", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    statusCalculo: "Processando", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-002200", desdob: "002/003", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "05/05/2026", dtVencimento: "07/07/2026",
     vlrDesdobramento: 9933.33, vlrDesconto: 0, vlrBaixa: 11783.33, dataBaixa: "05/05/2026",
@@ -195,8 +195,8 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "500.008",
     multa: 850.0, juros: 320.0,
-    totalIBSUF: 40.95, totalIBSMun: 40.95, totalCBS: 58.5,
-    statusCalculo: "Concluído", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    statusCalculo: "Concluído", statusGeracaoNota: "Processando", statusDFe: "Não enviado",
     nroNota: "NF-500210", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "08/05/2026", dtVencimento: "14/04/2026",
     vlrDesdobramento: 5100.0, vlrDesconto: 0, vlrBaixa: 6270.0, dataBaixa: "08/05/2026",
@@ -334,11 +334,11 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Transportes Sul S.A.",
     parceiroCNPJ: "11.222.333/0001-44",
     tipo: "Receita",
-    tipoMovimento: "Prestação de Serviço",
+    tipoMovimento: "Pedido de Venda",
     nroUnico: "300.011",
     multa: 980.0, juros: 410.0,
-    totalIBSUF: 48.3, totalIBSMun: 48.3, totalCBS: 69.0,
-    statusCalculo: "Concluído", statusGeracaoNota: "Não configurado", statusDFe: "Não enviado",
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    statusCalculo: "Não configurado", statusGeracaoNota: "Não configurado", statusDFe: "Não enviado",
     nroNota: "NF-003100", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "15/05/2026", dtVencimento: "10/04/2026",
     vlrDesdobramento: 8200.0, vlrDesconto: 0, vlrBaixa: 9590.0, dataBaixa: "15/05/2026",
@@ -422,7 +422,7 @@ const MOCK: MultaJurosReceita[] = [
     parceiroNome: "Transportes Delta S.A.",
     parceiroCNPJ: "22.333.444/0001-66",
     tipo: "Receita",
-    tipoMovimento: "Prestação de Serviço",
+    tipoMovimento: "Pedido de Venda",
     nroUnico: "400.010",
     multa: 360.0, juros: 180.0,
     totalIBSUF: 18.9, totalIBSMun: 18.9, totalCBS: 27.0,
@@ -481,7 +481,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.099",
     multa: 540.0, juros: 270.0,
-    totalIBSUF: 28.35, totalIBSMun: 28.35, totalCBS: 40.5,
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
     statusCalculo: "Concluído", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-001500", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "02/06/2026", dtVencimento: "02/05/2026",
@@ -584,16 +584,17 @@ function parseDate(date: string): Date {
 
 function BadgeCalculo({ status }: { status: StatusCalculo }) {
   const cls =
-    status === "Concluído"   ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
-    status === "Calculando"  ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
-                               "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
+    status === "Concluído"        ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
+    status === "Processando"      ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Não configurado"  ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
+                                    "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
 }
 
 function BadgeGeracao({ status }: { status: StatusGeracaoNota }) {
   const cls =
     status === "Confirmada"      ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
-    status === "Em geração"      ? "border-amber-300 text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40" :
+    status === "Processando"     ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
     status === "Não configurado" ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
                                    "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
@@ -630,9 +631,21 @@ function DetailField({ label, value, mono = false }: { label: string; value: str
   );
 }
 
-// valor IBS/CBS só aparece quando Concluído
-function ibsValue(v: number, status: StatusCalculo) {
-  return status === "Concluído" ? brl(v) : "—";
+// valor IBS/CBS só aparece quando a geração da nota foi Confirmada (cálculo ocorre nesse momento)
+function ibsValue(v: number, statusGeracao: StatusGeracaoNota) {
+  return statusGeracao === "Confirmada" ? brl(v) : "—";
+}
+
+function getPendencia(r: MultaJurosReceita): string | undefined {
+  if (r.statusCalculo === "Não configurado")
+    return "Cálculo de rateio não configurado.";
+  if (r.statusGeracaoNota === "Não configurado")
+    return "Geração de nota não configurada.";
+  if (r.statusDFe === "Erro")
+    return "Erro no envio do DFe.";
+  if (r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado")
+    return "Nota gerada mas DFe ainda não enviado.";
+  return undefined;
 }
 
 function PendenciaIcon({ pendencia }: { pendencia?: string }) {
@@ -640,6 +653,36 @@ function PendenciaIcon({ pendencia }: { pendencia?: string }) {
     return <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Pendência" />;
   }
   return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+}
+
+function SyncBadge({ label, date }: { label: string; date: string }) {
+  return (
+    <div className="relative group inline-flex">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200 cursor-default dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
+        ✓ {label}: {date}
+      </span>
+      {/* DEV — remover tooltip na versão do cliente */}
+      <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block z-20 pointer-events-none">
+        <div className="bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[11px] px-2.5 py-1.5 rounded-md shadow-md border border-amber-200 dark:border-amber-700 whitespace-nowrap">
+          <span className="font-semibold">Dev:</span> O job só executa se houver registros novos na tabela desde a última execução. Remover este tooltip na versão do cliente.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// DEV — wrapper de tooltip para notas técnicas que não devem aparecer na versão do cliente
+function DevTooltip({ children, hint }: { children: React.ReactNode; hint: string }) {
+  return (
+    <div className="relative group inline-flex">
+      {children}
+      <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-20 pointer-events-none">
+        <div className="bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[11px] px-2.5 py-1.5 rounded-md shadow-md border border-amber-200 dark:border-amber-700 max-w-[300px] leading-relaxed">
+          <span className="font-semibold">Dev:</span> {hint}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -657,6 +700,12 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [filtroGeracao, setFiltroGeracao] = useState("");
   const [filtroDFe, setFiltroDFe] = useState("");
   const [filtroTipoMovimento, setFiltroTipoMovimento] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1500);
+  };
 
   useEffect(() => {
     const nroUnico = (location.state as { openNroUnico?: string } | null)?.openNroUnico;
@@ -715,10 +764,15 @@ export default function MovimentacoesReceitasMultaJuros() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground font-medium">Multa e Juros</span>
         </div>
-        <h1 className="text-[18px] font-semibold">Receitas — Multa e Juros</h1>
-        <p className="text-[12px] text-muted-foreground mt-0.5">
-          Títulos a receber com multa e juros recebidos nas liquidações · a partir de 01/01/2026
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[18px] font-semibold">Receitas — Multa e Juros</h1>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              Títulos a receber com multa e juros recebidos nas liquidações · a partir de 01/01/2026
+            </p>
+          </div>
+          <SyncBadge label="Sincronizado" date="05/08/2026 19:26:25" />
+        </div>
       </div>
 
       {/* Filters */}
@@ -765,10 +819,10 @@ export default function MovimentacoesReceitasMultaJuros() {
           {/* Cálculo */}
           <Select value={filtroCalculo} onValueChange={setFiltroCalculo}>
             <SelectTrigger className="w-[145px] h-8 text-[13px]">
-              <SelectValue placeholder="Cálculo" />
+              <SelectValue placeholder="Cálculo de Rateio" />
             </SelectTrigger>
             <SelectContent>
-              {(["Pendente", "Calculando", "Concluído"] as StatusCalculo[]).map((s) => (
+              {(["Não configurado", "Pendente", "Processando", "Concluído"] as StatusCalculo[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
@@ -780,7 +834,7 @@ export default function MovimentacoesReceitasMultaJuros() {
               <SelectValue placeholder="Geração da Nota" />
             </SelectTrigger>
             <SelectContent>
-              {(["Pendente", "Em geração", "Confirmada", "Não configurado"] as StatusGeracaoNota[]).map((s) => (
+              {(["Não configurado", "Pendente", "Processando", "Confirmada"] as StatusGeracaoNota[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
@@ -823,6 +877,17 @@ export default function MovimentacoesReceitasMultaJuros() {
               Limpar filtros
             </button>
           )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 ml-auto text-muted-foreground hover:text-foreground"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+            {refreshing ? "Atualizando…" : "Atualizar"}
+          </Button>
         </div>
       </div>
 
@@ -852,7 +917,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                     <TableHead className="text-[12px] text-right">IBS UF Calculado</TableHead>
                     <TableHead className="text-[12px] text-right">IBS Mun Calculado</TableHead>
                     <TableHead className="text-[12px] text-right">CBS Calculado</TableHead>
-                    <TableHead className="text-[12px]">Cálculo</TableHead>
+                    <TableHead className="text-[12px]">Cálculo de Rateio</TableHead>
                     <TableHead className="text-[12px]">Geração da Nota</TableHead>
                     <TableHead className="text-[12px]">Status DFe</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
@@ -863,7 +928,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                     <TableRow key={r.id} className="hover:bg-muted/40 text-[13px]">
                       <TableCell className="text-center">
                         <div className="flex justify-center">
-                          <PendenciaIcon pendencia={r.pendencia} />
+                          <PendenciaIcon pendencia={getPendencia(r)} />
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
@@ -879,27 +944,35 @@ export default function MovimentacoesReceitasMultaJuros() {
                       <TableCell className="text-right font-mono">{brl(r.multa)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.juros)}</TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
-                        {ibsValue(r.totalIBSUF, r.statusCalculo)}
+                        {ibsValue(r.totalIBSUF, r.statusGeracaoNota)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
-                        {ibsValue(r.totalIBSMun, r.statusCalculo)}
+                        {ibsValue(r.totalIBSMun, r.statusGeracaoNota)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
-                        {ibsValue(r.totalCBS, r.statusCalculo)}
+                        {ibsValue(r.totalCBS, r.statusGeracaoNota)}
                       </TableCell>
                       <TableCell><BadgeCalculo status={r.statusCalculo} /></TableCell>
                       <TableCell><BadgeGeracao status={r.statusGeracaoNota} /></TableCell>
                       <TableCell><BadgeDFe status={r.statusDFe} /></TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-[12px] gap-1"
-                          onClick={() => { setSelected(r); setView("detail"); }}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Detalhar
-                        </Button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          {r.statusCalculo === "Pendente" && (
+                            <Button size="sm" variant="outline" className="h-7 text-[12px] gap-1">
+                              <Calculator className="h-3.5 w-3.5" />
+                              Calcular agora
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[12px] gap-1"
+                            onClick={() => { setSelected(r); setView("detail"); }}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Detalhar
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -929,8 +1002,7 @@ function MultaJurosDetailView({
 }) {
   const navigate = useNavigate();
   const showGerar   = r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado";
-  const showBuscar  = r.statusDFe === "Aguardando autorização";
-  const concluido   = r.statusCalculo === "Concluído";
+  const notaConfirmada = r.statusGeracaoNota === "Confirmada";
 
   return (
     <div className="flex flex-col h-full">
@@ -954,17 +1026,14 @@ function MultaJurosDetailView({
         </div>
         <div className="flex gap-2 shrink-0 flex-wrap justify-end">
           {showGerar && (
-            <Button variant="default" size="sm" className="h-8 text-[12px] gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              Gerar Nota de Débito
-            </Button>
+            <DevTooltip hint="Ao gerar, abrir Central de Vendas filtrada pela nota e Status NFe = 'Não enviado'. Remover este tooltip na versão do cliente.">
+              <Button variant="default" size="sm" className="h-8 text-[12px] gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                Gerar Nota de Débito
+              </Button>
+            </DevTooltip>
           )}
-          {showBuscar && (
-            <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" />
-              Buscar autorização
-            </Button>
-          )}
+
           <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
             <ExternalLink className="h-3.5 w-3.5" />
             Central de Vendas
@@ -978,7 +1047,7 @@ function MultaJurosDetailView({
         {/* Status do processo */}
         <div className="flex items-center gap-6 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="text-[12px] text-muted-foreground">Cálculo</span>
+            <span className="text-[12px] text-muted-foreground">Cálculo de Rateio</span>
             <BadgeCalculo status={r.statusCalculo} />
           </div>
           <div className="h-px w-4 bg-border" />
@@ -1009,29 +1078,29 @@ function MultaJurosDetailView({
             <SummaryCard label="Juros"          value={brl(r.juros)}      mono />
             <SummaryCard
               label="IBS UF Calculado"
-              value={ibsValue(r.totalIBSUF, r.statusCalculo)}
+              value={ibsValue(r.totalIBSUF, r.statusGeracaoNota)}
               mono
-              colorClass={!concluido ? "text-muted-foreground" : undefined}
+              colorClass={!notaConfirmada ? "text-muted-foreground" : undefined}
             />
             <SummaryCard
               label="IBS Mun Calculado"
-              value={ibsValue(r.totalIBSMun, r.statusCalculo)}
+              value={ibsValue(r.totalIBSMun, r.statusGeracaoNota)}
               mono
-              colorClass={!concluido ? "text-muted-foreground" : undefined}
+              colorClass={!notaConfirmada ? "text-muted-foreground" : undefined}
             />
             <SummaryCard
               label="CBS Calculado"
-              value={ibsValue(r.totalCBS, r.statusCalculo)}
+              value={ibsValue(r.totalCBS, r.statusGeracaoNota)}
               mono
-              colorClass={!concluido ? "text-muted-foreground" : undefined}
+              colorClass={!notaConfirmada ? "text-muted-foreground" : undefined}
             />
             <div className="col-span-2 md:col-span-1">
               <SummaryCard
-                label="Cálculo"
+                label="Cálculo de Rateio"
                 value={r.statusCalculo}
                 colorClass={
                   r.statusCalculo === "Concluído"  ? "text-green-700 dark:text-green-400" :
-                  r.statusCalculo === "Calculando" ? "text-blue-700 dark:text-blue-400" :
+                  r.statusCalculo === "Processando" ? "text-blue-700 dark:text-blue-400" :
                                                      "text-muted-foreground"
                 }
               />

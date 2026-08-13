@@ -1513,6 +1513,22 @@ interface D1011ListScreenProps {
   navigate: (s: Screen) => void;
 }
 function D1011ListScreen({ navigate }: D1011ListScreenProps) {
+  const [search, setSearch] = useState("");
+  const [filterD1001, setFilterD1001] = useState("todos");
+  const [filterD1011, setFilterD1011] = useState("todos");
+  const [filterPlano, setFilterPlano] = useState("todos");
+
+  const empresasFiltradas = EMPRESAS.filter((e) => {
+    const matchSearch =
+      search === "" ||
+      e.razao.toLowerCase().includes(search.toLowerCase()) ||
+      e.raiz.includes(search);
+    const matchD1001 = filterD1001 === "todos" || e.d1001 === filterD1001;
+    const matchD1011 = filterD1011 === "todos" || e.d1011 === filterD1011;
+    const matchPlano = filterPlano === "todos" || e.plano === filterPlano;
+    return matchSearch && matchD1001 && matchD1011 && matchPlano;
+  });
+
   return (
     <div>
       <div className="flex items-start justify-between mb-5">
@@ -1534,6 +1550,50 @@ function D1011ListScreen({ navigate }: D1011ListScreenProps) {
             O D1001 deve estar enviado antes de iniciar o D1011
           </p>
         </div>
+      </div>
+
+      <div className="flex items-center gap-2 mb-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Razão social ou CNPJ..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 h-8 text-sm"
+          />
+        </div>
+        <Select value={filterD1001} onValueChange={setFilterD1001}>
+          <SelectTrigger className="h-8 text-sm w-[160px]">
+            <SelectValue placeholder="D1001" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">D1001 – Todos</SelectItem>
+            <SelectItem value="enviado">Enviado</SelectItem>
+            <SelectItem value="processando">Processando</SelectItem>
+            <SelectItem value="nao_enviado">Não enviado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterD1011} onValueChange={setFilterD1011}>
+          <SelectTrigger className="h-8 text-sm w-[160px]">
+            <SelectValue placeholder="D1011" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">D1011 – Todos</SelectItem>
+            <SelectItem value="enviado">Enviado</SelectItem>
+            <SelectItem value="processando">Processando</SelectItem>
+            <SelectItem value="nao_enviado">Não enviado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterPlano} onValueChange={setFilterPlano}>
+          <SelectTrigger className="h-8 text-sm w-[160px]">
+            <SelectValue placeholder="Plano" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Plano – Todos</SelectItem>
+            <SelectItem value="configurado">Configurado</SelectItem>
+            <SelectItem value="nao-configurado">Não configurado</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="bg-card rounded-lg card-shadow border">
@@ -1561,7 +1621,7 @@ function D1011ListScreen({ navigate }: D1011ListScreenProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {EMPRESAS.map((e) => (
+            {empresasFiltradas.map((e) => (
               <TableRow key={e.raiz} className="hover:bg-muted/30 transition-colors">
                 <TableCell>
                   <div className="font-semibold font-mono text-sm">{e.raiz}</div>
