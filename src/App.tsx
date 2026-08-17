@@ -14,6 +14,8 @@ import TributacaoPersonalizadaWizard from "./pages/TributacaoPersonalizadaWizard
 import TabelaOficialPage from "./pages/TabelaOficialPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import AssistenteExcecoesPage from "./pages/AssistenteExcecoesPage";
+import AssistenteNfeDebitoPage from "./pages/AssistenteNfeDebitoPage";
+import AssistenteNfeCreditoPage from "./pages/AssistenteNfeCreditoPage";
 import MovimentacoesReceitasMovimento from "./pages/MovimentacoesReceitasMovimento";
 import MovimentacoesReceitasMultaJuros from "./pages/MovimentacoesReceitasMultaJuros";
 import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
@@ -59,7 +61,9 @@ const App = () => (
             <Route path={ERoutes.FINANCEIRO} element={<PlaceholderPage />} />
             <Route path={ERoutes.TRIBUTACAO_INTEGRAL} element={<TributacaoIntegralPage />} />
             <Route path={ERoutes.TRIBUTACAO_PERSONALIZADA} element={<TributacaoPersonalizadaWizard />} />
-            <Route path={ERoutes.CONFIG_ASSISTENTE_EXCECOES} element={<AssistenteExcecoesPage />} />
+            <Route path={ERoutes.CONFIG_ASSISTENTE_EXCECOES}   element={<AssistenteExcecoesPage />}    />
+            <Route path={ERoutes.CONFIG_ASSISTENTE_NFE_DEBITO}  element={<AssistenteNfeDebitoPage />}   />
+            <Route path={ERoutes.CONFIG_ASSISTENTE_NFE_CREDITO} element={<AssistenteNfeCreditoPage />}  />
             <Route path={ERoutes.CONFIG_EMPRESAS} element={<ConfigEmpresasPage />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_CBS} element={<PlaceholderPage />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_IBS} element={<PlaceholderPage />} />
