@@ -39,7 +39,12 @@
       "Read(//c/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/Multa_juros/especificação/FT3_Geracao_Nota_Debito/**)",
       "Bash(find \"C:\\\\Users\\\\eduardol_sankhya\\\\Documents\\\\VS Code\\\\sankhyaPRJ\\\\portalreformatributaria\" -name \"*.md\" | head -40)",
       "Read(//c/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/**)",
-      "Read(//c/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/Movimentações_financeiras/Receitas_Movimento/**)"
+      "Read(//c/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/Movimentações_financeiras/Receitas_Movimento/**)",
+      "WebFetch(domain:localhost)",
+      "Read(//c/Users/eduardol_sankhya/Documents/VS Code/sankhyaPRJ/portalreformatributaria/Multa_juros/especificação/FT4_Detalhamento_Titulo/**)",
+      "PowerShell(gh pr list --state open)",
+      "Bash(git pull *)",
+      "Bash(git stash *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\eduardol_sankhya\\.claude",
@@ -48,7 +53,8 @@
       "C:\\Users\\eduardol_sankhya\\Documents\\VS Code\\sankhyaPRJ\\portalreformatributaria\\Movimentações_financeiras\\Despesas_Movimento",
       "C:\\Users\\eduardol_sankhya\\Documents\\VS Code\\sankhyaPRJ\\portalreformatributaria\\Movimentações_financeiras\\Documentos_Movimento",
       "C:\\Users\\eduardol_sankhya",
-      "C:\\Users\\eduardol_sankhya\\Documents\\VS Code\\sankhyaPRJ\\portalreformatributaria\\Multa_juros\\especificação"
+      "C:\\Users\\eduardol_sankhya\\Documents\\VS Code\\sankhyaPRJ\\portalreformatributaria\\Multa_juros\\especificação",
+      "c:\\Users\\eduardol_sankhya\\Documents\\VS Code\\sankhyaPRJ\\portalreformatributaria\\Multa_juros\\especificação\\FT4_Detalhamento_Titulo"
     ]
   }
 }

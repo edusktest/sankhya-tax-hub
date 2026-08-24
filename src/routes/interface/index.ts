@@ -10,6 +10,7 @@ export enum ERoutes {
    APURACAO_DERE_D1001 = "/apuracao-dere/d1001",
    APURACAO_DERE_D1011 = "/apuracao-dere/d1011",
    APURACAO_DERE_HISTORICO = "/apuracao-dere/historico",
+   APURACAO_DERE_CREDENCIAIS = "/apuracao-dere/credenciais",
    GESTAO_EVENTOS = "/gestao-eventos",
    PROCESSOS = "/processos",
    FINANCEIRO = "/financeiro",
@@ -33,4 +34,5 @@ export enum ERoutes {
    MOVIMENTACOES_DESPESAS_MOVIMENTO = "/movimentacoes/despesas/movimento",
    MOVIMENTACOES_DOCUMENTOS_MOVIMENTO = "/movimentacoes/documentos/movimento",
    APURACAO_CONCILIACAO_FISCAL = "/apuracao-cbs/conciliacao-fiscal",
+   ALERTAS_PENDENTES = "/alertas-pendentes",
 }

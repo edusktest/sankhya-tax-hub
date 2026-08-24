@@ -112,6 +112,7 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
           { title: "D1001 – Inf. Contribuinte",            url: ERoutes.APURACAO_DERE_D1001      },
           { title: "D1011 – Plano Geral de Contas Comentado", url: ERoutes.APURACAO_DERE_D1011   },
           { title: "Histórico de Eventos",                 url: ERoutes.APURACAO_DERE_HISTORICO  },
+          { title: "Credenciais",                          url: ERoutes.APURACAO_DERE_CREDENCIAIS },
         ],
       },
       { title: "Gestão Eventos", url: ERoutes.GESTAO_EVENTOS, icon: Calendar },

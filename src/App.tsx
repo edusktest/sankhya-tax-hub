@@ -21,6 +21,8 @@ import MovimentacoesReceitasMultaJuros from "./pages/MovimentacoesReceitasMultaJ
 import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
 import MovimentacoesDocumentosMovimento from "./pages/MovimentacoesDocumentosMovimento";
 import ConciliacaoFiscal from "./pages/ConciliacaoFiscal";
+import AlertasPendentes from "./pages/AlertasPendentes";
+import DereCredenciais from "./pages/DereCredenciais";
 import NotFound from "./pages/NotFound";
 import { ERoutes } from "@/routes/interface";
 
@@ -56,6 +58,7 @@ const App = () => (
             <Route path={ERoutes.APURACAO_DERE_D1001} element={<ApuracaoDere initialScreen="d1001-list" />} />
             <Route path={ERoutes.APURACAO_DERE_D1011} element={<ApuracaoDere initialScreen="d1011-list" />} />
             <Route path={ERoutes.APURACAO_DERE_HISTORICO} element={<ApuracaoDere initialScreen="historico" />} />
+            <Route path={ERoutes.APURACAO_DERE_CREDENCIAIS} element={<DereCredenciais />} />
             <Route path={ERoutes.GESTAO_EVENTOS} element={<PlaceholderPage />} />
             <Route path={ERoutes.PROCESSOS} element={<PlaceholderPage />} />
             <Route path={ERoutes.FINANCEIRO} element={<PlaceholderPage />} />
@@ -79,6 +82,7 @@ const App = () => (
             <Route path={ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO} element={<MovimentacoesDespedasMovimento />} />
             <Route path={ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO} element={<MovimentacoesDocumentosMovimento />} />
             <Route path={ERoutes.APURACAO_CONCILIACAO_FISCAL} element={<ConciliacaoFiscal />} />
+            <Route path={ERoutes.ALERTAS_PENDENTES} element={<AlertasPendentes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
