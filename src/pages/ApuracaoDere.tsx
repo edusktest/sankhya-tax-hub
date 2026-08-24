@@ -40,6 +40,7 @@ type Screen =
 
 type StatusDeRE = "enviado" | "processando" | "nao_enviado";
 type StatusPlano = "configurado" | "nao-configurado";
+type AmbienteAtivo = "producao" | "producao_restrita" | "nao_configurado";
 type TipoOp = "Inclusão" | "Alteração" | "Exclusão";
 type Ocorrencia = "erro" | "aviso" | null;
 
@@ -48,7 +49,9 @@ interface EmpresaDeRE {
   cnpj: string;
   razao: string;
   filiais: number;
-  d1001: StatusDeRE;
+  ambienteAtivo: AmbienteAtivo;
+  d1001Prod: StatusDeRE;
+  d1001Homolog: StatusDeRE;
   d1011: StatusDeRE;
   plano: StatusPlano;
   regTrib: string;
@@ -82,7 +85,9 @@ const EMPRESAS: EmpresaDeRE[] = [
     cnpj: "12.345.678/0001-99",
     razao: "Financeira Alpha S.A.",
     filiais: 2,
-    d1001: "enviado",
+    ambienteAtivo: "producao_restrita",
+    d1001Prod: "nao_enviado",
+    d1001Homolog: "enviado",
     d1011: "nao_enviado",
     plano: "configurado",
     regTrib: "1 – Serviços Financeiros",
@@ -93,7 +98,9 @@ const EMPRESAS: EmpresaDeRE[] = [
     cnpj: "98.765.432/0001-01",
     razao: "Beta Factoring Ltda.",
     filiais: 0,
-    d1001: "nao_enviado",
+    ambienteAtivo: "nao_configurado",
+    d1001Prod: "nao_enviado",
+    d1001Homolog: "nao_enviado",
     d1011: "nao_enviado",
     plano: "nao-configurado",
     regTrib: "9 – Normas Gerais",
@@ -104,7 +111,9 @@ const EMPRESAS: EmpresaDeRE[] = [
     cnpj: "55.444.333/0001-55",
     razao: "Gamma Seguros S.A.",
     filiais: 4,
-    d1001: "processando",
+    ambienteAtivo: "producao",
+    d1001Prod: "processando",
+    d1001Homolog: "enviado",
     d1011: "nao_enviado",
     plano: "configurado",
     regTrib: "2 – Plano de Saúde",
@@ -256,6 +265,20 @@ function StatusBadge({ status }: { status: StatusDeRE | StatusPlano }) {
         <p>{tooltip}</p>
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function AmbienteBadge({ ambiente }: { ambiente: AmbienteAtivo }) {
+  const map: Record<AmbienteAtivo, [string, string]> = {
+    producao:          ["border-blue-500/40 text-blue-600 bg-blue-500/10", "1 – Produção"],
+    producao_restrita: ["border-amber-500/40 text-amber-600 bg-amber-500/10", "2 – Prod. Restrita"],
+    nao_configurado:   ["border-border text-muted-foreground bg-muted/50", "Não configurado"],
+  };
+  const [cls, label] = map[ambiente];
+  return (
+    <Badge variant="outline" className={cn("text-xs font-medium", cls)}>
+      {label}
+    </Badge>
   );
 }
 
@@ -751,7 +774,7 @@ function HomeScreen({ navigate }: HomeScreenProps) {
                 </TableCell>
                 <TableCell className="text-sm">{e.razao}</TableCell>
                 <TableCell>
-                  <StatusBadge status={e.d1001} />
+                  <StatusBadge status={e.d1001Prod} />
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={e.d1011} />
@@ -761,16 +784,16 @@ function HomeScreen({ navigate }: HomeScreenProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {(e.d1001 === "nao_enviado" || e.d1001 === "enviado") && (
+                    {(e.d1001Prod === "nao_enviado" || e.d1001Prod === "enviado") && (
                       <Button
                         size="sm"
                         className="h-7 text-xs px-3"
                         onClick={() => navigate("d1001-list")}
                       >
-                        {e.d1001 === "nao_enviado" ? "Iniciar D1001" : "Alterar D1001"}
+                        {e.d1001Prod === "nao_enviado" ? "Iniciar D1001" : "Alterar D1001"}
                       </Button>
                     )}
-                    {e.d1001 === "enviado" && e.plano === "configurado" && (
+                    {e.d1001Prod === "enviado" && e.plano === "configurado" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -990,7 +1013,9 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
       e.raiz.includes(search) ||
       e.razao.toLowerCase().includes(search.toLowerCase());
     const matchStatus =
-      filtroStatus.length === 0 || filtroStatus.includes(e.d1001);
+      filtroStatus.length === 0 ||
+      filtroStatus.includes(e.d1001Prod) ||
+      filtroStatus.includes(e.d1001Homolog);
     const matchOcorrencia =
       filtroOcorrencia.length === 0 ||
       (filtroOcorrencia.includes("vazio") && e.ocorrencia === null) ||
@@ -1000,7 +1025,7 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
 
   const selectableIndices = filtered
     .map((_, i) => i)
-    .filter((i) => filtered[i].d1001 !== "processando");
+    .filter((i) => filtered[i].d1001Prod !== "processando" || filtered[i].d1001Homolog !== "processando");
   const allSelected =
     selectableIndices.length > 0 &&
     selectableIndices.every((i) => selected.includes(i));
@@ -1122,7 +1147,9 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
               </TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">CNPJ Raiz</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Razão Social</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ambiente Ativo</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status Produção</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status Homologação</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ocorrência</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
             </TableRow>
@@ -1134,7 +1161,7 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
                   <Checkbox
                     checked={selected.includes(i)}
                     onCheckedChange={() => toggleOne(i)}
-                    disabled={e.d1001 === "processando"}
+                    disabled={e.d1001Prod === "processando" && e.d1001Homolog === "processando"}
                   />
                 </TableCell>
                 <TableCell>
@@ -1147,11 +1174,13 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{e.razao}</TableCell>
-                <TableCell><StatusBadge status={e.d1001} /></TableCell>
+                <TableCell><AmbienteBadge ambiente={e.ambienteAtivo} /></TableCell>
+                <TableCell><StatusBadge status={e.d1001Prod} /></TableCell>
+                <TableCell><StatusBadge status={e.d1001Homolog} /></TableCell>
                 <TableCell><OcorrenciaBadge ocorrencia={e.ocorrencia} /></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {e.d1001 !== "processando" && (
+                    {(e.d1001Prod !== "processando" || e.d1001Homolog !== "processando") && (
                       <Button
                         size="sm"
                         className="h-7 text-xs px-2"
@@ -1174,7 +1203,7 @@ function D1001ListScreen({ navigate, setBatch }: D1001ListScreenProps) {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground">
                   Nenhuma empresa encontrada
                 </TableCell>
               </TableRow>
@@ -1231,7 +1260,7 @@ function D1001WizardScreen({
   const empresa = empresas[0] ?? EMPRESAS[0];
 
   function getOpTipo(e: EmpresaDeRE): TipoOp {
-    return e.d1001 === "nao_enviado" ? "Inclusão" : "Alteração";
+    return e.d1001Prod === "nao_enviado" ? "Inclusão" : "Alteração";
   }
 
   const needsActividades = ["1", "2"].some(
@@ -1523,7 +1552,7 @@ function D1011ListScreen({ navigate }: D1011ListScreenProps) {
       search === "" ||
       e.razao.toLowerCase().includes(search.toLowerCase()) ||
       e.raiz.includes(search);
-    const matchD1001 = filterD1001 === "todos" || e.d1001 === filterD1001;
+    const matchD1001 = filterD1001 === "todos" || e.d1001Prod === filterD1001;
     const matchD1011 = filterD1011 === "todos" || e.d1011 === filterD1011;
     const matchPlano = filterPlano === "todos" || e.plano === filterPlano;
     return matchSearch && matchD1001 && matchD1011 && matchPlano;
@@ -1636,7 +1665,7 @@ function D1011ListScreen({ navigate }: D1011ListScreenProps) {
                 </TableCell>
                 <TableCell className="text-sm">{e.razao}</TableCell>
                 <TableCell>
-                  <StatusBadge status={e.d1001} />
+                  <StatusBadge status={e.d1001Prod} />
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={e.d1011} />
@@ -1646,7 +1675,7 @@ function D1011ListScreen({ navigate }: D1011ListScreenProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {e.d1001 === "enviado" && e.plano === "configurado" ? (
+                    {e.d1001Prod === "enviado" && e.plano === "configurado" ? (
                       <Button
                         size="sm"
                         className="h-7 text-xs px-3"
@@ -1656,7 +1685,7 @@ function D1011ListScreen({ navigate }: D1011ListScreenProps) {
                       </Button>
                     ) : (
                       <span className="text-[12px] text-muted-foreground">
-                        {e.d1001 !== "enviado"
+                        {e.d1001Prod !== "enviado"
                           ? "Aguardando D1001"
                           : "Plano não configurado"}
                       </span>
