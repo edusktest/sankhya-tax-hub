@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, Download, ChevronRight,
-  Loader2, Send, Search, Upload, RefreshCw, Trash2, X, ChevronsUpDown, Info,
+  Loader2, Send, Search, Upload, RefreshCw, Trash2, X, ChevronsUpDown, Info, Eraser,
 } from "lucide-react";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -72,6 +72,7 @@ interface EventoHistorico {
   idUnico: string | null;
   ocorrencias: Ocorrencia;
   dtUltimaConsulta: string | null;
+  tpAmb?: 0 | 1 | 2; // 0 = simulação/testes, 1 = produção, 2 = homologação
 }
 
 interface Batch {
@@ -1867,6 +1868,10 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [filtroAmbiente, setFiltroAmbiente] = useState<string[]>([]);
+  const [showLimparModal, setShowLimparModal] = useState(false);
+  const [limparEmAndamento, setLimparEmAndamento] = useState(false);
+  const [limparModalState, setLimparModalState] = useState<"select" | "confirm" | "loading" | "success" | "empty">("select");
+  const [limparEmpresaRaiz, setLimparEmpresaRaiz] = useState<string | null>(null);
 
   const filtered = eventos.filter((e) => {
     const matchSearch =
@@ -1938,6 +1943,39 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
 
   const temProcessando = selected.some((i) => filtered[i]?.status === "processando");
 
+  const temEventosTeste = eventos.some((e) => (e.tpAmb ?? 0) !== 1);
+
+  function handleLimparTeste() {
+    if (limparEmAndamento) {
+      setLimparModalState("loading");
+      setShowLimparModal(true);
+      return;
+    }
+    setLimparEmpresaRaiz(null);
+    setLimparModalState("select");
+    setShowLimparModal(true);
+  }
+
+  function avancarParaConfirmacao() {
+    if (!limparEmpresaRaiz) return;
+    const temTeste = eventos.some(
+      (e) => e.cnpjRaiz === limparEmpresaRaiz && (e.tpAmb ?? 0) !== 1
+    );
+    setLimparModalState(temTeste ? "confirm" : "empty");
+  }
+
+  function confirmarLimpeza() {
+    setLimparModalState("loading");
+    setLimparEmAndamento(true);
+    setTimeout(() => {
+      setEventos((prev) =>
+        prev.filter((e) => !(e.cnpjRaiz === limparEmpresaRaiz && (e.tpAmb ?? 0) !== 1))
+      );
+      setLimparEmAndamento(false);
+      setLimparModalState("success");
+    }, 2500);
+  }
+
   const TH = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
   return (
@@ -1982,6 +2020,14 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
           <Button variant="outline" size="sm" className="gap-1.5">
             <Upload className="h-3.5 w-3.5" />
             Importar
+          </Button>
+          <Button
+            variant="outline" size="sm"
+            className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/50"
+            onClick={handleLimparTeste}
+          >
+            <Eraser className="h-3.5 w-3.5" />
+            Limpar dados de teste
           </Button>
         </div>
       </div>
@@ -2274,6 +2320,156 @@ function HistoricoScreen({ navigate }: HistoricoScreenProps) {
               Entendi
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Limpar dados de teste */}
+      <Dialog open={showLimparModal} onOpenChange={(open) => {
+        if (!open && limparModalState !== "loading") setShowLimparModal(false);
+      }}>
+        <DialogContent className="max-w-md">
+          {limparModalState === "select" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Eraser className="h-5 w-5 text-destructive" />
+                  Limpar dados de teste
+                </DialogTitle>
+                <DialogDescription className="text-sm text-foreground pt-1">
+                  Selecione a empresa cujos eventos de teste e homologação serão removidos.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="rounded-lg border overflow-hidden">
+                <Command>
+                  <CommandInput placeholder="Buscar por razão social ou CNPJ..." />
+                  <CommandList className="max-h-52">
+                    <CommandEmpty>Nenhuma empresa encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      {EMPRESAS.map((emp) => (
+                        <CommandItem
+                          key={emp.raiz}
+                          value={`${emp.razao} ${emp.cnpj}`}
+                          onSelect={() => setLimparEmpresaRaiz(emp.raiz)}
+                          className={cn(
+                            "flex items-center gap-2.5 cursor-pointer aria-selected:bg-transparent",
+                            limparEmpresaRaiz === emp.raiz && "bg-destructive/8"
+                          )}
+                        >
+                          <div className={cn(
+                            "h-4 w-4 shrink-0 rounded-full border-2 transition-colors",
+                            limparEmpresaRaiz === emp.raiz
+                              ? "border-destructive bg-destructive"
+                              : "border-muted-foreground/40"
+                          )} />
+                          <div>
+                            <p className="text-sm font-medium leading-tight">{emp.razao}</p>
+                            <p className="text-xs text-muted-foreground">{emp.cnpj}</p>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </div>
+              {limparEmpresaRaiz && (
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Selecionada:{" "}
+                  <span className="font-medium text-foreground">
+                    {EMPRESAS.find((e) => e.raiz === limparEmpresaRaiz)?.razao}
+                  </span>
+                </p>
+              )}
+              <DialogFooter>
+                <Button size="sm" variant="outline" onClick={() => setShowLimparModal(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm" variant="destructive"
+                  disabled={!limparEmpresaRaiz}
+                  onClick={avancarParaConfirmacao}
+                >
+                  Próximo
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+          {limparModalState === "confirm" && (() => {
+            const emp = EMPRESAS.find((e) => e.raiz === limparEmpresaRaiz);
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eraser className="h-5 w-5 text-destructive" />
+                    Confirmar limpeza
+                  </DialogTitle>
+                  <DialogDescription asChild>
+                    <div className="pt-2 space-y-3">
+                      <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                        <p className="font-medium text-foreground">{emp?.razao}</p>
+                        <p className="text-xs text-muted-foreground">{emp?.cnpj}</p>
+                      </div>
+                      <p className="text-sm text-foreground">
+                        Esta ação remove permanentemente todos os eventos de teste e homologação deste CNPJ, tanto no sistema quanto no ambiente da Receita Federal. Não é possível desfazer. Deseja continuar?
+                      </p>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button size="sm" variant="outline" onClick={() => setLimparModalState("select")}>
+                    Voltar
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={confirmarLimpeza}>
+                    Limpar dados de teste
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+          {limparModalState === "loading" && (
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                Limpando dados de teste...
+              </DialogTitle>
+              <DialogDescription className="text-sm text-foreground pt-2">
+                Removendo eventos do ambiente da Receita Federal. Aguarde — esta operação não pode ser cancelada.
+              </DialogDescription>
+            </DialogHeader>
+          )}
+          {limparModalState === "success" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  Dados de teste removidos
+                </DialogTitle>
+                <DialogDescription className="text-sm text-foreground pt-2">
+                  Todos os eventos de teste e homologação foram removidos do sistema e do ambiente da Receita Federal.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button size="sm" onClick={() => setShowLimparModal(false)}>Fechar</Button>
+              </DialogFooter>
+            </>
+          )}
+          {limparModalState === "empty" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  Nenhum evento a remover
+                </DialogTitle>
+                <DialogDescription className="text-sm text-foreground pt-2">
+                  Não há eventos de teste ou homologação no histórico para esta empresa.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button size="sm" variant="outline" onClick={() => setLimparModalState("select")}>
+                  Voltar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 

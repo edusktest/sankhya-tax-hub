@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Calculator, FileText, ChevronDown, Calendar,
-  SlidersHorizontal, Search, X, Building2, LayoutDashboard,
-  Percent, BookOpen, Sparkles, Menu, ChevronRight, Bot, Globe,
+  Calculator, FileText, ChevronDown,
+  SlidersHorizontal, Search, X, Building2,
+  Sparkles, Menu, ChevronRight,
   TrendingUp, TrendingDown, FileStack,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -13,8 +13,6 @@ import { useBIAChat } from "@/context/BIAChatContext";
 
 type SubItem = { title: string; url: string };
 interface MenuItem { title: string; url: string; icon: React.ElementType; subItems?: SubItem[] }
-
-const HOME_ITEM: MenuItem = { title: "Home", url: ERoutes.HOME, icon: LayoutDashboard };
 
 const menuGroups: { group: string; items: MenuItem[] }[] = [
   {
@@ -59,21 +57,16 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
           { title: "Conciliação Fiscal", url: ERoutes.APURACAO_CONCILIACAO_FISCAL     },
         ],
       },
-      { title: "Apuração IBS", url: ERoutes.APURACAO_IBS, icon: Calculator },
-      { title: "Apuração IS",  url: ERoutes.APURACAO_IS,  icon: Calculator },
       {
         title: "DeRE",
         url: ERoutes.APURACAO_DERE,
         icon: FileText,
         subItems: [
-          { title: "Plano Referencial",                       url: ERoutes.APURACAO_DERE_PLANO_REF },
-          { title: "D1001 – Inf. Contribuinte",               url: ERoutes.APURACAO_DERE_D1001     },
-          { title: "D1011 – Plano Geral de Contas Comentado", url: ERoutes.APURACAO_DERE_D1011     },
-          { title: "Histórico de Eventos",                    url: ERoutes.APURACAO_DERE_HISTORICO  },
-          { title: "Credenciais",                             url: ERoutes.APURACAO_DERE_CREDENCIAIS },
+          { title: "D1001 – Inf. Contribuinte", url: ERoutes.APURACAO_DERE_D1001      },
+          { title: "Histórico de Eventos",       url: ERoutes.APURACAO_DERE_HISTORICO  },
+          { title: "Credenciais",                url: ERoutes.APURACAO_DERE_CREDENCIAIS },
         ],
       },
-      { title: "Gestão Eventos", url: ERoutes.GESTAO_EVENTOS, icon: Calendar },
     ],
   },
   {
@@ -91,34 +84,6 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
           { title: "NFe crédito - IBS/CBS",                       url: ERoutes.CONFIG_ASSISTENTE_NFE_CREDITO },
         ],
       },
-      {
-        title: "Alíquotas",
-        url: ERoutes.CONFIG_ALIQUOTAS_CBS,
-        icon: Percent,
-        subItems: [
-          { title: "CBS", url: ERoutes.CONFIG_ALIQUOTAS_CBS },
-          { title: "IBS", url: ERoutes.CONFIG_ALIQUOTAS_IBS },
-          { title: "IS",  url: ERoutes.CONFIG_ALIQUOTAS_IS  },
-        ],
-      },
-      {
-        title: "Tabelas Oficiais",
-        url: ERoutes.CONFIG_TABELAS_CLASSIFICACAO,
-        icon: BookOpen,
-        subItems: [
-          { title: "Classificação Tributária",           url: ERoutes.CONFIG_TABELAS_CLASSIFICACAO     },
-          { title: "Crédito Presumido",                  url: ERoutes.CONFIG_TABELAS_CREDITO_PRESUMIDO },
-          { title: "Anexos",                             url: ERoutes.CONFIG_TABELAS_ANEXOS            },
-          { title: "Indicadores dos Locais de Operação", url: ERoutes.CONFIG_TABELAS_INDICADORES       },
-        ],
-      },
-    ],
-  },
-  {
-    group: "Digital Workers",
-    items: [
-      { title: "Configurações Globais",   url: ERoutes.DIGITAL_WORKERS_CONFIG_GLOBAL, icon: Globe },
-      { title: "Configuração por Worker", url: ERoutes.DIGITAL_WORKERS_CONFIG_WORKER, icon: Bot  },
     ],
   },
 ];
@@ -173,8 +138,6 @@ export function NavPanel() {
     return urls;
   }, [q]);
 
-  const showHome = !q || HOME_ITEM.title.toLowerCase().includes(q);
-
   const filteredGroups = useMemo(() => {
     if (!q) return menuGroups;
     return menuGroups
@@ -194,7 +157,7 @@ export function NavPanel() {
       .filter(Boolean) as typeof menuGroups;
   }, [q]);
 
-  const noResults = !showHome && filteredGroups.length === 0;
+  const noResults = filteredGroups.length === 0;
 
   return (
     <div
@@ -264,21 +227,6 @@ export function NavPanel() {
               )}
             </div>
           </div>
-
-          {/* Home */}
-          {showHome && (
-            <div className="px-2 py-1.5 shrink-0">
-              <NavLink
-                to={HOME_ITEM.url}
-                end
-                className="flex items-center gap-2 px-3 h-8 rounded-md text-[13px] text-foreground/80 hover:bg-accent/60 hover:text-foreground transition-colors"
-                activeClassName="bg-primary/10 text-primary font-semibold"
-              >
-                <LayoutDashboard className="h-4 w-4 shrink-0" />
-                <span>Home</span>
-              </NavLink>
-            </div>
-          )}
 
           {noResults && (
             <p className="px-4 py-6 text-[12px] text-muted-foreground text-center">

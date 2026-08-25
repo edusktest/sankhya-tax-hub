@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ERoutes } from "@/routes/interface";
 import { HelpCircle, Bell, ChevronDown, Sparkles, ArrowLeft, LayoutDashboard, Search, X, LayoutGrid, Home, FileText, BarChart2, Settings, Users } from "lucide-react";
 import { BIAChatProvider, useBIAChat } from "@/context/BIAChatContext";
 import { BIAChat } from "@/components/BIAChat";
@@ -82,6 +84,7 @@ function TransitionScreen() {
 function AppLayoutInner({ children }: AppLayoutProps) {
   const { hasInteracted, immediateLayout, eipMode, setEipMode, skipToLayout } = useBIAChat();
   const [showMain, setShowMain] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!hasInteracted || showMain) return;
@@ -222,11 +225,14 @@ function AppLayoutInner({ children }: AppLayoutProps) {
         ) : (
           <>
             <header className="h-14 flex items-center justify-between border-b bg-primary px-4 shrink-0">
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(ERoutes.HOME)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
                 <span className="text-primary-foreground font-bold text-sm tracking-tight">Sankhya</span>
                 <span className="text-primary-foreground/30 text-sm select-none">|</span>
                 <span className="text-primary-foreground/90 text-sm">Portal da Reforma Tributária</span>
-              </div>
+              </button>
 
               <div className="flex items-center gap-0.5">
                 <button

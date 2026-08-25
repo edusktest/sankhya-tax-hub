@@ -4,18 +4,12 @@ import {
   FileText,
   ChevronDown,
   ChevronRight,
-  Calendar,
   SlidersHorizontal,
   Search,
   X,
   Building2,
-  LayoutDashboard,
-  Percent,
-  BookOpen,
   Sparkles,
   Zap,
-  Bot,
-  Globe,
   TrendingUp,
   TrendingDown,
   FileStack,
@@ -54,9 +48,6 @@ interface MenuItem {
   icon: React.ElementType;
   subItems?: SubItem[];
 }
-
-// Home is standalone — not inside a collapsible group
-const HOME_ITEM: MenuItem = { title: "Home", url: ERoutes.HOME, icon: LayoutDashboard };
 
 const menuGroups: { group: string; items: MenuItem[] }[] = [
   {
@@ -101,21 +92,16 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
           { title: "Conciliação Fiscal", url: ERoutes.APURACAO_CONCILIACAO_FISCAL },
         ],
       },
-      { title: "Apuração IBS", url: ERoutes.APURACAO_IBS, icon: Calculator },
-      { title: "Apuração IS",  url: ERoutes.APURACAO_IS,  icon: Calculator },
       {
         title: "DeRE",
         url: ERoutes.APURACAO_DERE,
         icon: FileText,
         subItems: [
-          { title: "Plano Referencial",                    url: ERoutes.APURACAO_DERE_PLANO_REF  },
-          { title: "D1001 – Inf. Contribuinte",            url: ERoutes.APURACAO_DERE_D1001      },
-          { title: "D1011 – Plano Geral de Contas Comentado", url: ERoutes.APURACAO_DERE_D1011   },
-          { title: "Histórico de Eventos",                 url: ERoutes.APURACAO_DERE_HISTORICO  },
-          { title: "Credenciais",                          url: ERoutes.APURACAO_DERE_CREDENCIAIS },
+          { title: "D1001 – Inf. Contribuinte", url: ERoutes.APURACAO_DERE_D1001      },
+          { title: "Histórico de Eventos",       url: ERoutes.APURACAO_DERE_HISTORICO  },
+          { title: "Credenciais",                url: ERoutes.APURACAO_DERE_CREDENCIAIS },
         ],
       },
-      { title: "Gestão Eventos", url: ERoutes.GESTAO_EVENTOS, icon: Calendar },
     ],
   },
   {
@@ -133,34 +119,6 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
           { title: "NFe crédito - IBS/CBS",                       url: ERoutes.CONFIG_ASSISTENTE_NFE_CREDITO },
         ],
       },
-      {
-        title: "Alíquotas",
-        url: ERoutes.CONFIG_ALIQUOTAS_CBS,
-        icon: Percent,
-        subItems: [
-          { title: "CBS", url: ERoutes.CONFIG_ALIQUOTAS_CBS },
-          { title: "IBS", url: ERoutes.CONFIG_ALIQUOTAS_IBS },
-          { title: "IS",  url: ERoutes.CONFIG_ALIQUOTAS_IS  },
-        ],
-      },
-      {
-        title: "Tabelas Oficiais",
-        url: ERoutes.CONFIG_TABELAS_CLASSIFICACAO,
-        icon: BookOpen,
-        subItems: [
-          { title: "Classificação Tributária",           url: ERoutes.CONFIG_TABELAS_CLASSIFICACAO     },
-          { title: "Crédito Presumido",                  url: ERoutes.CONFIG_TABELAS_CREDITO_PRESUMIDO },
-          { title: "Anexos",                             url: ERoutes.CONFIG_TABELAS_ANEXOS            },
-          { title: "Indicadores dos Locais de Operação", url: ERoutes.CONFIG_TABELAS_INDICADORES       },
-        ],
-      },
-    ],
-  },
-  {
-    group: "Digital Workers (Em construção)",
-    items: [
-      { title: "Configurações Globais",   url: ERoutes.DIGITAL_WORKERS_CONFIG_GLOBAL, icon: Globe },
-      { title: "Configuração por Worker", url: ERoutes.DIGITAL_WORKERS_CONFIG_WORKER, icon: Bot  },
     ],
   },
 ];
@@ -218,8 +176,6 @@ export function AppSidebar() {
     return urls;
   }, [q]);
 
-  const showHome = !q || HOME_ITEM.title.toLowerCase().includes(q);
-
   const filteredGroups = useMemo(() => {
     if (!q) return menuGroups;
     return menuGroups
@@ -241,21 +197,21 @@ export function AppSidebar() {
       .filter(Boolean) as typeof menuGroups;
   }, [q]);
 
-  const noResults = !showHome && filteredGroups.length === 0;
+  const noResults = filteredGroups.length === 0;
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-2.5">
           {collapsed ? (
-            <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shrink-0">
+            <NavLink to={ERoutes.HOME} className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shrink-0 hover:opacity-80 transition-opacity">
               <span className="text-primary-foreground font-extrabold text-[13px] leading-none">S</span>
-            </div>
+            </NavLink>
           ) : (
-            <div>
+            <NavLink to={ERoutes.HOME} className="hover:opacity-80 transition-opacity">
               <p className="text-[13px] font-bold text-foreground leading-tight">Sankhya</p>
               <p className="text-[11px] text-muted-foreground leading-tight">Portal da Reforma Tributária</p>
-            </div>
+            </NavLink>
           )}
         </div>
       </SidebarHeader>
@@ -283,32 +239,6 @@ export function AppSidebar() {
               )}
             </div>
           </div>
-        )}
-
-        {/* ── Home — standalone, no group label ── */}
-        {showHome && (
-          <SidebarGroup className="py-1.5 shrink-0">
-            <SidebarGroupContent>
-              <SidebarMenu className={cn(!collapsed && "pl-3")}>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild className="h-8">
-                    <NavLink
-                      to={HOME_ITEM.url}
-                      end
-                      className="rounded-md text-[13px] text-foreground/80 transition-colors hover:bg-accent/60 hover:text-foreground"
-                      activeClassName="bg-primary/10 text-primary font-semibold"
-                    >
-                      {collapsed ? (
-                        <LayoutDashboard className="h-4 w-4 shrink-0" />
-                      ) : (
-                        <span>Home</span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
         )}
 
         {noResults && !collapsed && (
