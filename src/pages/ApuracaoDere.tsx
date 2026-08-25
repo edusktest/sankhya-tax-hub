@@ -241,11 +241,11 @@ const STATUS_TOOLTIPS: Record<string, string> = {
 
 function StatusBadge({ status }: { status: StatusDeRE | StatusPlano }) {
   const map: Record<string, [string, string]> = {
-    enviado:        ["border-success/50 text-success bg-success/10", "Enviado"],
-    processando:    ["border-warning/60 text-warning bg-warning/10", "Processando"],
-    nao_enviado:    ["border-border text-muted-foreground bg-muted/50", "Não enviado"],
-    configurado:    ["border-success/50 text-success bg-success/10", "Configurado"],
-    "nao-configurado": ["border-border text-muted-foreground bg-muted/50", "Não configurado"],
+    enviado:        ["border-[#2E7D32]/40 text-[#2E7D32] bg-[#E8F5E9]", "Enviado"],
+    processando:    ["border-[#F57F17]/50 text-[#F57F17] bg-[#FFF8E1]", "Processando"],
+    nao_enviado:    ["border-[#9E9E9E]/50 text-[#757575] bg-[#F5F5F5]", "Não enviado"],
+    configurado:    ["border-[#2E7D32]/40 text-[#2E7D32] bg-[#E8F5E9]", "Configurado"],
+    "nao-configurado": ["border-[#9E9E9E]/50 text-[#757575] bg-[#F5F5F5]", "Não configurado"],
   };
   const [cls, label] = map[status] || ["border-border text-muted-foreground", status];
   const tooltip = STATUS_TOOLTIPS[status];
@@ -285,8 +285,8 @@ function AmbienteBadge({ ambiente }: { ambiente: AmbienteAtivo }) {
 function OcorrenciaBadge({ ocorrencia }: { ocorrencia: Ocorrencia }) {
   if (!ocorrencia) return <span className="text-muted-foreground/40 text-xs">—</span>;
   const map: Record<string, [string, string]> = {
-    erro:  ["border-destructive/50 text-destructive bg-destructive/10", "Erro"],
-    aviso: ["border-warning/60 text-warning bg-warning/10", "Aviso"],
+    erro:  ["border-[#C62828]/40 text-[#C62828] bg-[#FFEBEE]", "Erro"],
+    aviso: ["border-[#E65100]/50 text-[#E65100] bg-[#FFF3E0]", "Aviso"],
   };
   const [cls, label] = map[ocorrencia];
   return (
