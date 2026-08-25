@@ -96,119 +96,113 @@ function AppLayoutInner({ children }: AppLayoutProps) {
   // EIP mode: traditional left-sidebar layout, no BIA, no NavPanel
   if (eipMode) {
     return (
-      <div className="h-screen flex flex-col w-full overflow-hidden">
+      <div className="h-screen flex w-full overflow-hidden">
 
-        {/* ── Barra superior full-width ─────────────────────────── */}
-        <header className="h-12 flex items-center justify-between border-b bg-[#D8D8D8] shrink-0">
-          <div className="flex items-center h-full gap-1.5">
-            {/* Espaço alinhado com a faixa azul */}
-            <div className="w-16 h-full bg-[#1A2B47] shrink-0" />
-            {/* Aba ativa — arredondada no topo, sem chevron interno */}
-            <div className="flex items-center gap-1.5 h-[calc(100%+1px)] -mb-px px-3 bg-white border-t border-x border-[#C0C0C0] rounded-t-md text-[12px] text-[#333333]">
-              <span className="font-medium truncate max-w-[200px]">Portal da Reforma Tributária</span>
+        {/* ── Faixa Sankhya full-height (logo no topo) ───────────── */}
+        <div className="w-14 bg-[#1A2B47] shrink-0 flex flex-col items-center py-3 gap-1">
+          <div className="mb-3 flex items-center justify-center">
+            <img src="/sankhyalogo.png" alt="Sankhya" className="h-9 w-9 object-contain" />
+          </div>
+          {[
+            { icon: Home,      label: "Home"       },
+            { icon: BarChart2, label: "Dashboard"  },
+            { icon: FileText,  label: "Documentos" },
+            { icon: Users,     label: "Usuários"   },
+            { icon: Settings,  label: "Config"     },
+          ].map(({ icon: Icon, label }) => (
+            <button
+              key={label}
+              title={label}
+              className="w-9 h-9 flex items-center justify-center rounded-md text-white/55 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <Icon className="h-[18px] w-[18px]" />
+            </button>
+          ))}
+        </div>
+
+        {/* ── Coluna direita: barra superior + conteúdo ─────────── */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+          <header className="h-[60px] flex items-end justify-between bg-white border-b border-[#E3E6EA] shrink-0 pl-3 pr-3 pb-2">
+            <div className="flex items-end gap-2">
+              {/* Aba ativa */}
+              <div className="flex items-center gap-2 px-3 h-9 bg-white border border-[#C9D3CE] rounded-lg shadow-sm text-[13px] text-[#333333]">
+                <span className="font-medium truncate max-w-[220px]">Portal da Reforma Tributária</span>
+                <button
+                  onClick={() => { setEipMode(false); skipToLayout(); }}
+                  className="text-[#999999] hover:text-[#555555] shrink-0 transition-colors"
+                  title="Fechar"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <button className="text-[#555555] hover:text-[#222222] transition-colors mb-2">
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Ações à direita */}
+            <div className="flex items-center gap-0.5">
               <button
                 onClick={() => { setEipMode(false); skipToLayout(); }}
-                className="text-[#999999] hover:text-[#555555] shrink-0 transition-colors"
-                title="Fechar"
+                className="flex items-center gap-1 text-[#444444] hover:text-primary hover:bg-accent/60 rounded px-2 py-1 text-[11px] font-medium transition-colors mr-1"
+                title="Abrir Portal IA"
               >
-                <X className="h-3 w-3" />
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Portal IA</span>
               </button>
-            </div>
-            {/* Chevron FORA da aba, sobre o fundo cinza */}
-            <button className="text-[#555555] hover:text-[#222222] transition-colors">
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {/* Ações à direita */}
-          <div className="flex items-center gap-0.5 pr-3">
-            <button
-              onClick={() => { setEipMode(false); skipToLayout(); }}
-              className="flex items-center gap-1 text-[#444444] hover:text-[#1565C0] hover:bg-white/60 rounded px-2 py-1 text-[11px] font-medium transition-colors mr-1"
-              title="Abrir Portal IA"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Portal IA</span>
-            </button>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#777777] pointer-events-none" />
-              <input
-                placeholder="Buscar"
-                readOnly
-                className="h-7 pl-7 pr-3 text-[12px] bg-white border border-[#C0C0C0] rounded w-[130px] placeholder:text-[#999999] focus:outline-none cursor-default"
-              />
-            </div>
-            <button className="relative p-1.5 text-[#444444] hover:bg-white/60 rounded transition-colors">
-              <Bell className="h-[16px] w-[16px]" />
-              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-warning" />
-            </button>
-            <button className="p-1.5 text-[#444444] hover:bg-white/60 rounded transition-colors">
-              <HelpCircle className="h-[16px] w-[16px]" />
-            </button>
-            <button className="p-1.5 text-[#444444] hover:bg-white/60 rounded transition-colors">
-              <LayoutGrid className="h-[16px] w-[16px]" />
-            </button>
-            <div className="w-px h-4 bg-[#BBBBBB] mx-1" />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 hover:bg-[#E5E5E5] rounded-full pl-0.5 pr-2 py-0.5 transition-colors">
-                  <div className="h-6 w-6 rounded-full bg-[#1565C0] flex items-center justify-center shrink-0">
-                    <span className="text-white font-semibold text-[10px]">AS</span>
-                  </div>
-                  <span className="text-[#333333] text-[12px] font-medium hidden sm:block">Ana Silva</span>
-                  <ChevronDown className="h-3 w-3 text-[#888888] hidden sm:block" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[200px]">
-                <DropdownMenuItem asChild>
-                  <a href="https://cognito-layout-dream.lovable.app/" className="flex items-center gap-2 cursor-pointer">
-                    <ArrowLeft className="h-4 w-4" />
-                    Voltar para Team Workers
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-
-        {/* ── Linha principal: faixa Sankhya + sidebar + conteúdo ── */}
-        <div className="flex-1 flex min-w-0 overflow-hidden">
-
-          {/* Faixa azul Sankhya */}
-          <div className="w-16 bg-[#1A2B47] shrink-0 flex flex-col items-center pt-2 pb-3 gap-1">
-            {/* Logo Sankhya */}
-            <div className="mb-2 flex flex-col items-center">
-              <img src="/sankhyalogo.png" alt="Sankhya" className="h-16 w-16 object-contain" />
-            </div>
-            {/* Ícones de módulos */}
-            {[
-              { icon: Home,      label: "Home"         },
-              { icon: BarChart2, label: "Dashboard"    },
-              { icon: FileText,  label: "Documentos"   },
-              { icon: Users,     label: "Usuários"     },
-              { icon: Settings,  label: "Config"       },
-            ].map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                title={label}
-                className="w-8 h-8 flex items-center justify-center rounded text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <Icon className="h-4 w-4" />
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#777777] pointer-events-none" />
+                <input
+                  placeholder="Buscar"
+                  readOnly
+                  className="h-8 pl-7 pr-3 text-[12px] bg-white border border-[#DCE1E6] rounded-md w-[140px] placeholder:text-[#999999] focus:outline-none cursor-default"
+                />
+              </div>
+              <button className="relative p-1.5 text-[#444444] hover:bg-muted rounded transition-colors">
+                <Bell className="h-[16px] w-[16px]" />
+                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-warning" />
               </button>
-            ))}
+              <button className="p-1.5 text-[#444444] hover:bg-muted rounded transition-colors">
+                <HelpCircle className="h-[16px] w-[16px]" />
+              </button>
+              <button className="p-1.5 text-[#444444] hover:bg-muted rounded transition-colors">
+                <LayoutGrid className="h-[16px] w-[16px]" />
+              </button>
+              <div className="w-px h-4 bg-[#DDDDDD] mx-1" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 hover:bg-muted rounded-full pl-0.5 pr-2 py-0.5 transition-colors">
+                    <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span className="text-primary-foreground font-semibold text-[10px]">AS</span>
+                    </div>
+                    <span className="text-[#333333] text-[12px] font-medium hidden sm:block">Ana Silva</span>
+                    <ChevronDown className="h-3 w-3 text-[#888888] hidden sm:block" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[200px]">
+                  <DropdownMenuItem asChild>
+                    <a href="https://cognito-layout-dream.lovable.app/" className="flex items-center gap-2 cursor-pointer">
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar para Team Workers
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+
+          <div className="flex-1 flex min-w-0 overflow-hidden">
+            <EIPSidebar />
+            <main className="flex-1 p-6 bg-background overflow-auto">
+              {children}
+            </main>
           </div>
-
-          {/* Sidebar de navegação do portal */}
-          <EIPSidebar />
-
-          {/* Conteúdo principal */}
-          <main className="flex-1 p-6 bg-background overflow-auto">
-            {children}
-          </main>
         </div>
       </div>
     );
   }
+
 
   // Landing: full-screen conversational page
   if (!hasInteracted) {
