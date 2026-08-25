@@ -99,7 +99,7 @@ function AppLayoutInner({ children }: AppLayoutProps) {
       <div className="h-screen flex w-full overflow-hidden">
 
         {/* ── Faixa Sankhya full-height (logo no topo) ───────────── */}
-        <div className="w-14 bg-[#1A2B47] shrink-0 flex flex-col items-center py-3 gap-1">
+        <div className="w-14 bg-[#2B3A54] shrink-0 flex flex-col items-center py-3 gap-1">
           <div className="mb-3 flex items-center justify-center">
             <img src="/sankhyalogo.png" alt="Sankhya" className="h-9 w-9 object-contain" />
           </div>
