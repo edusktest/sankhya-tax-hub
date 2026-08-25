@@ -204,17 +204,18 @@ export function EIPSidebar() {
     >
       {/* Header */}
       {isOpen ? (
-        <div className="flex items-center gap-2 px-3 h-12 border-b shrink-0">
-          <span className="flex-1 text-[12px] font-semibold text-[#333333] truncate">Portal da Reforma Tributária</span>
+        <div className="flex items-center gap-2 px-4 h-[60px] shrink-0">
+          <span className="flex-1 text-[15px] font-semibold text-[#1f2937] truncate">Portal da Reforma Tributária</span>
           <button
             onClick={() => setIsOpen(false)}
-            className="hover:bg-[#E3F2FD] rounded p-1.5 transition-colors shrink-0"
+            className="h-7 w-7 flex items-center justify-center rounded-full border border-primary/30 text-primary hover:bg-accent transition-colors shrink-0"
             title="Recolher"
           >
-            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+            <ChevronLeft className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
+
         <button
           onClick={() => setIsOpen(true)}
           className="flex flex-col items-center justify-center h-12 border-b hover:bg-[#E3F2FD] transition-colors w-full shrink-0"
