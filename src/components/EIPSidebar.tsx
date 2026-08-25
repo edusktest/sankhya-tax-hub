@@ -218,7 +218,7 @@ export function EIPSidebar() {
 
         <button
           onClick={() => setIsOpen(true)}
-          className="flex flex-col items-center justify-center h-12 border-b hover:bg-[#E3F2FD] transition-colors w-full shrink-0"
+          className="flex flex-col items-center justify-center h-[60px] hover:bg-accent transition-colors w-full shrink-0"
           title="Expandir navegação"
         >
           <Menu className="h-4 w-4 text-muted-foreground" />
