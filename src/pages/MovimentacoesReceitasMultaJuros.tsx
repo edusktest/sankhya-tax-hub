@@ -105,7 +105,30 @@ interface MultaJurosReceita {
   // refs
   documentoFiscal:    DocumentoFiscalOrigem;
   notaDebito?:        NotaDebito;
-  pendencia?:         string;
+  baixaEstornada?:    boolean;
+}
+
+// ─── Pendências ───────────────────────────────────────────────────────────────
+
+export const PENDENCIAS_MJ = {
+  PRT0002: "Título foi recebido com multa e juros. É necessário gerar uma Nota de Débito.",
+  PRT0003: "Baixa estornada. A baixa deste título foi estornada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
+} as const;
+
+export type CodigoPRT = keyof typeof PENDENCIAS_MJ;
+
+export interface PendenciaMJ {
+  codigo: CodigoPRT;
+  descricao: string;
+}
+
+export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
+  const p: PendenciaMJ[] = [];
+  if (r.statusDFe !== "Autorizado")
+    p.push({ codigo: "PRT0002", descricao: PENDENCIAS_MJ.PRT0002 });
+  if (r.baixaEstornada)
+    p.push({ codigo: "PRT0003", descricao: PENDENCIAS_MJ.PRT0003 });
+  return p;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -656,7 +679,7 @@ const MOCK: MultaJurosReceita[] = [
     multa: 950.0, juros: 475.0,
     totalIBSUF: 50.05, totalIBSMun: 50.05, totalCBS: 71.5,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
-    pendencia: "Baixa estornada",
+    baixaEstornada: true,
     nroNota: "NF-003200", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "30/07/2026", dtVencimento: "20/06/2026",
     vlrDesdobramento: 19000.0, vlrDesconto: 0, vlrBaixa: 20425.0, dataBaixa: "30/07/2026",
@@ -683,6 +706,8 @@ const MOCK: MultaJurosReceita[] = [
     },
   },
 ];
+
+export const MOCK_MULTA_JUROS = MOCK;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -750,25 +775,18 @@ function ibsValue(v: number, statusGeracao: StatusGeracaoNota) {
   return statusGeracao === "Confirmada" ? brl(v) : "—";
 }
 
-function getPendencia(r: MultaJurosReceita): string | undefined {
-  if (r.pendencia === "Baixa estornada")
-    return "Baixa estornada.";
-  if (r.statusCalculo === "Não configurado")
-    return "Cálculo de rateio não configurado.";
-  if (r.statusGeracaoNota === "Não configurado")
-    return "Geração de nota não configurada.";
-  if (r.statusDFe === "Erro")
-    return "Erro no envio do DFe.";
-  if (r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado")
-    return "Nota gerada mas DFe ainda não enviado.";
-  return undefined;
-}
-
-function PendenciaIcon({ pendencia }: { pendencia?: string }) {
-  if (pendencia) {
-    return <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Pendência" />;
-  }
-  return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+function PendenciaIcon({ pendencias }: { pendencias: PendenciaMJ[] }) {
+  if (pendencias.length === 0)
+    return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+  const tooltip = pendencias.map((p) => `${p.codigo}: ${p.descricao}`).join("\n");
+  return (
+    <div className="flex items-center gap-0.5" title={tooltip}>
+      <AlertTriangle className="h-4 w-4 text-amber-500" />
+      {pendencias.length > 1 && (
+        <span className="text-[10px] font-semibold text-amber-600 leading-none">{pendencias.length}</span>
+      )}
+    </div>
+  );
 }
 
 function SyncBadge({ label, date }: { label: string; date: string }) {
@@ -1044,7 +1062,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                     <TableRow key={r.id} className="hover:bg-muted/40 text-[13px]">
                       <TableCell className="text-center">
                         <div className="flex justify-center">
-                          <PendenciaIcon pendencia={getPendencia(r)} />
+                          <PendenciaIcon pendencias={getMultaJurosPendencias(r)} />
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
@@ -1160,16 +1178,13 @@ function MultaJurosDetailView({
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
-        {/* Alerta: Baixa estornada */}
-        {r.pendencia === "Baixa estornada" && (
-          <div className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
+        {/* Alertas de pendência */}
+        {getMultaJurosPendencias(r).map((p) => (
+          <div key={p.codigo} className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span>
-              <strong>Baixa estornada</strong> — A baixa deste título foi estornada após a emissão da Nota de Débito.
-              Verifique se o cancelamento da nota é necessário no Portal de Vendas.
-            </span>
+            <span><strong>{p.codigo}</strong> — {p.descricao}</span>
           </div>
-        )}
+        ))}
 
         {/* Status do processo */}
         <div className="flex items-center gap-6 flex-wrap">

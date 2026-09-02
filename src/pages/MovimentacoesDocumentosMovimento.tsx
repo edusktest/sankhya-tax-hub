@@ -163,6 +163,25 @@ interface DocumentoMovimento {
   pendencia?: string;
 }
 
+// ─── Pendências ───────────────────────────────────────────────────────────────
+
+export const PENDENCIAS_DOC = {
+  PRT0001: "Títulos com pendências",
+} as const;
+
+export type CodigoPRT_DOC = keyof typeof PENDENCIAS_DOC;
+
+export interface PendenciaDoc {
+  codigo: CodigoPRT_DOC;
+  descricao: string;
+}
+
+export function getDocumentoPendencias(d: DocumentoMovimento): PendenciaDoc[] {
+  if (d.pendencia || d.titulos.some((t) => t.pendencia))
+    return [{ codigo: "PRT0001", descricao: PENDENCIAS_DOC.PRT0001 }];
+  return [];
+}
+
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
 const EMPRESAS = [
@@ -3016,6 +3035,8 @@ const MOCK: DocumentoMovimento[] = [
   },
 ];
 
+export const MOCK_DOCUMENTOS_MOVIMENTO = MOCK;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const brl = (v: number) =>
@@ -3038,18 +3059,30 @@ function centralLabel(tm: TipoMovimento): string {
     : "Central de Compra";
 }
 
-function PendenciaIcon({ pendencia }: { pendencia?: string }) {
-  if (pendencia) {
-    return <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Pendência" />;
-  }
-  return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+function PendenciaIcon({ pendencias }: { pendencias: PendenciaDoc[] }) {
+  if (pendencias.length === 0)
+    return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />;
+  const tooltip = pendencias.map((p) => `${p.codigo}: ${p.descricao}`).join("\n");
+  return (
+    <div className="flex items-center gap-0.5" title={tooltip}>
+      <AlertTriangle className="h-4 w-4 text-amber-500" />
+      {pendencias.length > 1 && (
+        <span className="text-[10px] font-semibold text-amber-600 leading-none">{pendencias.length}</span>
+      )}
+    </div>
+  );
 }
 
-function PendenciaAlerta({ pendencia }: { pendencia: string }) {
+function PendenciaAlerta({ pendencias }: { pendencias: { codigo: string; descricao: string }[] }) {
+  if (pendencias.length === 0) return null;
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
-      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-      <p className="text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">{pendencia}</p>
+    <div className="space-y-2">
+      {pendencias.map((p) => (
+        <div key={p.codigo} className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span><strong>{p.codigo}</strong> — {p.descricao}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -3462,7 +3495,7 @@ export default function MovimentacoesDocumentosMovimento() {
                     <TableRow key={r.id} className="hover:bg-muted/40 text-[13px] align-middle">
                       <TableCell className="text-center">
                         <div className="flex justify-center">
-                          <PendenciaIcon pendencia={r.pendencia} />
+                          <PendenciaIcon pendencias={getDocumentoPendencias(r)} />
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
@@ -3600,10 +3633,8 @@ function DocumentDetailView({
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
-        {/* Alerta de pendência */}
-        {d.pendencia && (
-          <PendenciaAlerta pendencia={d.pendencia} />
-        )}
+        {/* Alertas de pendência */}
+        <PendenciaAlerta pendencias={getDocumentoPendencias(d)} />
 
         {/* Resumo do Documento */}
         <CollapsibleSection title="Resumo do Documento">
@@ -3750,7 +3781,7 @@ function DocumentDetailView({
                       <TableRow key={ref.id} className="text-[13px]">
                         <TableCell className="text-center">
                           <div className="flex justify-center">
-                            <PendenciaIcon pendencia={ref.pendencia} />
+                            <PendenciaIcon pendencias={ref.pendencia ? [{ codigo: "PRT0001" as const, descricao: ref.pendencia }] : []} />
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-[12px]">{ref.dataNegociacao}</TableCell>
@@ -3826,7 +3857,7 @@ function DocumentDetailView({
                     <TableRow key={t.id} className="hover:bg-muted/40 text-[13px]">
                       <TableCell className="text-center">
                         <div className="flex justify-center">
-                          <PendenciaIcon pendencia={t.pendencia} />
+                          <PendenciaIcon pendencias={t.pendencia ? [{ codigo: "PRT0001" as const, descricao: t.pendencia }] : []} />
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-[12px]">{t.dataNegociacao}</TableCell>
@@ -3944,10 +3975,8 @@ function TituloDetailView({
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
 
-        {/* Alerta de pendência */}
-        {t.pendencia && (
-          <PendenciaAlerta pendencia={t.pendencia} />
-        )}
+        {/* Alertas de pendência */}
+        <PendenciaAlerta pendencias={t.pendencia ? [{ codigo: "PRT0001", descricao: t.pendencia }] : []} />
 
         {/* Resumo do Título */}
         <CollapsibleSection title="Resumo do Título">
