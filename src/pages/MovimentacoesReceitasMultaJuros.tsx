@@ -18,8 +18,8 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type StatusCalculo      = "Pendente" | "Processando" | "Concluído" | "Não configurado";
-type StatusGeracaoNota  = "Pendente" | "Processando" | "Confirmada" | "Não configurado";
+type StatusCalculo      = "Pendente" | "Processando" | "Concluído" | "Erro" | "Não configurado";
+type StatusGeracaoNota  = "Pendente" | "Processando" | "Confirmada" | "Erro" | "Não configurado";
 type StatusDFe          = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado";
 
 interface NotaDebito {
@@ -244,6 +244,13 @@ const MOCK: MultaJurosReceita[] = [
       dtEntradaSaida: "05/05/2026", dtFaturamento: "05/05/2026", dtMovimento: "05/05/2026",
       finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "600.020",
       serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+    notaDebito: {
+      dataNegociacao: "10/05/2026",
+      nroUnico: "ND-600.025",
+      nroNota: "ND-000009",
+      chaveDFeOrigem: "35260288999000000133550010000061001234567892",
+      statusDFe: "Não enviado",
     },
   },
 
@@ -570,6 +577,111 @@ const MOCK: MultaJurosReceita[] = [
       statusDFe: "Autorizado",
     },
   },
+
+  // ── Cálculo: Erro ────────────────────────────────────────────────────────────
+  {
+    id: "mj_err1",
+    dataNegociacao: "15/07/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Construtora Prata S.A.",
+    parceiroCNPJ: "44.555.666/0001-77",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    nroUnico: "100.910",
+    multa: 780.0, juros: 390.0,
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    statusCalculo: "Erro", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
+    nroNota: "NF-001900", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "15/07/2026", dtVencimento: "10/06/2026",
+    vlrDesdobramento: 15600.0, vlrDesconto: 0, vlrBaixa: 16770.0, dataBaixa: "15/07/2026",
+    documentoFiscal: {
+      dataNegociacao: "10/06/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Construtora Prata S.A.", parceiroCNPJ: "44.555.666/0001-77",
+      tipoMovimento: "Venda", numero: "1900",
+      chaveDFe: "35260744555666000177550010000019001234567910",
+      valor: 15600.0, totalIBSUF: 546.0, totalIBSMun: 546.0, totalCBS: 780.0,
+      empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "10/06/2026", dtFaturamento: "10/06/2026", dtMovimento: "10/06/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "100.905",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+  },
+
+  // ── Geração: Erro ────────────────────────────────────────────────────────────
+  {
+    id: "mj_err2",
+    dataNegociacao: "22/07/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Mercado Sul Ltda",
+    parceiroCNPJ: "33.444.555/0001-22",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    nroUnico: "200.120",
+    multa: 1100.0, juros: 550.0,
+    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    statusCalculo: "Concluído", statusGeracaoNota: "Erro", statusDFe: "Não enviado",
+    nroNota: "NF-002500", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "22/07/2026", dtVencimento: "15/06/2026",
+    vlrDesdobramento: 22000.0, vlrDesconto: 0, vlrBaixa: 23650.0, dataBaixa: "22/07/2026",
+    documentoFiscal: {
+      dataNegociacao: "15/06/2026",
+      empresa: "002 - Sankhya São Paulo S.A.",
+      parceiroNome: "Mercado Sul Ltda", parceiroCNPJ: "33.444.555/0001-22",
+      tipoMovimento: "Venda", numero: "2500",
+      chaveDFe: "35260733444555000122550010000025001234567920",
+      valor: 22000.0, totalIBSUF: 770.0, totalIBSMun: 770.0, totalCBS: 1100.0,
+      empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "15/06/2026", dtFaturamento: "15/06/2026", dtMovimento: "15/06/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "200.115",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+  },
+
+  // ── Baixa estornada ──────────────────────────────────────────────────────────
+  {
+    id: "mj_est1",
+    dataNegociacao: "30/07/2026",
+    empresa: "003 - Distribuidora Norte Ltda",
+    empresaCod: "003",
+    parceiroNome: "Logística Oeste S.A.",
+    parceiroCNPJ: "66.777.888/0001-99",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    nroUnico: "300.215",
+    multa: 950.0, juros: 475.0,
+    totalIBSUF: 50.05, totalIBSMun: 50.05, totalCBS: 71.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
+    pendencia: "Baixa estornada",
+    nroNota: "NF-003200", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "30/07/2026", dtVencimento: "20/06/2026",
+    vlrDesdobramento: 19000.0, vlrDesconto: 0, vlrBaixa: 20425.0, dataBaixa: "30/07/2026",
+    documentoFiscal: {
+      dataNegociacao: "20/06/2026",
+      empresa: "003 - Distribuidora Norte Ltda",
+      parceiroNome: "Logística Oeste S.A.", parceiroCNPJ: "66.777.888/0001-99",
+      tipoMovimento: "Venda", numero: "3200",
+      chaveDFe: "35260866777888000199550010000032001234567930",
+      valor: 19000.0, totalIBSUF: 665.0, totalIBSMun: 665.0, totalCBS: 950.0,
+      empresaNegociacao: "003 - Distribuidora Norte Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "20/06/2026", dtFaturamento: "20/06/2026", dtMovimento: "20/06/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "300.210",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+    notaDebito: {
+      dataNegociacao: "30/07/2026",
+      nroUnico: "ND-300.215",
+      nroNota: "ND-000030",
+      chaveDFe: "35260866777888000199550010000000301234567931",
+      chaveDFeOrigem: "35260866777888000199550010000032001234567930",
+      statusDFe: "Autorizado",
+    },
+  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -586,6 +698,7 @@ function BadgeCalculo({ status }: { status: StatusCalculo }) {
   const cls =
     status === "Concluído"        ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
     status === "Processando"      ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Erro"             ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
     status === "Não configurado"  ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
                                     "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
@@ -595,6 +708,7 @@ function BadgeGeracao({ status }: { status: StatusGeracaoNota }) {
   const cls =
     status === "Confirmada"      ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
     status === "Processando"     ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Erro"            ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
     status === "Não configurado" ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
                                    "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
@@ -637,6 +751,8 @@ function ibsValue(v: number, statusGeracao: StatusGeracaoNota) {
 }
 
 function getPendencia(r: MultaJurosReceita): string | undefined {
+  if (r.pendencia === "Baixa estornada")
+    return "Baixa estornada.";
   if (r.statusCalculo === "Não configurado")
     return "Cálculo de rateio não configurado.";
   if (r.statusGeracaoNota === "Não configurado")
@@ -722,7 +838,7 @@ export default function MovimentacoesReceitasMultaJuros() {
     const ate = filtroAte ? new Date(filtroAte) : null;
     return MOCK.filter((r) => {
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const dt = parseDate(r.dataNegociacao);
+      const dt = parseDate(r.dataBaixa);
       const byDe = !de || dt >= de;
       const byAte = !ate || dt <= ate;
       const byCalculo = !filtroCalculo || r.statusCalculo === filtroCalculo;
@@ -822,7 +938,7 @@ export default function MovimentacoesReceitasMultaJuros() {
               <SelectValue placeholder="Cálculo de Rateio" />
             </SelectTrigger>
             <SelectContent>
-              {(["Não configurado", "Pendente", "Processando", "Concluído"] as StatusCalculo[]).map((s) => (
+              {(["Não configurado", "Pendente", "Processando", "Concluído", "Erro"] as StatusCalculo[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
@@ -834,7 +950,7 @@ export default function MovimentacoesReceitasMultaJuros() {
               <SelectValue placeholder="Geração da Nota" />
             </SelectTrigger>
             <SelectContent>
-              {(["Não configurado", "Pendente", "Processando", "Confirmada"] as StatusGeracaoNota[]).map((s) => (
+              {(["Não configurado", "Pendente", "Processando", "Confirmada", "Erro"] as StatusGeracaoNota[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
@@ -1026,10 +1142,10 @@ function MultaJurosDetailView({
         </div>
         <div className="flex gap-2 shrink-0 flex-wrap justify-end">
           {showGerar && (
-            <DevTooltip hint="Ao gerar, abrir Central de Vendas filtrada pela nota e Status NFe = 'Não enviado'. Remover este tooltip na versão do cliente.">
+            <DevTooltip hint="Abre Central de Vendas filtrada pela nota e Status NFe = 'Não enviado'. A transmissão é realizada no Portal de Vendas. Remover este tooltip na versão do cliente.">
               <Button variant="default" size="sm" className="h-8 text-[12px] gap-1.5">
                 <FileText className="h-3.5 w-3.5" />
-                Gerar Nota de Débito
+                Transmitir DFe
               </Button>
             </DevTooltip>
           )}
@@ -1043,6 +1159,17 @@ function MultaJurosDetailView({
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-6 py-5 space-y-6">
+
+        {/* Alerta: Baixa estornada */}
+        {r.pendencia === "Baixa estornada" && (
+          <div className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>
+              <strong>Baixa estornada</strong> — A baixa deste título foi estornada após a emissão da Nota de Débito.
+              Verifique se o cancelamento da nota é necessário no Portal de Vendas.
+            </span>
+          </div>
+        )}
 
         {/* Status do processo */}
         <div className="flex items-center gap-6 flex-wrap">
@@ -1191,7 +1318,7 @@ function MultaJurosDetailView({
         </CollapsibleSection>
 
         {/* Nota de Débito */}
-        {r.notaDebito && (
+        {r.statusGeracaoNota === "Confirmada" && r.notaDebito && (
           <CollapsibleSection title="Nota de Débito">
             <div className="rounded-lg border overflow-hidden">
               <Table>
