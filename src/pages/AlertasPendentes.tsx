@@ -43,7 +43,7 @@ const ALERTAS_DOCUMENTOS: AlertaItem[] = MOCK_DOCUMENTOS_MOVIMENTO.flatMap((d) =
     menuOrigem: "Documentos > Movimento",
     registro: d.numero,
     routeTo: ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO,
-    routeState: { openNroUnico: d.id },
+    routeState: { filterNroUnico: d.id },
   }))
 );
 
@@ -56,7 +56,7 @@ const ALERTAS_MULTA_JUROS: AlertaItem[] = MOCK_MULTA_JUROS.flatMap((r) =>
     menuOrigem: "Receitas > Multa e Juros",
     registro: r.nroUnico,
     routeTo: ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS,
-    routeState: { openNroUnico: r.nroUnico },
+    routeState: { filterNroUnico: r.nroUnico },
   }))
 );
 

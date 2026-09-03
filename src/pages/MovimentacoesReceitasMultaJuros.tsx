@@ -879,6 +879,7 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [filtroGeracao, setFiltroGeracao] = useState("");
   const [filtroDFe, setFiltroDFe] = useState("");
   const [filtroTipoMovimento, setFiltroTipoMovimento] = useState("");
+  const [filtroNroUnico, setFiltroNroUnico] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = () => {
@@ -887,14 +888,17 @@ export default function MovimentacoesReceitasMultaJuros() {
   };
 
   useEffect(() => {
-    const nroUnico = (location.state as { openNroUnico?: string } | null)?.openNroUnico;
-    if (!nroUnico) return;
-    const record = MOCK.find((r) => r.nroUnico === nroUnico);
-    if (record) { setSelected(record); setView("detail"); }
+    const state = location.state as { openNroUnico?: string; filterNroUnico?: string } | null;
+    if (state?.openNroUnico) {
+      const record = MOCK.find((r) => r.nroUnico === state.openNroUnico);
+      if (record) { setSelected(record); setView("detail"); }
+    } else if (state?.filterNroUnico) {
+      setFiltroNroUnico(state.filterNroUnico);
+    }
   }, [location.state]);
 
   const hasFilter = filtroEmpresa !== "" || filtroDe !== "" || filtroAte !== "" ||
-    filtroCalculo !== "" || filtroGeracao !== "" || filtroDFe !== "" || filtroTipoMovimento !== "";
+    filtroCalculo !== "" || filtroGeracao !== "" || filtroDFe !== "" || filtroTipoMovimento !== "" || filtroNroUnico !== "";
 
   const rows = useMemo(() => {
     const de = filtroDe ? new Date(filtroDe) : null;
@@ -908,9 +912,10 @@ export default function MovimentacoesReceitasMultaJuros() {
       const byGeracao = !filtroGeracao || r.statusGeracaoNota === filtroGeracao;
       const byDFe = !filtroDFe || r.statusDFe === filtroDFe;
       const byTipo = !filtroTipoMovimento || r.tipoMovimento === filtroTipoMovimento;
-      return byEmpresa && byDe && byAte && byCalculo && byGeracao && byDFe && byTipo;
+      const byNroUnico = !filtroNroUnico || r.nroUnico === filtroNroUnico;
+      return byEmpresa && byDe && byAte && byCalculo && byGeracao && byDFe && byTipo && byNroUnico;
     });
-  }, [filtroEmpresa, filtroDe, filtroAte, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento]);
+  }, [filtroEmpresa, filtroDe, filtroAte, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento, filtroNroUnico]);
 
   if (view === "doc-fiscal" && selected) {
     return (
@@ -1048,7 +1053,7 @@ export default function MovimentacoesReceitasMultaJuros() {
               onClick={() => {
                 setFiltroEmpresa(""); setFiltroDe(""); setFiltroAte("");
                 setFiltroCalculo(""); setFiltroGeracao(""); setFiltroDFe("");
-                setFiltroTipoMovimento("");
+                setFiltroTipoMovimento(""); setFiltroNroUnico("");
               }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -1069,6 +1074,19 @@ export default function MovimentacoesReceitasMultaJuros() {
           </Button>
         </div>
       </div>
+
+      {/* Chip: filtro por nº único vindo de Alertas */}
+      {filtroNroUnico && (
+        <div className="px-6 py-2 border-b bg-primary/5 flex items-center gap-2">
+          <span className="text-[12px] text-muted-foreground">Filtrado por:</span>
+          <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded-full">
+            Nº único: {filtroNroUnico}
+            <button onClick={() => setFiltroNroUnico("")} className="hover:text-destructive ml-0.5 leading-none">
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-auto">

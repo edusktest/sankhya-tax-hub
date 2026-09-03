@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+﻿import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ERoutes } from "@/routes/interface";
 
@@ -165,8 +165,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "08/02/2026",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 18000, baseReduzida: 0, aliquota: "5,00%", valor: 900.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 18000, baseReduzida: 0, aliquota: "3,50%", valor: 630.0, digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "500.001", nroNota: "NF-500100", chaveDFe: "35260111222333000144550010005001001005001000", statusDFe: "Autorizado", finalidade: "Normal" },
@@ -199,8 +198,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "—",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "5,00%", valor: 310.0,  digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "3,50%", valor: 217.0,  digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "3,50%", valor: 217.0,  digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 6200, baseReduzida: 0, aliquota: "3,50%", valor: 217.0,  digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "500.002", nroNota: "NF-500101", chaveDFe: "35260155666777000188550010005001011005001010", statusDFe: "Aguardando autorização", finalidade: "Normal" },
@@ -233,8 +231,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "03/03/2026",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 37500, baseReduzida: 0, aliquota: "5,00%", valor: 1875.0,  digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 37500, baseReduzida: 0, aliquota: "3,50%", valor: 1312.5,  digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 37500, baseReduzida: 0, aliquota: "3,50%", valor: 1312.5,  digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 37500, baseReduzida: 0, aliquota: "3,50%", valor: 1312.5,  digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "600.010", nroNota: "NF-600050", chaveDFe: "35260299000111000122550010006000501006000500", statusDFe: "Autorizado", finalidade: "Normal" },
@@ -267,8 +264,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "22/03/2026",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "5,00%", valor: 240.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "3,50%", valor: 168.0, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "3,50%", valor: 168.0, digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 4800, baseReduzida: 0, aliquota: "3,50%", valor: 168.0, digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "500.003", nroNota: "NF-500115", chaveDFe: "35260233444555000166550010005001151005001150", statusDFe: "Autorizado", finalidade: "Normal" },
@@ -301,8 +297,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "—",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 9400, baseReduzida: 0, aliquota: "5,00%", valor: 470.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 9400, baseReduzida: 0, aliquota: "3,50%", valor: 329.0, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 9400, baseReduzida: 0, aliquota: "3,50%", valor: 329.0, digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 9400, baseReduzida: 0, aliquota: "3,50%", valor: 329.0, digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "500.004", nroNota: "NF-500200", chaveDFe: "35260444555666000177550010005002001005002000", statusDFe: "Autorizado", finalidade: "Normal" },
@@ -335,8 +330,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "—",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "5,00%", valor: 1075.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 21500, baseReduzida: 0, aliquota: "3,50%", valor:  752.5, digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "600.020", nroNota: "NF-600100", chaveDFe: "35260588999000000133550010006001001006001000", statusDFe: "Autorizado", finalidade: "Normal" },
@@ -369,8 +363,7 @@ const MOCK: DespesaMovimento[] = [
     dataBaixa: "—",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "5,00%", valor: 255.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 5100, baseReduzida: 0, aliquota: "3,50%", valor: 178.5, digitado: "Não" },
     ],
     documentos: [
       { nroUnico: "500.005", nroNota: "NF-500210", chaveDFe: "35260555666777000188550010005002101005002100", statusDFe: "Autorizado", finalidade: "Normal" },
@@ -401,8 +394,7 @@ const MOCK: DespesaMovimento[] = [
     vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
     tributos: [
       { imposto: "CBS",     incidencia: "Saída", cst: "01", base: -3360, baseReduzida: 0, aliquota: "5,00%", valor: -168.0,   digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Saída", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
     ],
     tituloRef: {
       id: "t9",
@@ -420,13 +412,11 @@ const MOCK: DespesaMovimento[] = [
       totalCBS: 420.0,
       tributos: [
         { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "5,00%", valor:  420.0,  digitado: "Não" },
-        { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "3,50%", valor:  294.0,  digitado: "Não" },
-        { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "3,50%", valor:  294.0,  digitado: "Não" },
+        { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "3,50%", valor:  294.0,  digitado: "Não" },
       ],
       tributosDevolvidos: [
         { imposto: "CBS",     incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "5,00%", valor: -168.0,   digitado: "Não" },
-        { imposto: "IBS UF",  incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
-        { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
+        { imposto: "IBS",  incidencia: "Devolução", cst: "01", base: -3360, baseReduzida: 0, aliquota: "3,50%", valor: -117.60,  digitado: "Não" },
       ],
     },
     documentos: [
@@ -514,8 +504,7 @@ const MOCK: DespesaMovimento[] = [
     vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 200.0, dataBaixa: "01/06/2026",
     tributos: [
       { imposto: "CBS",     incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "5,00%", valor: 10.0, digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "3,50%", valor:  7.0, digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "3,50%", valor:  7.0, digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Entrada", cst: "50", base: 200, baseReduzida: 0, aliquota: "3,50%", valor:  7.0, digitado: "Não" },
     ],
     documentos: [],
     pedidoRef: {
@@ -556,8 +545,7 @@ const MOCK: DespesaMovimento[] = [
     vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 0, dataBaixa: "—",
     tributos: [
       { imposto: "CBS",     incidencia: "Saída", cst: "01", base: -18600, baseReduzida: 0, aliquota: "5,00%", valor: -930.0,  digitado: "Não" },
-      { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
-      { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
+      { imposto: "IBS",  incidencia: "Saída", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
     ],
     tituloRef: {
       id: "t7",
@@ -575,13 +563,11 @@ const MOCK: DespesaMovimento[] = [
       totalCBS: 930.0,
       tributos: [
         { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "5,00%", valor: 930.0,  digitado: "Não" },
-        { imposto: "IBS UF",  incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "3,50%", valor: 651.0,  digitado: "Não" },
-        { imposto: "IBS Mun", incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "3,50%", valor: 651.0,  digitado: "Não" },
+        { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "3,50%", valor: 651.0,  digitado: "Não" },
       ],
       tributosDevolvidos: [
         { imposto: "CBS",     incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "5,00%", valor: -930.0,  digitado: "Não" },
-        { imposto: "IBS UF",  incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
-        { imposto: "IBS Mun", incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
+        { imposto: "IBS",  incidencia: "Devolução", cst: "01", base: -18600, baseReduzida: 0, aliquota: "3,50%", valor: -651.0,  digitado: "Não" },
       ],
     },
     documentos: [

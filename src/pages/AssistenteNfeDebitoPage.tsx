@@ -645,61 +645,65 @@ export default function AssistenteNfeDebitoPage() {
     const totalConf = SUBTIPOS_SUPORTADOS.filter(s => topAtiva(s.cod)).length;
 
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+      <div className="min-h-full p-6 bg-background">
+        <div className="max-w-4xl mx-auto">
+          {/* Sticky header */}
+          <div className="sticky top-0 z-10 bg-background border-b -mx-6 -mt-6 px-6 py-3 mb-6">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground flex-wrap">
+              <span>Configurações</span>
+              <ChevronRight className="h-3 w-3" />
+              <span>Assistentes</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground font-medium">Configuração de Nota de Débito</span>
+            </div>
+          </div>
+
+          <div className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="h-11 w-11 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
-              <FileText className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
+          <div>
+            <div className="flex items-center gap-2">
               <h1 className="text-[22px] font-bold text-foreground leading-tight">
                 Nota de Débito IBS/CBS
               </h1>
-              <p className="text-[13px] text-muted-foreground mt-0.5">
-                Configure os Tipos de Operação (TOP) e alíquotas para emissão de Notas de Débito
-                {" "}(<span className="font-medium">finNFe = 6</span>).
-              </p>
+              <div className="relative group">
+                <Info className="h-4 w-4 text-muted-foreground/50 cursor-default hover:text-muted-foreground transition-colors" />
+                <div className="absolute left-0 top-full mt-2 hidden group-hover:block z-20 pointer-events-none">
+                  <div className="bg-popover text-popover-foreground rounded-lg border border-border shadow-md p-3 w-80 space-y-1.5">
+                    <p className="text-[12px] font-semibold">O que é uma Nota de Débito?</p>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                      Documenta qualquer evento que resulte no <strong className="text-foreground">aumento do imposto devido</strong> pelo emitente.
+                      Corresponde à finalidade <strong className="text-foreground">finNFe = 6</strong> na NF-e. Este assistente cobre os subtipos:{" "}
+                      <strong className="text-foreground">04 — Multa e juros</strong> e <strong className="text-foreground">06 — Pagamento antecipado</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Info box */}
-        <div className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-4 flex gap-3">
-          <Info className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="text-[13px] font-semibold text-orange-800 dark:text-orange-300">
-              O que é uma Nota de Débito?
-            </p>
-            <p className="text-[12px] text-orange-700 dark:text-orange-400 leading-relaxed">
-              Documenta qualquer evento que resulte no <strong>aumento do imposto devido</strong> pelo emitente.
-              Corresponde à finalidade <strong>finNFe = 6</strong> na NF-e. Este assistente cobre os subtipos:{" "}
-              <strong>04 — Multa e juros</strong> e <strong>06 — Pagamento antecipado</strong>.
+            <p className="text-[13px] text-muted-foreground mt-0.5">
+              Configure os Tipos de Operação (TOP) e alíquotas para emissão de Notas de Débito
+              {" "}(<span className="font-medium">finNFe = 6</span>).
             </p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg border bg-card px-4 py-3 flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+        <div className="flex gap-3">
+          <div className="flex-1 rounded-lg border bg-card p-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              <span className="text-[11px] font-medium text-muted-foreground">Subtipos configurados</span>
             </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground">Subtipos configurados</p>
-              <p className="text-[18px] font-bold text-foreground leading-tight">
-                {totalConf} <span className="text-[13px] font-normal text-muted-foreground">de {SUBTIPOS_SUPORTADOS.length}</span>
-              </p>
-            </div>
+            <p className="text-[22px] font-bold text-foreground leading-none mb-0.5">{totalConf}</p>
+            <p className="text-[11px] text-muted-foreground">de {SUBTIPOS_SUPORTADOS.length} subtipos suportados</p>
           </div>
-          <div className="rounded-lg border bg-card px-4 py-3 flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <div className="flex-1 rounded-lg border bg-card p-3">
+            <div className="flex items-center gap-2 mb-1.5">
               <Layers className="h-4 w-4 text-primary" />
+              <span className="text-[11px] font-medium text-muted-foreground">TOPs cadastradas</span>
             </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground">TOPs cadastradas</p>
-              <p className="text-[18px] font-bold text-foreground leading-tight">{tops.length}</p>
-            </div>
+            <p className="text-[22px] font-bold text-foreground leading-none mb-0.5">{tops.length}</p>
+            <p className="text-[11px] text-muted-foreground">configurações ativas e inativas</p>
           </div>
         </div>
 
@@ -737,9 +741,9 @@ export default function AssistenteNfeDebitoPage() {
                       <TableCell className="text-[12px] text-muted-foreground italic">Não configurado</TableCell>
                       <TableCell colSpan={4} />
                       <TableCell className="text-right">
-                        <Button size="sm" className="h-7 gap-1.5 text-[12px]" onClick={() => openNovaTop(sub.cod)}>
-                          <Plus className="h-3.5 w-3.5" />
-                          Configurar
+                        <Button size="sm" className="h-7 gap-1.5 text-[12px] bg-emerald-700 hover:bg-emerald-800 text-white" onClick={() => openNovaTop(sub.cod)}>
+                          <ChevronRight className="h-3.5 w-3.5" />
+                          Iniciar configuração
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -779,6 +783,8 @@ export default function AssistenteNfeDebitoPage() {
               })}
             </TableBody>
           </Table>
+        </div>
+          </div>
         </div>
       </div>
     );
