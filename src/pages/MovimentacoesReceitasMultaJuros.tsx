@@ -106,6 +106,7 @@ interface MultaJurosReceita {
   documentoFiscal:    DocumentoFiscalOrigem;
   notaDebito?:        NotaDebito;
   baixaEstornada?:    boolean;
+  vendaCancelada?:    boolean;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
@@ -113,6 +114,7 @@ interface MultaJurosReceita {
 export const PENDENCIAS_MJ = {
   PRT0002: "Título foi recebido com multa e juros. É necessário gerar uma Nota de Débito.",
   PRT0003: "Baixa estornada. A baixa deste título foi estornada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
+  PRT0004: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
 } as const;
 
 export type CodigoPRT = keyof typeof PENDENCIAS_MJ;
@@ -128,6 +130,8 @@ export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
     p.push({ codigo: "PRT0002", descricao: PENDENCIAS_MJ.PRT0002 });
   if (r.baixaEstornada)
     p.push({ codigo: "PRT0003", descricao: PENDENCIAS_MJ.PRT0003 });
+  if (r.vendaCancelada && r.statusDFe === "Autorizado")
+    p.push({ codigo: "PRT0004", descricao: PENDENCIAS_MJ.PRT0004 });
   return p;
 }
 
@@ -662,6 +666,47 @@ const MOCK: MultaJurosReceita[] = [
       dtEntradaSaida: "15/06/2026", dtFaturamento: "15/06/2026", dtMovimento: "15/06/2026",
       finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "200.115",
       serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+  },
+
+  // ── Venda cancelada ──────────────────────────────────────────────────────────
+  {
+    id: "mj_canc1",
+    dataNegociacao: "10/08/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Distribuidora Leste S.A.",
+    parceiroCNPJ: "11.222.333/0001-44",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    nroUnico: "400.310",
+    multa: 180.0, juros: 90.0,
+    totalIBSUF: 9.45, totalIBSMun: 9.45, totalCBS: 13.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
+    vendaCancelada: true,
+    nroNota: "NF-004100", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "10/08/2026", dtVencimento: "01/07/2026",
+    vlrDesdobramento: 8500.0, vlrDesconto: 0, vlrBaixa: 8770.0, dataBaixa: "10/08/2026",
+    documentoFiscal: {
+      dataNegociacao: "01/07/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Distribuidora Leste S.A.", parceiroCNPJ: "11.222.333/0001-44",
+      tipoMovimento: "Venda", numero: "4100",
+      chaveDFe: "35260711222333000144550010000041001234567940",
+      valor: 8500.0, totalIBSUF: 297.5, totalIBSMun: 297.5, totalCBS: 425.0,
+      empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "01/07/2026", dtFaturamento: "01/07/2026", dtMovimento: "01/07/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "400.300",
+      serieNota: "001", statusNota: "Cancelado", notaModelo: "55 - NF-e",
+    },
+    notaDebito: {
+      dataNegociacao: "10/08/2026",
+      nroUnico: "ND-400.310",
+      nroNota: "ND-000040",
+      chaveDFe: "35260711222333000144550010000000401234567941",
+      chaveDFeOrigem: "35260711222333000144550010000041001234567940",
+      statusDFe: "Autorizado",
     },
   },
 
