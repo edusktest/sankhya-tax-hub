@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowUp, Sparkles, Bot, Gem, AlertTriangle, ChevronRight,
-  Home, Plus, ChevronDown, CheckCircle2, Clock,
+  Home, Plus, ChevronDown, CheckCircle2, Clock, LayoutDashboard,
 } from "lucide-react";
 import { useBIAChat } from "@/context/BIAChatContext";
 import type { BIASkill } from "@/context/BIAChatContext";
@@ -260,7 +260,7 @@ function WorkerCard({
 
 // ── Main component ────────────────────────────────────────────────
 export function ConversationalLanding() {
-  const { addMessage, setThinking, sendInsight, setPendingAction, skipToLayout } = useBIAChat();
+  const { addMessage, setThinking, sendInsight, setPendingAction, skipToLayout, setEipMode } = useBIAChat();
   const navigate = useNavigate();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -837,7 +837,14 @@ export function ConversationalLanding() {
   return (
     <div className="h-screen w-full flex flex-col bg-background">
       {/* Top-right action */}
-      <div className="absolute top-3 right-4 z-10">
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-2">
+        <button
+          onClick={() => { setEipMode(true); skipToLayout(); }}
+          className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent hover:border-primary/30 transition-colors shadow-sm"
+        >
+          <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+          Voltar para layout EIP
+        </button>
         <button
           onClick={skipToLayout}
           className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent hover:border-primary/30 transition-colors shadow-sm"
