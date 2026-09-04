@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   TrendingUp, ChevronRight, ExternalLink, Eye, Filter, X,
-  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, Calculator,
+  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw,
 } from "lucide-react";
 import { ERoutes } from "@/routes/interface";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 type StatusCalculo      = "Pendente" | "Processando" | "Concluído" | "Erro" | "Não configurado";
 type StatusGeracaoNota  = "Pendente" | "Processando" | "Confirmada" | "Erro" | "Não configurado";
-type StatusDFe          = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado";
+type StatusDFe          = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado" | "Cancelado" | "Denegado";
 
 interface NotaDebito {
   dataNegociacao: string;
@@ -124,9 +124,15 @@ export interface PendenciaMJ {
   descricao: string;
 }
 
+const DFE_DEFINITIVO = new Set<StatusDFe>(["Autorizado", "Cancelado", "Denegado"]);
+
+function isDFeDefinitivo(status: StatusDFe): boolean {
+  return DFE_DEFINITIVO.has(status);
+}
+
 export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
   const p: PendenciaMJ[] = [];
-  if (r.statusDFe !== "Autorizado")
+  if (!isDFeDefinitivo(r.statusDFe))
     p.push({ codigo: "PRT0002", descricao: PENDENCIAS_MJ.PRT0002 });
   if (r.baixaEstornada)
     p.push({ codigo: "PRT0003", descricao: PENDENCIAS_MJ.PRT0003 });
@@ -710,6 +716,45 @@ const MOCK: MultaJurosReceita[] = [
     },
   },
 
+  // ── Denegado ─────────────────────────────────────────────────────────────────
+  {
+    id: "mj_den1",
+    dataNegociacao: "20/08/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod: "001",
+    parceiroNome: "Indústria Zeta Ltda",
+    parceiroCNPJ: "55.444.333/0001-11",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    nroUnico: "100.950",
+    multa: 620.0, juros: 310.0,
+    totalIBSUF: 32.55, totalIBSMun: 32.55, totalCBS: 46.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Denegado",
+    nroNota: "NF-001950", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "20/08/2026", dtVencimento: "18/07/2026",
+    vlrDesdobramento: 12400.0, vlrDesconto: 0, vlrBaixa: 13330.0, dataBaixa: "20/08/2026",
+    documentoFiscal: {
+      dataNegociacao: "18/07/2026",
+      empresa: "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome: "Indústria Zeta Ltda", parceiroCNPJ: "55.444.333/0001-11",
+      tipoMovimento: "Venda", numero: "1950",
+      chaveDFe: "35260855444333000111550010000019501234567950",
+      valor: 12400.0, totalIBSUF: 434.0, totalIBSMun: 434.0, totalCBS: 620.0,
+      empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "18/07/2026", dtFaturamento: "18/07/2026", dtMovimento: "18/07/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "100.945",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+    notaDebito: {
+      dataNegociacao: "20/08/2026",
+      nroUnico: "ND-100.950",
+      nroNota: "ND-000050",
+      chaveDFeOrigem: "35260855444333000111550010000019501234567950",
+      statusDFe: "Denegado",
+    },
+  },
+
   // ── Baixa estornada ──────────────────────────────────────────────────────────
   {
     id: "mj_est1",
@@ -789,7 +834,9 @@ function BadgeDFe({ status }: { status: StatusDFe }) {
     status === "Autorizado"              ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
     status === "Aguardando autorização"  ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
     status === "Erro"                    ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
-                                           "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
+    status === "Denegado"               ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
+    status === "Cancelado"              ? "border-gray-400 text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/40" :
+                                          "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
 }
 
@@ -881,10 +928,39 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [filtroTipoMovimento, setFiltroTipoMovimento] = useState("");
   const [filtroNroUnico, setFiltroNroUnico] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [mockOverrides, setMockOverrides] = useState<Record<string, Partial<MultaJurosReceita>>>({});
 
   const handleRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1500);
+  };
+
+  const handleReprocessar = (id: string) => {
+    const base = MOCK.find((m) => m.id === id)!;
+    setMockOverrides((prev) => ({ ...prev, [id]: { ...prev[id], statusCalculo: "Processando" } }));
+    setTimeout(() => {
+      setMockOverrides((prev) => {
+        const current = { ...base, ...prev[id] };
+        const notaDebito: NotaDebito = current.notaDebito
+          ? { ...current.notaDebito, statusDFe: "Não enviado" }
+          : {
+              dataNegociacao: new Date().toLocaleDateString("pt-BR"),
+              nroUnico: `ND-${base.nroUnico}`,
+              nroNota: `ND-${base.id.toUpperCase()}`,
+              chaveDFeOrigem: base.documentoFiscal.chaveDFe,
+              statusDFe: "Não enviado",
+            };
+        return {
+          ...prev,
+          [id]: {
+            ...prev[id],
+            statusCalculo: "Concluído",
+            statusGeracaoNota: "Confirmada",
+            notaDebito,
+          },
+        };
+      });
+    }, 2000);
   };
 
   useEffect(() => {
@@ -903,7 +979,7 @@ export default function MovimentacoesReceitasMultaJuros() {
   const rows = useMemo(() => {
     const de = filtroDe ? new Date(filtroDe) : null;
     const ate = filtroAte ? new Date(filtroAte) : null;
-    return MOCK.filter((r) => {
+    return MOCK.map((r) => ({ ...r, ...mockOverrides[r.id] } as MultaJurosReceita)).filter((r) => {
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
       const dt = parseDate(r.dataBaixa);
       const byDe = !de || dt >= de;
@@ -915,7 +991,7 @@ export default function MovimentacoesReceitasMultaJuros() {
       const byNroUnico = !filtroNroUnico || r.nroUnico === filtroNroUnico;
       return byEmpresa && byDe && byAte && byCalculo && byGeracao && byDFe && byTipo && byNroUnico;
     });
-  }, [filtroEmpresa, filtroDe, filtroAte, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento, filtroNroUnico]);
+  }, [filtroEmpresa, filtroDe, filtroAte, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento, filtroNroUnico, mockOverrides]);
 
   if (view === "doc-fiscal" && selected) {
     return (
@@ -1030,7 +1106,7 @@ export default function MovimentacoesReceitasMultaJuros() {
               <SelectValue placeholder="Status DFe" />
             </SelectTrigger>
             <SelectContent>
-              {(["Não enviado", "Aguardando autorização", "Erro", "Autorizado"] as StatusDFe[]).map((s) => (
+              {(["Não enviado", "Aguardando autorização", "Erro", "Autorizado", "Cancelado", "Denegado"] as StatusDFe[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
@@ -1154,10 +1230,16 @@ export default function MovimentacoesReceitasMultaJuros() {
                       <TableCell><BadgeDFe status={r.statusDFe} /></TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          {r.statusCalculo === "Pendente" && (
-                            <Button size="sm" variant="outline" className="h-7 text-[12px] gap-1">
-                              <Calculator className="h-3.5 w-3.5" />
-                              Calcular agora
+                          {r.statusCalculo !== "Não configurado" && !isDFeDefinitivo(r.statusDFe) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-[12px] gap-1"
+                              disabled={r.statusCalculo === "Processando"}
+                              onClick={() => handleReprocessar(r.id)}
+                            >
+                              <RefreshCw className={cn("h-3.5 w-3.5", r.statusCalculo === "Processando" && "animate-spin")} />
+                              Reprocessar
                             </Button>
                           )}
                           <Button
