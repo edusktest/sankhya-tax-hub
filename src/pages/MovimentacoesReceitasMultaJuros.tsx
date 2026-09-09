@@ -41,8 +41,7 @@ interface TituloDoc {
   tipoMovimento:      string;
   nroUnico:           string;
   vlrDesdobramento:   number;
-  totalIBSUF:         number;
-  totalIBSMun:        number;
+  totalIBS:         number;
   totalCBS:           number;
 }
 
@@ -55,8 +54,7 @@ interface DocumentoFiscalOrigem {
   numero:             string;
   chaveDFe:           string;
   valor:              number;
-  totalIBSUF:         number;
-  totalIBSMun:        number;
+  totalIBS:         number;
   totalCBS:           number;
   // TGFCAB detail fields
   empresaNegociacao:  string;
@@ -86,8 +84,7 @@ interface MultaJurosReceita {
   nroUnico:           string;
   multa:              number;
   juros:              number;
-  totalIBSUF:         number;
-  totalIBSMun:        number;
+  totalIBS:         number;
   totalCBS:           number;
   statusCalculo:      StatusCalculo;
   statusGeracaoNota:  StatusGeracaoNota;
@@ -164,7 +161,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.010",
     multa: 450.0, juros: 230.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Pendente", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-001234", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "28/04/2026", dtVencimento: "25/04/2026",
@@ -175,7 +172,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Grupo Nexus S.A.", parceiroCNPJ: "23.456.789/0001-01",
       tipoMovimento: "Venda", numero: "1234",
       chaveDFe: "35260123456789000100550010000012341234567890",
-      valor: 11300.0, totalIBSUF: 395.5, totalIBSMun: 395.5, totalCBS: 565.0,
+      valor: 11300.0, totalIBS: 395.5, totalCBS: 565.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Vista",
       dtEntradaSaida: "25/04/2026", dtFaturamento: "25/04/2026", dtMovimento: "25/04/2026",
@@ -196,7 +193,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "200.030",
     multa: 1200.0, juros: 650.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Processando", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-002200", desdob: "002/003", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "05/05/2026", dtVencimento: "07/07/2026",
@@ -207,7 +204,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Comércio Leste Ltda", parceiroCNPJ: "77.888.999/0001-55",
       tipoMovimento: "Venda", numero: "2200",
       chaveDFe: "35260267890100000123550010000022001234567891",
-      valor: 29800.0, totalIBSUF: 1043.0, totalIBSMun: 1043.0, totalCBS: 1490.0,
+      valor: 29800.0, totalIBS: 1043.0, totalCBS: 1490.0,
       empresaNegociacao: "002 - Sankhya São Paulo S.A.",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "07/05/2026", dtFaturamento: "07/05/2026", dtMovimento: "07/05/2026",
@@ -228,7 +225,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "500.008",
     multa: 850.0, juros: 320.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Concluído", statusGeracaoNota: "Processando", statusDFe: "Não enviado",
     nroNota: "NF-500210", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "08/05/2026", dtVencimento: "14/04/2026",
@@ -239,7 +236,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Distribuidora Beta S.A.", parceiroCNPJ: "55.666.777/0001-88",
       tipoMovimento: "Venda", numero: "5210",
       chaveDFe: "35260255666777000188550010000052101234567893",
-      valor: 5100.0, totalIBSUF: 178.5, totalIBSMun: 178.5, totalCBS: 255.0,
+      valor: 5100.0, totalIBS: 178.5, totalCBS: 255.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Vista",
       dtEntradaSaida: "14/05/2026", dtFaturamento: "14/05/2026", dtMovimento: "14/05/2026",
@@ -260,7 +257,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "600.025",
     multa: 2100.0, juros: 980.0,
-    totalIBSUF: 107.8, totalIBSMun: 107.8, totalCBS: 154.0,
+    totalIBS: 107.8, totalCBS: 154.0,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Não enviado",
     nroNota: "NF-600100", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "10/05/2026", dtVencimento: "05/04/2026",
@@ -271,7 +268,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Materiais Omega S.A.", parceiroCNPJ: "88.999.000/0001-33",
       tipoMovimento: "Venda", numero: "6100",
       chaveDFe: "35260288999000000133550010000061001234567892",
-      valor: 21500.0, totalIBSUF: 752.5, totalIBSMun: 752.5, totalCBS: 1075.0,
+      valor: 21500.0, totalIBS: 752.5, totalCBS: 1075.0,
       empresaNegociacao: "003 - Distribuidora Norte Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "05/05/2026", dtFaturamento: "05/05/2026", dtMovimento: "05/05/2026",
@@ -299,7 +296,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "200.040",
     multa: 1800.0, juros: 720.0,
-    totalIBSUF: 88.2, totalIBSMun: 88.2, totalCBS: 126.0,
+    totalIBS: 88.2, totalCBS: 126.0,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Aguardando autorização",
     nroNota: "NF-002200", desdob: "003/003", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "12/05/2026", dtVencimento: "07/08/2026",
@@ -310,7 +307,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Comércio Leste Ltda", parceiroCNPJ: "77.888.999/0001-55",
       tipoMovimento: "Venda", numero: "2200",
       chaveDFe: "35260267890100000123550010000022001234567891",
-      valor: 29800.0, totalIBSUF: 1043.0, totalIBSMun: 1043.0, totalCBS: 1490.0,
+      valor: 29800.0, totalIBS: 1043.0, totalCBS: 1490.0,
       empresaNegociacao: "002 - Sankhya São Paulo S.A.",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "07/05/2026", dtFaturamento: "07/05/2026", dtMovimento: "07/05/2026",
@@ -338,7 +335,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.015",
     multa: 3500.0, juros: 1200.0,
-    totalIBSUF: 164.5, totalIBSMun: 164.5, totalCBS: 235.0,
+    totalIBS: 164.5, totalCBS: 235.0,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Erro",
     nroNota: "NF-001234", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "14/05/2026", dtVencimento: "25/03/2026",
@@ -349,7 +346,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Grupo Nexus S.A.", parceiroCNPJ: "23.456.789/0001-01",
       tipoMovimento: "Venda", numero: "1234",
       chaveDFe: "35260123456789000100550010000012341234567890",
-      valor: 11300.0, totalIBSUF: 395.5, totalIBSMun: 395.5, totalCBS: 565.0,
+      valor: 11300.0, totalIBS: 395.5, totalCBS: 565.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Vista",
       dtEntradaSaida: "25/04/2026", dtFaturamento: "25/04/2026", dtMovimento: "25/04/2026",
@@ -377,7 +374,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Pedido de Venda",
     nroUnico: "300.011",
     multa: 980.0, juros: 410.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Não configurado", statusGeracaoNota: "Não configurado", statusDFe: "Não enviado",
     nroNota: "NF-003100", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "15/05/2026", dtVencimento: "10/04/2026",
@@ -388,7 +385,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Transportes Sul S.A.", parceiroCNPJ: "11.222.333/0001-44",
       tipoMovimento: "Venda", numero: "3100",
       chaveDFe: "35260211222333000144550010000031001234567894",
-      valor: 8200.0, totalIBSUF: 287.0, totalIBSMun: 287.0, totalCBS: 410.0,
+      valor: 8200.0, totalIBS: 287.0, totalCBS: 410.0,
       empresaNegociacao: "003 - Distribuidora Norte Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "10/05/2026", dtFaturamento: "10/05/2026", dtMovimento: "10/05/2026",
@@ -409,8 +406,8 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "200.050",
     multa: 6200.0, juros: 2300.0,
-    totalIBSUF: 297.5, totalIBSMun: 297.5, totalCBS: 425.0,
-    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
+    totalIBS: 297.5, totalCBS: 425.0,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Aguardando autorização",
     nroNota: "NF-002200", desdob: "001/003", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "18/05/2026", dtVencimento: "07/06/2026",
     vlrDesdobramento: 9933.34, vlrDesconto: 0, vlrBaixa: 18433.34, dataBaixa: "18/05/2026",
@@ -420,7 +417,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Comércio Leste Ltda", parceiroCNPJ: "77.888.999/0001-55",
       tipoMovimento: "Venda", numero: "2200",
       chaveDFe: "35260267890100000123550010000022001234567891",
-      valor: 29800.0, totalIBSUF: 1043.0, totalIBSMun: 1043.0, totalCBS: 1490.0,
+      valor: 29800.0, totalIBS: 1043.0, totalCBS: 1490.0,
       empresaNegociacao: "002 - Sankhya São Paulo S.A.",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "07/05/2026", dtFaturamento: "07/05/2026", dtMovimento: "07/05/2026",
@@ -437,8 +434,7 @@ const MOCK: MultaJurosReceita[] = [
           tipoMovimento: "Venda",
           nroUnico: "200.020",
           vlrDesdobramento: 29800.0,
-          totalIBSUF: 1043.0,
-          totalIBSMun: 1043.0,
+          totalIBS: 1043.0,
           totalCBS: 1490.0,
         },
       ],
@@ -447,9 +443,8 @@ const MOCK: MultaJurosReceita[] = [
       dataNegociacao: "19/05/2026",
       nroUnico: "ND-200.050",
       nroNota: "ND-000012",
-      chaveDFe: "35260167890100000123550010000000121234567999",
       chaveDFeOrigem: "35260267890100000123550010000022001234567891",
-      statusDFe: "Autorizado",
+      statusDFe: "Aguardando autorização",
     },
   },
 
@@ -465,7 +460,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Pedido de Venda",
     nroUnico: "400.010",
     multa: 360.0, juros: 180.0,
-    totalIBSUF: 18.9, totalIBSMun: 18.9, totalCBS: 27.0,
+    totalIBS: 18.9, totalCBS: 27.0,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
     nroNota: "NF-001400", desdob: "001/001", tipoOperacao: "1.209 - Recebimento",
     dtEntradaSaida: "25/05/2026", dtVencimento: "25/05/2026",
@@ -476,7 +471,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Transportes Delta S.A.", parceiroCNPJ: "22.333.444/0001-66",
       tipoMovimento: "Venda", numero: "1400",
       chaveDFe: "35260123456789000100550010000014001234567901",
-      valor: 12000.0, totalIBSUF: 420.0, totalIBSMun: 420.0, totalCBS: 600.0,
+      valor: 12000.0, totalIBS: 420.0, totalCBS: 600.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Vista",
       dtEntradaSaida: "15/05/2026", dtFaturamento: "15/05/2026", dtMovimento: "15/05/2026",
@@ -493,8 +488,8 @@ const MOCK: MultaJurosReceita[] = [
           tipoMovimento: "Venda",
           nroUnico: "400.001",
           vlrDesdobramento: 12000.0,
-          totalIBSUF: 420.0,
-          totalIBSMun: 420.0,
+          totalIBS: 420.0,
+          
           totalCBS: 600.0,
         },
       ],
@@ -521,7 +516,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.099",
     multa: 540.0, juros: 270.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Concluído", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-001500", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "02/06/2026", dtVencimento: "02/05/2026",
@@ -532,7 +527,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Indústria Alfa S.A.", parceiroCNPJ: "11.222.333/0001-44",
       tipoMovimento: "Venda", numero: "1500",
       chaveDFe: "35260601234567890001550010000015001000015000",
-      valor: 18000.0, totalIBSUF: 630.0, totalIBSMun: 630.0, totalCBS: 900.0,
+      valor: 18000.0, totalIBS: 630.0, totalCBS: 900.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "02/06/2026", dtFaturamento: "02/06/2026", dtMovimento: "02/06/2026",
@@ -553,7 +548,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.803",
     multa: 300.0, juros: 150.0,
-    totalIBSUF: 15.75, totalIBSMun: 15.75, totalCBS: 22.5,
+    totalIBS: 15.75, totalCBS: 22.5,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
     nroNota: "NF-001601", desdob: "002/002", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "05/06/2026", dtVencimento: "05/07/2026",
@@ -564,7 +559,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Digital Supply Ltda", parceiroCNPJ: "12.345.678/0001-55",
       tipoMovimento: "Venda", numero: "1601",
       chaveDFe: "35260601234567890001550010000016011000016011",
-      valor: 20000.0, totalIBSUF: 700.0, totalIBSMun: 700.0, totalCBS: 1000.0,
+      valor: 20000.0, totalIBS: 700.0, totalCBS: 1000.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "05/06/2026", dtFaturamento: "05/06/2026", dtMovimento: "05/06/2026",
@@ -581,8 +576,8 @@ const MOCK: MultaJurosReceita[] = [
           tipoMovimento: "Venda",
           nroUnico: "100.802",
           vlrDesdobramento: 10000.0,
-          totalIBSUF: 350.0,
-          totalIBSMun: 350.0,
+          totalIBS: 350.0,
+          
           totalCBS: 500.0,
         },
         {
@@ -595,8 +590,8 @@ const MOCK: MultaJurosReceita[] = [
           tipoMovimento: "Venda",
           nroUnico: "100.803",
           vlrDesdobramento: 10000.0,
-          totalIBSUF: 350.0,
-          totalIBSMun: 350.0,
+          totalIBS: 350.0,
+          
           totalCBS: 500.0,
         },
       ],
@@ -623,7 +618,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.910",
     multa: 780.0, juros: 390.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Erro", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
     nroNota: "NF-001900", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "15/07/2026", dtVencimento: "10/06/2026",
@@ -634,7 +629,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Construtora Prata S.A.", parceiroCNPJ: "44.555.666/0001-77",
       tipoMovimento: "Venda", numero: "1900",
       chaveDFe: "35260744555666000177550010000019001234567910",
-      valor: 15600.0, totalIBSUF: 546.0, totalIBSMun: 546.0, totalCBS: 780.0,
+      valor: 15600.0, totalIBS: 546.0, totalCBS: 780.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "10/06/2026", dtFaturamento: "10/06/2026", dtMovimento: "10/06/2026",
@@ -655,7 +650,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "200.120",
     multa: 1100.0, juros: 550.0,
-    totalIBSUF: 0, totalIBSMun: 0, totalCBS: 0,
+    totalIBS: 0, totalCBS: 0,
     statusCalculo: "Concluído", statusGeracaoNota: "Erro", statusDFe: "Não enviado",
     nroNota: "NF-002500", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "22/07/2026", dtVencimento: "15/06/2026",
@@ -666,7 +661,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Mercado Sul Ltda", parceiroCNPJ: "33.444.555/0001-22",
       tipoMovimento: "Venda", numero: "2500",
       chaveDFe: "35260733444555000122550010000025001234567920",
-      valor: 22000.0, totalIBSUF: 770.0, totalIBSMun: 770.0, totalCBS: 1100.0,
+      valor: 22000.0, totalIBS: 770.0, totalCBS: 1100.0,
       empresaNegociacao: "002 - Sankhya São Paulo S.A.",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "15/06/2026", dtFaturamento: "15/06/2026", dtMovimento: "15/06/2026",
@@ -687,8 +682,8 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "400.310",
     multa: 180.0, juros: 90.0,
-    totalIBSUF: 9.45, totalIBSMun: 9.45, totalCBS: 13.5,
-    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
+    totalIBS: 9.45, totalCBS: 13.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Aguardando autorização",
     vendaCancelada: true,
     nroNota: "NF-004100", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "10/08/2026", dtVencimento: "01/07/2026",
@@ -699,7 +694,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Distribuidora Leste S.A.", parceiroCNPJ: "11.222.333/0001-44",
       tipoMovimento: "Venda", numero: "4100",
       chaveDFe: "35260711222333000144550010000041001234567940",
-      valor: 8500.0, totalIBSUF: 297.5, totalIBSMun: 297.5, totalCBS: 425.0,
+      valor: 8500.0, totalIBS: 297.5, totalCBS: 425.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "01/07/2026", dtFaturamento: "01/07/2026", dtMovimento: "01/07/2026",
@@ -710,9 +705,8 @@ const MOCK: MultaJurosReceita[] = [
       dataNegociacao: "10/08/2026",
       nroUnico: "ND-400.310",
       nroNota: "ND-000040",
-      chaveDFe: "35260711222333000144550010000000401234567941",
       chaveDFeOrigem: "35260711222333000144550010000041001234567940",
-      statusDFe: "Autorizado",
+      statusDFe: "Aguardando autorização",
     },
   },
 
@@ -728,7 +722,7 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "100.950",
     multa: 620.0, juros: 310.0,
-    totalIBSUF: 32.55, totalIBSMun: 32.55, totalCBS: 46.5,
+    totalIBS: 32.55, totalCBS: 46.5,
     statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Denegado",
     nroNota: "NF-001950", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "20/08/2026", dtVencimento: "18/07/2026",
@@ -739,7 +733,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Indústria Zeta Ltda", parceiroCNPJ: "55.444.333/0001-11",
       tipoMovimento: "Venda", numero: "1950",
       chaveDFe: "35260855444333000111550010000019501234567950",
-      valor: 12400.0, totalIBSUF: 434.0, totalIBSMun: 434.0, totalCBS: 620.0,
+      valor: 12400.0, totalIBS: 434.0, totalCBS: 620.0,
       empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "18/07/2026", dtFaturamento: "18/07/2026", dtMovimento: "18/07/2026",
@@ -767,8 +761,8 @@ const MOCK: MultaJurosReceita[] = [
     tipoMovimento: "Venda",
     nroUnico: "300.215",
     multa: 950.0, juros: 475.0,
-    totalIBSUF: 50.05, totalIBSMun: 50.05, totalCBS: 71.5,
-    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Autorizado",
+    totalIBS: 50.05, totalCBS: 71.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Confirmada", statusDFe: "Aguardando autorização",
     baixaEstornada: true,
     nroNota: "NF-003200", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "30/07/2026", dtVencimento: "20/06/2026",
@@ -779,7 +773,7 @@ const MOCK: MultaJurosReceita[] = [
       parceiroNome: "Logística Oeste S.A.", parceiroCNPJ: "66.777.888/0001-99",
       tipoMovimento: "Venda", numero: "3200",
       chaveDFe: "35260866777888000199550010000032001234567930",
-      valor: 19000.0, totalIBSUF: 665.0, totalIBSMun: 665.0, totalCBS: 950.0,
+      valor: 19000.0, totalIBS: 665.0, totalCBS: 950.0,
       empresaNegociacao: "003 - Distribuidora Norte Ltda",
       tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
       dtEntradaSaida: "20/06/2026", dtFaturamento: "20/06/2026", dtMovimento: "20/06/2026",
@@ -790,9 +784,8 @@ const MOCK: MultaJurosReceita[] = [
       dataNegociacao: "30/07/2026",
       nroUnico: "ND-300.215",
       nroNota: "ND-000030",
-      chaveDFe: "35260866777888000199550010000000301234567931",
       chaveDFeOrigem: "35260866777888000199550010000032001234567930",
-      statusDFe: "Autorizado",
+      statusDFe: "Aguardando autorização",
     },
   },
 ];
@@ -1187,8 +1180,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px] text-right">Multa</TableHead>
                     <TableHead className="text-[12px] text-right">Juros</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS UF Calculado</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS Mun Calculado</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS Calculado</TableHead>
                     <TableHead className="text-[12px] text-right">CBS Calculado</TableHead>
                     <TableHead className="text-[12px]">Cálculo de Rateio</TableHead>
                     <TableHead className="text-[12px]">Geração da Nota</TableHead>
@@ -1217,10 +1209,9 @@ export default function MovimentacoesReceitasMultaJuros() {
                       <TableCell className="text-right font-mono">{brl(r.multa)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.juros)}</TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
-                        {ibsValue(r.totalIBSUF, r.statusGeracaoNota)}
+                        {ibsValue(r.totalIBS, r.statusGeracaoNota)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
-                        {ibsValue(r.totalIBSMun, r.statusGeracaoNota)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
                         {ibsValue(r.totalCBS, r.statusGeracaoNota)}
@@ -1364,14 +1355,8 @@ function MultaJurosDetailView({
             <SummaryCard label="Multa"          value={brl(r.multa)}      mono />
             <SummaryCard label="Juros"          value={brl(r.juros)}      mono />
             <SummaryCard
-              label="IBS UF Calculado"
-              value={ibsValue(r.totalIBSUF, r.statusGeracaoNota)}
-              mono
-              colorClass={!notaConfirmada ? "text-muted-foreground" : undefined}
-            />
-            <SummaryCard
-              label="IBS Mun Calculado"
-              value={ibsValue(r.totalIBSMun, r.statusGeracaoNota)}
+              label="IBS Calculado"
+              value={ibsValue(r.totalIBS, r.statusGeracaoNota)}
               mono
               colorClass={!notaConfirmada ? "text-muted-foreground" : undefined}
             />
@@ -1430,8 +1415,7 @@ function MultaJurosDetailView({
                   <TableHead className="text-[12px]">Número</TableHead>
                   <TableHead className="text-[12px]">Chave DFe</TableHead>
                   <TableHead className="text-[12px] text-right">Valor</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                  <TableHead className="text-[12px] text-right">Total IBS</TableHead>
                   <TableHead className="text-[12px] text-right">Total CBS</TableHead>
                   <TableHead className="text-[12px] text-center">Ação</TableHead>
                 </TableRow>
@@ -1457,8 +1441,7 @@ function MultaJurosDetailView({
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-mono">{brl(r.documentoFiscal.valor)}</TableCell>
-                  <TableCell className="text-right font-mono">{brl(r.documentoFiscal.totalIBSUF)}</TableCell>
-                  <TableCell className="text-right font-mono">{brl(r.documentoFiscal.totalIBSMun)}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(r.documentoFiscal.totalIBS)}</TableCell>
                   <TableCell className="text-right font-mono">{brl(r.documentoFiscal.totalCBS)}</TableCell>
                   <TableCell className="text-center">
                     <Button
@@ -1601,8 +1584,7 @@ function DocFiscalDetailView({
             <SummaryCard label="Número"            value={d.numero}         mono />
             <SummaryCard label="Valor"             value={brl(d.valor)}     mono />
             <SummaryCard label="CBS Calculado"      value={brl(d.totalCBS)}   mono />
-            <SummaryCard label="IBS UF Calculado"  value={brl(d.totalIBSUF)} mono />
-            <SummaryCard label="IBS Mun Calculado" value={brl(d.totalIBSMun)} mono />
+            <SummaryCard label="IBS Calculado"  value={brl(d.totalIBS)} mono />
             <div className="col-span-2 md:col-span-3 overflow-hidden">
               <div className="rounded-lg border bg-card p-3 overflow-hidden">
                 <div className="text-[11px] text-muted-foreground mb-0.5">Chave DFe</div>
@@ -1655,8 +1637,7 @@ function DocFiscalDetailView({
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS</TableHead>
                     <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -1683,8 +1664,7 @@ function DocFiscalDetailView({
                       <TableCell className="font-medium whitespace-nowrap">{t.tipoMovimento}</TableCell>
                       <TableCell className="font-mono">{t.nroUnico}</TableCell>
                       <TableCell className="text-right font-mono">{brl(t.vlrDesdobramento)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(t.totalIBSUF)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(t.totalIBSMun)}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(t.totalIBS)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(t.totalCBS)}</TableCell>
                       <TableCell className="text-center">
                         <Button

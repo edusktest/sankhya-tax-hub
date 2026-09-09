@@ -77,8 +77,7 @@ interface TituloRef {
   nroUnico: string;
   nroNota: string;
   vlrDesdobramento: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   tributos?: Tributo[];
   tributosDevolvidos?: Tributo[];
@@ -108,8 +107,7 @@ interface DespesaMovimento {
   tipoMovimento: string;
   tipoTitulo: string;
   vlrDesdobramento: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   nroNota: string;
   desdob: string;
@@ -150,8 +148,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 18000.0,
-    totalIBSUF: 630.0,
-    totalIBSMun: 630.0,
+    totalIBS: 630.0,
     totalCBS: 900.0,
     nroNota: "NF-500100",
     desdob: "001/001",
@@ -183,8 +180,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "PIX",
     vlrDesdobramento: 6200.0,
-    totalIBSUF: 217.0,
-    totalIBSMun: 217.0,
+    totalIBS: 217.0,
     totalCBS: 310.0,
     nroNota: "NF-500101",
     desdob: "001/002",
@@ -216,8 +212,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 37500.0,
-    totalIBSUF: 1312.5,
-    totalIBSMun: 1312.5,
+    totalIBS: 1312.5,
     totalCBS: 1875.0,
     nroNota: "NF-600050",
     desdob: "001/001",
@@ -249,8 +244,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "Cartão",
     vlrDesdobramento: 4800.0,
-    totalIBSUF: 168.0,
-    totalIBSMun: 168.0,
+    totalIBS: 168.0,
     totalCBS: 240.0,
     nroNota: "NF-500115",
     desdob: "001/001",
@@ -282,8 +276,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "PIX",
     vlrDesdobramento: 9400.0,
-    totalIBSUF: 329.0,
-    totalIBSMun: 329.0,
+    totalIBS: 329.0,
     totalCBS: 470.0,
     nroNota: "NF-500200",
     desdob: "001/001",
@@ -315,8 +308,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "Cartão",
     vlrDesdobramento: 21500.0,
-    totalIBSUF: 752.5,
-    totalIBSMun: 752.5,
+    totalIBS: 752.5,
     totalCBS: 1075.0,
     nroNota: "NF-600100",
     desdob: "001/001",
@@ -348,8 +340,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Compra",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 5100.0,
-    totalIBSUF: 178.5,
-    totalIBSMun: 178.5,
+    totalIBS: 178.5,
     totalCBS: 255.0,
     nroNota: "NF-500210",
     desdob: "001/001",
@@ -383,8 +374,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Devolução de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 3360.0,
-    totalIBSUF: 117.60,
-    totalIBSMun: 117.60,
+    totalIBS: 117.60,
     totalCBS: 168.0,
     nroNota: "NF-003250",
     desdob: "001/001",
@@ -407,8 +397,7 @@ const MOCK: DespesaMovimento[] = [
       nroUnico: "900.001",
       nroNota: "NF-003200",
       vlrDesdobramento: 8400.0,
-      totalIBSUF: 294.0,
-      totalIBSMun: 294.0,
+      totalIBS: 294.0,
       totalCBS: 420.0,
       tributos: [
         { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "5,00%", valor:  420.0,  digitado: "Não" },
@@ -437,8 +426,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "DARF",
     tipoTitulo: "DARF",
     vlrDesdobramento: 750.0,
-    totalIBSUF: 0,
-    totalIBSMun: 0,
+    totalIBS: 0,
     totalCBS: 750.0,
     nroNota: "DARF-2026-001",
     desdob: "001/001",
@@ -452,7 +440,7 @@ const MOCK: DespesaMovimento[] = [
     ],
   },
 
-  // ── DAR – IBS UF + IBS Mun (par com Receita 100.006 – Logística Express Ltda)
+  // ── DAR – IBS (par com Receita 100.006 – Logística Express Ltda)
   {
     id: "12",
     dataNegociacao: "30/06/2026",
@@ -465,8 +453,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "DAR",
     tipoTitulo: "DAR",
     vlrDesdobramento: 1050.0,
-    totalIBSUF: 525.0,
-    totalIBSMun: 525.0,
+    totalIBS: 525.0,
     totalCBS: 0,
     nroNota: "DAR-2026-001",
     desdob: "001/001",
@@ -493,8 +480,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Pedido de Compra",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 200.0,
-    totalIBSUF: 7.0,
-    totalIBSMun: 7.0,
+    totalIBS: 7.0,
     totalCBS: 10.0,
     nroNota: "—",
     desdob: "001/001",
@@ -534,8 +520,7 @@ const MOCK: DespesaMovimento[] = [
     tipoMovimento: "Devolução de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 18600.0,
-    totalIBSUF: 651.0,
-    totalIBSMun: 651.0,
+    totalIBS: 651.0,
     totalCBS: 930.0,
     nroNota: "NF-003100",
     desdob: "001/001",
@@ -558,8 +543,7 @@ const MOCK: DespesaMovimento[] = [
       nroUnico: "700.001",
       nroNota: "NF-003050",
       vlrDesdobramento: 18600.0,
-      totalIBSUF: 651.0,
-      totalIBSMun: 651.0,
+      totalIBS: 651.0,
       totalCBS: 930.0,
       tributos: [
         { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "5,00%", valor: 930.0,  digitado: "Não" },
@@ -785,8 +769,7 @@ export default function MovimentacoesDespedasMovimento() {
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS</TableHead>
                     <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -811,8 +794,7 @@ export default function MovimentacoesDespedasMovimento() {
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
                       <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
                       <TableCell className="text-right font-mono">{brl(r.vlrDesdobramento)}</TableCell>
-                      <TableCell className="text-right font-mono">{saldo(r.tributos, "IBS UF")}</TableCell>
-                      <TableCell className="text-right font-mono">{saldo(r.tributos, "IBS Mun")}</TableCell>
+                      <TableCell className="text-right font-mono">{saldo(r.tributos, "IBS")}</TableCell>
                       <TableCell className="text-right font-mono">{saldo(r.tributos, "CBS")}</TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -1115,8 +1097,7 @@ function DetailView({
             <SummaryCard label="Nro Único"      value={r.nroUnico}              mono />
             <SummaryCard label="Valor"    value={brl(r.vlrDesdobramento)} mono />
             <SummaryCard label="CBS"      value={saldo(r.tributos, "CBS")}     mono />
-            <SummaryCard label="IBS UF"   value={saldo(r.tributos, "IBS UF")}  mono />
-            <SummaryCard label="IBS Mun"  value={saldo(r.tributos, "IBS Mun")} mono />
+            <SummaryCard label="IBS"   value={saldo(r.tributos, "IBS")}  mono />
           </div>
         </CollapsibleSection>
 
@@ -1194,10 +1175,6 @@ function DetailView({
           ) : (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um pedido relacionado</p>
-              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                <Link2 className="h-3.5 w-3.5" />
-                Relacionar documento
-              </Button>
             </div>
           )}
         </CollapsibleSection>
@@ -1263,10 +1240,6 @@ function DetailView({
                   <Upload className="h-3.5 w-3.5" />
                   Importar XML
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                  <Link2 className="h-3.5 w-3.5" />
-                  Relacionar documento
-                </Button>
                 {r.pedidoRef && (
                   <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
                     <FileText className="h-3.5 w-3.5" />
@@ -1293,8 +1266,7 @@ function DetailView({
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS</TableHead>
                     <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -1321,8 +1293,7 @@ function DetailView({
                     <TableCell className="font-mono">{r.tituloRef.nroUnico}</TableCell>
                     <TableCell className="font-mono">{r.tituloRef.nroNota}</TableCell>
                     <TableCell className="text-right font-mono">{brl(r.tituloRef.vlrDesdobramento)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBSUF)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBSMun)}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBS)}</TableCell>
                     <TableCell className="text-right font-mono">{brl(r.tituloRef.totalCBS)}</TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -1414,8 +1385,7 @@ function RefDetailView({
             <SummaryCard label="Tipo de Movimento" value={tr.tipoMovimento}              />
             <SummaryCard label="Valor"             value={brl(tr.vlrDesdobramento)} mono />
             <SummaryCard label="Total CBS"         value={brl(tr.totalCBS)}         mono colorClass="text-blue-700 dark:text-blue-400" />
-            <SummaryCard label="Total IBS UF"      value={brl(tr.totalIBSUF)}       mono colorClass="text-amber-700 dark:text-amber-400" />
-            <SummaryCard label="Total IBS Mun"     value={brl(tr.totalIBSMun)}      mono colorClass="text-amber-700 dark:text-amber-400" />
+            <SummaryCard label="Total IBS"      value={brl(tr.totalIBS)}       mono colorClass="text-amber-700 dark:text-amber-400" />
           </div>
         </CollapsibleSection>
 
@@ -1433,8 +1403,7 @@ function RefDetailView({
                   <TableHead className="text-[12px]">Nro Único</TableHead>
                   <TableHead className="text-[12px]">Nro Nota</TableHead>
                   <TableHead className="text-[12px] text-right">Valor</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                  <TableHead className="text-[12px] text-right">Total IBS</TableHead>
                   <TableHead className="text-[12px] text-right">Total CBS</TableHead>
                   <TableHead className="text-[12px] text-center">Ação</TableHead>
                 </TableRow>
@@ -1461,8 +1430,7 @@ function RefDetailView({
                   <TableCell className="font-mono">{p.nroUnico}</TableCell>
                   <TableCell className="font-mono">{p.nroNota}</TableCell>
                   <TableCell className="text-right font-mono">{brl(p.vlrDesdobramento)}</TableCell>
-                  <TableCell className="text-right font-mono">{brl(p.totalIBSUF)}</TableCell>
-                  <TableCell className="text-right font-mono">{brl(p.totalIBSMun)}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(p.totalIBS)}</TableCell>
                   <TableCell className="text-right font-mono">{brl(p.totalCBS)}</TableCell>
                   <TableCell className="text-center">
                     <Button

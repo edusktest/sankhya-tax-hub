@@ -75,8 +75,7 @@ interface TituloRef {
   nroUnico: string;
   nroNota: string;
   vlrDesdobramento: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   tributos?: Tributo[];
   tributosDevolvidos?: Tributo[];
@@ -117,8 +116,7 @@ interface ReceitaMovimento {
   tipoMovimento: string;
   tipoTitulo: string;
   vlrDesdobramento: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   nroNota: string;
   desdob: string;
@@ -162,8 +160,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 24500.0,
-    totalIBSUF: 857.5,
-    totalIBSMun: 857.5,
+    totalIBS: 857.5,
     totalCBS: 1225.0,
     nroNota: "NF-001234",
     desdob: "001/001",
@@ -195,8 +192,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "PIX",
     vlrDesdobramento: 8750.0,
-    totalIBSUF: 306.25,
-    totalIBSMun: 306.25,
+    totalIBS: 306.25,
     totalCBS: 437.5,
     nroNota: "NF-001235",
     desdob: "001/002",
@@ -228,8 +224,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 52000.0,
-    totalIBSUF: 1820.0,
-    totalIBSMun: 1820.0,
+    totalIBS: 1820.0,
     totalCBS: 2600.0,
     nroNota: "NF-002100",
     desdob: "001/001",
@@ -261,8 +256,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Cartão",
     vlrDesdobramento: 3200.0,
-    totalIBSUF: 112.0,
-    totalIBSMun: 112.0,
+    totalIBS: 112.0,
     totalCBS: 160.0,
     nroNota: "NF-001250",
     desdob: "001/003",
@@ -294,8 +288,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "PIX",
     vlrDesdobramento: 11300.0,
-    totalIBSUF: 395.5,
-    totalIBSMun: 395.5,
+    totalIBS: 395.5,
     totalCBS: 565.0,
     nroNota: "NF-001310",
     desdob: "001/001",
@@ -327,8 +320,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Cartão",
     vlrDesdobramento: 29800.0,
-    totalIBSUF: 1043.0,
-    totalIBSMun: 1043.0,
+    totalIBS: 1043.0,
     totalCBS: 1490.0,
     nroNota: "NF-002200",
     desdob: "001/001",
@@ -366,8 +358,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 9933.34,
-    totalIBSUF: 347.67,
-    totalIBSMun: 347.67,
+    totalIBS: 347.67,
     totalCBS: 496.67,
     nroNota: "NF-002200",
     desdob: "001/003",
@@ -395,8 +386,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 9933.33,
-    totalIBSUF: 347.67,
-    totalIBSMun: 347.67,
+    totalIBS: 347.67,
     totalCBS: 496.67,
     nroNota: "NF-002200",
     desdob: "002/003",
@@ -424,8 +414,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 9933.33,
-    totalIBSUF: 347.66,
-    totalIBSMun: 347.66,
+    totalIBS: 347.66,
     totalCBS: 496.66,
     nroNota: "NF-002200",
     desdob: "003/003",
@@ -454,8 +443,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "PIX",
     vlrDesdobramento: 7600.0,
-    totalIBSUF: 266.0,
-    totalIBSMun: 266.0,
+    totalIBS: 266.0,
     totalCBS: 380.0,
     nroNota: "NF-001320",
     desdob: "001/001",
@@ -489,8 +477,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 8400.0,
-    totalIBSUF: 294.0,
-    totalIBSMun: 294.0,
+    totalIBS: 294.0,
     totalCBS: 420.0,
     nroNota: "NF-003200",
     desdob: "001/001",
@@ -517,8 +504,7 @@ const MOCK: ReceitaMovimento[] = [
       nroUnico: "950.001",
       nroNota: "NF-003250",
       vlrDesdobramento: 3360.0,
-      totalIBSUF: 117.60,
-      totalIBSMun: 117.60,
+      totalIBS: 117.60,
       totalCBS: 168.0,
     },
     documentos: [
@@ -539,8 +525,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 12000.0,
-    totalIBSUF: 420.0,
-    totalIBSMun: 420.0,
+    totalIBS: 420.0,
     totalCBS: 600.0,
     nroNota: "NF-001400",
     desdob: "001/001",
@@ -579,8 +564,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Multa e Juros",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 9933.34,
-    totalIBSUF: 297.5,
-    totalIBSMun: 297.5,
+    totalIBS: 297.5,
     totalCBS: 425.0,
     nroNota: "ND-000012",
     desdob: "001/003",
@@ -615,8 +599,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 5000.0,
-    totalIBSUF: 175.0,
-    totalIBSMun: 175.0,
+    totalIBS: 175.0,
     totalCBS: 250.0,
     nroNota: "NF-001325",
     desdob: "001/003",
@@ -657,8 +640,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 5000.0,
-    totalIBSUF: 175.0,
-    totalIBSMun: 175.0,
+    totalIBS: 175.0,
     totalCBS: 250.0,
     nroNota: "NF-001325",
     desdob: "002/003",
@@ -698,8 +680,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 5000.0,
-    totalIBSUF: 175.0,
-    totalIBSMun: 175.0,
+    totalIBS: 175.0,
     totalCBS: 250.0,
     nroNota: "NF-001325",
     desdob: "003/003",
@@ -733,8 +714,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 18600.0,
-    totalIBSUF: 651.0,
-    totalIBSMun: 651.0,
+    totalIBS: 651.0,
     totalCBS: 930.0,
     nroNota: "NF-003050",
     desdob: "001/001",
@@ -761,8 +741,7 @@ const MOCK: ReceitaMovimento[] = [
       nroUnico: "800.001",
       nroNota: "NF-003100",
       vlrDesdobramento: 18600.0,
-      totalIBSUF: 651.0,
-      totalIBSMun: 651.0,
+      totalIBS: 651.0,
       totalCBS: 930.0,
     },
     documentos: [
@@ -783,8 +762,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 18000.0,
-    totalIBSUF: 630.0,
-    totalIBSMun: 630.0,
+    totalIBS: 630.0,
     totalCBS: 900.0,
     nroNota: "NF-001500",
     desdob: "001/001",
@@ -823,8 +801,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Antecipação",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 20.0,
-    totalIBSUF: 0.7,
-    totalIBSMun: 0.7,
+    totalIBS: 0.7,
     totalCBS: 1.0,
     nroNota: "ND-000101",
     desdob: "001/001",
@@ -854,8 +831,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Antecipação",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 30.0,
-    totalIBSUF: 1.05,
-    totalIBSMun: 1.05,
+    totalIBS: 1.05,
     totalCBS: 1.5,
     nroNota: "ND-000102",
     desdob: "001/001",
@@ -885,8 +861,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 100.0,
-    totalIBSUF: 3.5,
-    totalIBSMun: 3.5,
+    totalIBS: 3.5,
     totalCBS: 5.0,
     nroNota: "—",
     desdob: "001/001",
@@ -926,8 +901,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 150.0,
-    totalIBSUF: 5.25,
-    totalIBSMun: 5.25,
+    totalIBS: 5.25,
     totalCBS: 7.5,
     nroNota: "—",
     desdob: "002/003",
@@ -966,8 +940,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 250.0,
-    totalIBSUF: 8.75,
-    totalIBSMun: 8.75,
+    totalIBS: 8.75,
     totalCBS: 12.5,
     nroNota: "—",
     desdob: "003/003",
@@ -1006,8 +979,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 400.0,
-    totalIBSUF: 14.0,
-    totalIBSMun: 14.0,
+    totalIBS: 14.0,
     totalCBS: 20.0,
     nroNota: "ND-0301",
     desdob: "001/002",
@@ -1048,8 +1020,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 400.0,
-    totalIBSUF: 14.0,
-    totalIBSMun: 14.0,
+    totalIBS: 14.0,
     totalCBS: 20.0,
     nroNota: "ND-0302",
     desdob: "002/002",
@@ -1090,8 +1061,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 450.0,
-    totalIBSUF: 15.75,
-    totalIBSMun: 15.75,
+    totalIBS: 15.75,
     totalCBS: 22.5,
     nroNota: "ND-0401",
     desdob: "001/002",
@@ -1132,8 +1102,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 450.0,
-    totalIBSUF: 15.75,
-    totalIBSMun: 15.75,
+    totalIBS: 15.75,
     totalCBS: 22.5,
     nroNota: "ND-0402",
     desdob: "002/002",
@@ -1174,8 +1143,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 600.0,
-    totalIBSUF: 21.0,
-    totalIBSMun: 21.0,
+    totalIBS: 21.0,
     totalCBS: 30.0,
     nroNota: "ND-0501",
     desdob: "001/002",
@@ -1216,8 +1184,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 600.0,
-    totalIBSUF: 21.0,
-    totalIBSMun: 21.0,
+    totalIBS: 21.0,
     totalCBS: 30.0,
     nroNota: "NF-1201",
     desdob: "002/002",
@@ -1258,8 +1225,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 15000.0,
-    totalIBSUF: 525.0,
-    totalIBSMun: 525.0,
+    totalIBS: 525.0,
     totalCBS: 750.0,
     nroNota: "NF-006601",
     desdob: "001/001",
@@ -1288,8 +1254,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 10000.0,
-    totalIBSUF: 350.0,
-    totalIBSMun: 350.0,
+    totalIBS: 350.0,
     totalCBS: 500.0,
     nroNota: "NF-001601",
     desdob: "001/002",
@@ -1330,8 +1295,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 10000.0,
-    totalIBSUF: 350.0,
-    totalIBSMun: 350.0,
+    totalIBS: 350.0,
     totalCBS: 500.0,
     nroNota: "NF-001601",
     desdob: "002/002",
@@ -1378,8 +1342,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 30.0,
-    totalIBSUF: 1.05,
-    totalIBSMun: 1.05,
+    totalIBS: 1.05,
     totalCBS: 1.50,
     nroNota: "ND-0601",
     desdob: "001/002",
@@ -1420,8 +1383,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 30.0,
-    totalIBSUF: 1.05,
-    totalIBSMun: 1.05,
+    totalIBS: 1.05,
     totalCBS: 1.50,
     nroNota: "ND-0602",
     desdob: "002/002",
@@ -1462,8 +1424,7 @@ const MOCK: ReceitaMovimento[] = [
     tipoMovimento: "Pedido de Venda",
     tipoTitulo: "Boleto",
     vlrDesdobramento: 72.0,
-    totalIBSUF: 2.52,
-    totalIBSMun: 2.52,
+    totalIBS: 2.52,
     totalCBS: 3.60,
     nroNota: "ND-000072",
     desdob: "001/001",
@@ -1732,8 +1693,7 @@ export default function MovimentacoesReceitasMovimento() {
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS</TableHead>
                     <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -1758,8 +1718,7 @@ export default function MovimentacoesReceitasMovimento() {
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
                       <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
                       <TableCell className="text-right font-mono">{brl(r.vlrDesdobramento)}</TableCell>
-                      <TableCell className="text-right font-mono">{saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "IBS UF")}</TableCell>
-                      <TableCell className="text-right font-mono">{saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "IBS Mun")}</TableCell>
+                      <TableCell className="text-right font-mono">{saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "IBS")}</TableCell>
                       <TableCell className="text-right font-mono">{saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "CBS")}</TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -2093,8 +2052,7 @@ function DetailView({
             <SummaryCard label="Nro Único"      value={r.nroUnico}              mono />
             <SummaryCard label="Valor"    value={brl(r.vlrDesdobramento)} mono />
             <SummaryCard label="CBS"      value={saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "CBS")}     mono colorClass="text-blue-700 dark:text-blue-400" />
-            <SummaryCard label="IBS UF"   value={saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "IBS UF")}  mono colorClass="text-amber-700 dark:text-amber-400" />
-            <SummaryCard label="IBS Mun"  value={saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "IBS Mun")} mono colorClass="text-amber-700 dark:text-amber-400" />
+            <SummaryCard label="IBS"   value={saldo(r.tributos, r.tributosDevolvidos, r.tributosMultaJuros, "IBS")}  mono colorClass="text-amber-700 dark:text-amber-400" />
           </div>
         </CollapsibleSection>
 
@@ -2172,10 +2130,6 @@ function DetailView({
           ) : (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um pedido relacionado</p>
-              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                <Link2 className="h-3.5 w-3.5" />
-                Relacionar documento
-              </Button>
             </div>
           )}
         </CollapsibleSection>
@@ -2263,8 +2217,7 @@ function DetailView({
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">IBS</TableHead>
                     <TableHead className="text-[12px] text-right">CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -2291,8 +2244,7 @@ function DetailView({
                     <TableCell className="font-mono">{r.tituloRef.nroUnico}</TableCell>
                     <TableCell className="font-mono">{r.tituloRef.nroNota}</TableCell>
                     <TableCell className="text-right font-mono">{brl(r.tituloRef.vlrDesdobramento)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBSUF)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBSMun)}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.tituloRef.totalIBS)}</TableCell>
                     <TableCell className="text-right font-mono">{brl(r.tituloRef.totalCBS)}</TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -2430,8 +2382,7 @@ function RefDetailView({
             <SummaryCard label="Tipo de Movimento" value={tr.tipoMovimento}              />
             <SummaryCard label="Valor"             value={brl(tr.vlrDesdobramento)} mono />
             <SummaryCard label="Total CBS"         value={brl(tr.totalCBS)}         mono colorClass="text-blue-700 dark:text-blue-400" />
-            <SummaryCard label="Total IBS UF"      value={brl(tr.totalIBSUF)}       mono colorClass="text-amber-700 dark:text-amber-400" />
-            <SummaryCard label="Total IBS Mun"     value={brl(tr.totalIBSMun)}      mono colorClass="text-amber-700 dark:text-amber-400" />
+            <SummaryCard label="Total IBS"      value={brl(tr.totalIBS)}       mono colorClass="text-amber-700 dark:text-amber-400" />
           </div>
         </CollapsibleSection>
 
@@ -2449,8 +2400,7 @@ function RefDetailView({
                   <TableHead className="text-[12px]">Nro Único</TableHead>
                   <TableHead className="text-[12px]">Nro Nota</TableHead>
                   <TableHead className="text-[12px] text-right">Valor</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                  <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                  <TableHead className="text-[12px] text-right">Total IBS</TableHead>
                   <TableHead className="text-[12px] text-right">Total CBS</TableHead>
                   <TableHead className="text-[12px] text-center">Ação</TableHead>
                 </TableRow>
@@ -2477,8 +2427,7 @@ function RefDetailView({
                   <TableCell className="font-mono">{p.nroUnico}</TableCell>
                   <TableCell className="font-mono">{p.nroNota}</TableCell>
                   <TableCell className="text-right font-mono">{brl(p.vlrDesdobramento)}</TableCell>
-                  <TableCell className="text-right font-mono">{brl(p.totalIBSUF)}</TableCell>
-                  <TableCell className="text-right font-mono">{brl(p.totalIBSMun)}</TableCell>
+                  <TableCell className="text-right font-mono">{brl(p.totalIBS)}</TableCell>
                   <TableCell className="text-right font-mono">{brl(p.totalCBS)}</TableCell>
                   <TableCell className="text-center">
                     <Button

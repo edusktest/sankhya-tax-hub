@@ -75,8 +75,7 @@ interface DocumentoFiscalRef {
   numero: string;
   chaveDFe: string;
   valor: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   pendencia?: string;
 }
@@ -92,8 +91,7 @@ interface TituloRef {
   nroUnico: string;
   nroNota: string;
   vlrDesdobramento: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   tributos?: Tributo[];
   tributosDevolvidos?: Tributo[];
@@ -109,8 +107,7 @@ interface TituloDocumento {
   tipoMovimento: TipoMovimento;
   nroUnico: string;
   vlrDesdobramento: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   nroNota: string;
   desdob: string;
@@ -141,8 +138,7 @@ interface DocumentoMovimento {
   numero: string;
   chaveDFe: string;
   valor: number;
-  totalIBSUF: number;
-  totalIBSMun: number;
+  totalIBS: number;
   totalCBS: number;
   empresaNegociacao: string;
   tipoOperacao: string;
@@ -202,8 +198,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1234",
     chaveDFe: "35260123456789000100550010000012341234567890",
     valor: 11300.0,
-    totalIBSUF: 395.5,
-    totalIBSMun: 395.5,
+    totalIBS: 395.5,
     totalCBS: 565.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -229,8 +224,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "1198",
       chaveDFe: "35260123456789000100550010000011981234567880",
       valor: 11300.0,
-      totalIBSUF: 395.5,
-      totalIBSMun: 395.5,
+      totalIBS: 395.5,
       totalCBS: 565.0,
     }],
     titulos: [
@@ -244,8 +238,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "100.004",
         vlrDesdobramento: 11300.0,
-        totalIBSUF: 395.5,
-        totalIBSMun: 395.5,
+        totalIBS: 395.5,
         totalCBS: 565.0,
         nroNota: "NF-001310",
         desdob: "001/001",
@@ -275,8 +268,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "2200",
     chaveDFe: "35260267890100000123550010000022001234567891",
     valor: 29800.0,
-    totalIBSUF: 1043.0,
-    totalIBSMun: 1043.0,
+    totalIBS: 1043.0,
     totalCBS: 1490.0,
     empresaNegociacao: "002 - Sankhya São Paulo S.A.",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -302,8 +294,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "200.021",
         vlrDesdobramento: 9933.34,
-        totalIBSUF: 347.67,
-        totalIBSMun: 347.67,
+        totalIBS: 347.67,
         totalCBS: 496.67,
         nroNota: "NF-002200",
         desdob: "001/003",
@@ -329,8 +320,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "200.022",
         vlrDesdobramento: 9933.33,
-        totalIBSUF: 347.67,
-        totalIBSMun: 347.67,
+        totalIBS: 347.67,
         totalCBS: 496.67,
         nroNota: "NF-002200",
         desdob: "002/003",
@@ -356,8 +346,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "200.023",
         vlrDesdobramento: 9933.33,
-        totalIBSUF: 347.66,
-        totalIBSMun: 347.66,
+        totalIBS: 347.66,
         totalCBS: 496.66,
         nroNota: "NF-002200",
         desdob: "003/003",
@@ -387,8 +376,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "6100",
     chaveDFe: "35260288999000000133550010000061001234567892",
     valor: 21500.0,
-    totalIBSUF: 752.5,
-    totalIBSMun: 752.5,
+    totalIBS: 752.5,
     totalCBS: 1075.0,
     empresaNegociacao: "002 - Sankhya São Paulo S.A.",
     tipoOperacao: "2.101 - Compra de Mercadoria",
@@ -414,8 +402,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Compra",
         nroUnico: "600.020",
         vlrDesdobramento: 21500.0,
-        totalIBSUF: 752.5,
-        totalIBSMun: 752.5,
+        totalIBS: 752.5,
         totalCBS: 1075.0,
         nroNota: "NF-600100",
         desdob: "001/001",
@@ -445,8 +432,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "5210",
     chaveDFe: "35260255666777000188550010000052101234567893",
     valor: 5100.0,
-    totalIBSUF: 178.5,
-    totalIBSMun: 178.5,
+    totalIBS: 178.5,
     totalCBS: 255.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "2.101 - Compra de Mercadoria",
@@ -472,8 +458,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Compra",
         nroUnico: "500.005",
         vlrDesdobramento: 5100.0,
-        totalIBSUF: 178.5,
-        totalIBSMun: 178.5,
+        totalIBS: 178.5,
         totalCBS: 255.0,
         nroNota: "NF-500210",
         desdob: "001/001",
@@ -503,8 +488,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1310",
     chaveDFe: "35260123456789000100550010000013101234567894",
     valor: 5650.0,
-    totalIBSUF: 197.75,
-    totalIBSMun: 197.75,
+    totalIBS: 197.75,
     totalCBS: 282.5,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.202 - Devolução de Venda de Mercadoria",
@@ -530,8 +514,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "1234",
       chaveDFe: "35260123456789000100550010000012341234567890",
       valor: 11300.0,
-      totalIBSUF: 395.5,
-      totalIBSMun: 395.5,
+      totalIBS: 395.5,
       totalCBS: 565.0,
     }],
     titulos: [
@@ -545,8 +528,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Devolução de Venda",
         nroUnico: "100.009",
         vlrDesdobramento: 5650.0,
-        totalIBSUF: 197.75,
-        totalIBSMun: 197.75,
+        totalIBS: 197.75,
         totalCBS: 282.5,
         nroNota: "NF-001310",
         desdob: "001/001",
@@ -576,8 +558,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "3050",
     chaveDFe: "35260244555666000122550010000030501234567896",
     valor: 18600.0,
-    totalIBSUF: 651.0,
-    totalIBSMun: 651.0,
+    totalIBS: 651.0,
     totalCBS: 930.0,
     empresaNegociacao: "002 - Sankhya São Paulo S.A.",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -603,8 +584,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "3100",
       chaveDFe: "35260244555666000122550010000031001234567897",
       valor: 18600.0,
-      totalIBSUF: 651.0,
-      totalIBSMun: 651.0,
+      totalIBS: 651.0,
       totalCBS: 930.0,
     }],
     titulos: [
@@ -618,8 +598,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "700.001",
         vlrDesdobramento: 18600.0,
-        totalIBSUF: 651.0,
-        totalIBSMun: 651.0,
+        totalIBS: 651.0,
         totalCBS: 930.0,
         nroNota: "NF-003050",
         desdob: "001/001",
@@ -646,8 +625,7 @@ const MOCK: DocumentoMovimento[] = [
           nroUnico: "800.001",
           nroNota: "NF-003100",
           vlrDesdobramento: 18600.0,
-          totalIBSUF: 651.0,
-          totalIBSMun: 651.0,
+          totalIBS: 651.0,
           totalCBS: 930.0,
         },
         documentos: [
@@ -668,8 +646,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "3100",
     chaveDFe: "35260244555666000122550010000031001234567897",
     valor: 18600.0,
-    totalIBSUF: 651.0,
-    totalIBSMun: 651.0,
+    totalIBS: 651.0,
     totalCBS: 930.0,
     empresaNegociacao: "002 - Sankhya São Paulo S.A.",
     tipoOperacao: "1.202 - Devolução de Venda de Mercadoria",
@@ -695,8 +672,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "3050",
       chaveDFe: "35260244555666000122550010000030501234567896",
       valor: 18600.0,
-      totalIBSUF: 651.0,
-      totalIBSMun: 651.0,
+      totalIBS: 651.0,
       totalCBS: 930.0,
     }],
     titulos: [
@@ -710,8 +686,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Devolução de Venda",
         nroUnico: "800.001",
         vlrDesdobramento: 18600.0,
-        totalIBSUF: 651.0,
-        totalIBSMun: 651.0,
+        totalIBS: 651.0,
         totalCBS: 930.0,
         nroNota: "NF-003100",
         desdob: "001/001",
@@ -734,8 +709,7 @@ const MOCK: DocumentoMovimento[] = [
           nroUnico: "700.001",
           nroNota: "NF-003050",
           vlrDesdobramento: 18600.0,
-          totalIBSUF: 651.0,
-          totalIBSMun: 651.0,
+          totalIBS: 651.0,
           totalCBS: 930.0,
           tributos: [
             { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 18600, baseReduzida: 0, aliquota: "5,00%", valor: 930.0,  digitado: "Não" },
@@ -764,8 +738,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "3200",
     chaveDFe: "35260233444555000199550010000032001234567898",
     valor: 8400.0,
-    totalIBSUF: 294.0,
-    totalIBSMun: 294.0,
+    totalIBS: 294.0,
     totalCBS: 420.0,
     empresaNegociacao: "003 - Distribuidora Norte Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -791,8 +764,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "3250",
       chaveDFe: "35260233444555000199550010000032501234567899",
       valor: 3360.0,
-      totalIBSUF: 117.60,
-      totalIBSMun: 117.60,
+      totalIBS: 117.60,
       totalCBS: 168.0,
     }],
     titulos: [
@@ -806,8 +778,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "900.001",
         vlrDesdobramento: 8400.0,
-        totalIBSUF: 294.0,
-        totalIBSMun: 294.0,
+        totalIBS: 294.0,
         totalCBS: 420.0,
         nroNota: "NF-003200",
         desdob: "001/001",
@@ -834,8 +805,7 @@ const MOCK: DocumentoMovimento[] = [
           nroUnico: "950.001",
           nroNota: "NF-003250",
           vlrDesdobramento: 3360.0,
-          totalIBSUF: 117.60,
-          totalIBSMun: 117.60,
+          totalIBS: 117.60,
           totalCBS: 168.0,
         },
         documentos: [
@@ -856,8 +826,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "3250",
     chaveDFe: "35260233444555000199550010000032501234567899",
     valor: 3360.0,
-    totalIBSUF: 117.60,
-    totalIBSMun: 117.60,
+    totalIBS: 117.60,
     totalCBS: 168.0,
     empresaNegociacao: "003 - Distribuidora Norte Ltda",
     tipoOperacao: "1.202 - Devolução de Venda de Mercadoria",
@@ -883,8 +852,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "3200",
       chaveDFe: "35260233444555000199550010000032001234567898",
       valor: 8400.0,
-      totalIBSUF: 294.0,
-      totalIBSMun: 294.0,
+      totalIBS: 294.0,
       totalCBS: 420.0,
     }],
     titulos: [
@@ -898,8 +866,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Devolução de Venda",
         nroUnico: "950.001",
         vlrDesdobramento: 3360.0,
-        totalIBSUF: 117.60,
-        totalIBSMun: 117.60,
+        totalIBS: 117.60,
         totalCBS: 168.0,
         nroNota: "NF-003250",
         desdob: "001/001",
@@ -922,8 +889,7 @@ const MOCK: DocumentoMovimento[] = [
           nroUnico: "900.001",
           nroNota: "NF-003200",
           vlrDesdobramento: 8400.0,
-          totalIBSUF: 294.0,
-          totalIBSMun: 294.0,
+          totalIBS: 294.0,
           totalCBS: 420.0,
           tributos: [
             { imposto: "CBS",     incidencia: "Saída", cst: "01", base: 8400, baseReduzida: 0, aliquota: "5,00%", valor:  420.0,  digitado: "Não" },
@@ -952,8 +918,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1400",
     chaveDFe: "35260123456789000100550010000014001234567901",
     valor: 12000.0,
-    totalIBSUF: 420.0,
-    totalIBSMun: 420.0,
+    totalIBS: 420.0,
     totalCBS: 600.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -979,8 +944,7 @@ const MOCK: DocumentoMovimento[] = [
       numero: "20",
       chaveDFe: "35260123456789000100550010000000201234567902",
       valor: 540.0,
-      totalIBSUF: 18.9,
-      totalIBSMun: 18.9,
+      totalIBS: 18.9,
       totalCBS: 27.0,
     }],
     titulos: [
@@ -994,8 +958,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "400.001",
         vlrDesdobramento: 12000.0,
-        totalIBSUF: 420.0,
-        totalIBSMun: 420.0,
+        totalIBS: 420.0,
         totalCBS: 600.0,
         nroNota: "NF-001400",
         desdob: "001/001",
@@ -1030,8 +993,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "20",
     chaveDFe: "35260123456789000100550010000000201234567902",
     valor: 540.0,
-    totalIBSUF: 18.9,
-    totalIBSMun: 18.9,
+    totalIBS: 18.9,
     totalCBS: 27.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1057,11 +1019,37 @@ const MOCK: DocumentoMovimento[] = [
       numero: "1400",
       chaveDFe: "35260123456789000100550010000014001234567901",
       valor: 12000.0,
-      totalIBSUF: 420.0,
-      totalIBSMun: 420.0,
+      totalIBS: 420.0,
       totalCBS: 600.0,
     }],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-12",
+        dataNegociacao: "25/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Transportes Delta S.A.",
+        parceiroCNPJ: "22.333.444/0001-66",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "400.011",
+        vlrDesdobramento: 540.0,
+        totalIBS: 18.9,
+        totalCBS: 27.0,
+        nroNota: "NF-000020",
+        desdob: "001/001",
+        tipoOperacao: "1.209 - Nota de Débito",
+        dtEntradaSaida: "25/05/2026",
+        dtVencimento: "25/05/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 540.0, dataBaixa: "25/05/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 540, baseReduzida: 0, aliquota: "5,00%", valor: 27.0, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 540, baseReduzida: 0, aliquota: "3,50%", valor: 18.9, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "400.010", nroNota: "NF-000020", chaveDFe: "35260123456789000100550010000000201234567902", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+      },
+    ],
   },
 
   // ── Devolução de Compra – 2 títulos ──────────────────────────────────────
@@ -1075,8 +1063,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "180",
     chaveDFe: "35260288999000000133550010000001801234567895",
     valor: 8400.0,
-    totalIBSUF: 294.0,
-    totalIBSMun: 294.0,
+    totalIBS: 294.0,
     totalCBS: 420.0,
     empresaNegociacao: "003 - Distribuidora Norte Ltda",
     tipoOperacao: "2.202 - Devolução de Compra de Mercadoria",
@@ -1102,8 +1089,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Devolução de Compra",
         nroUnico: "300.011",
         vlrDesdobramento: 4200.0,
-        totalIBSUF: 147.0,
-        totalIBSMun: 147.0,
+        totalIBS: 147.0,
         totalCBS: 210.0,
         nroNota: "NF-000180",
         desdob: "001/002",
@@ -1129,8 +1115,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Devolução de Compra",
         nroUnico: "300.012",
         vlrDesdobramento: 4200.0,
-        totalIBSUF: 147.0,
-        totalIBSMun: 147.0,
+        totalIBS: 147.0,
         totalCBS: 210.0,
         nroNota: "NF-000180",
         desdob: "002/002",
@@ -1160,8 +1145,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "5500",
     chaveDFe: "35260123456789000100550010000055001234567800",
     valor: 8500.0,
-    totalIBSUF: 297.5,
-    totalIBSMun: 297.5,
+    totalIBS: 297.5,
     totalCBS: 425.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -1176,7 +1160,34 @@ const MOCK: DocumentoMovimento[] = [
     statusNota: "Autorizado",
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
-    titulos: [],
+    titulos: [
+      {
+        id: "t-13",
+        dataNegociacao: "20/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Tech Solutions Ltda",
+        parceiroCNPJ: "11.222.333/0001-44",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "500.002",
+        vlrDesdobramento: 8500.0,
+        totalIBS: 297.5,
+        totalCBS: 425.0,
+        nroNota: "NF-005500",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "20/05/2026",
+        dtVencimento: "20/05/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 8500.0, dataBaixa: "20/05/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 8500, baseReduzida: 0, aliquota: "5,00%", valor: 425.0,  digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 8500, baseReduzida: 0, aliquota: "3,50%", valor: 297.5,  digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "500.001", nroNota: "NF-005500", chaveDFe: "35260123456789000100550010000055001234567800", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+      },
+    ],
   },
 
   // ── Venda – título sem documentos ─────────────────────────────────────────
@@ -1190,8 +1201,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "6601",
     chaveDFe: "35260267890100000123550010000066011234567810",
     valor: 15000.0,
-    totalIBSUF: 525.0,
-    totalIBSMun: 525.0,
+    totalIBS: 525.0,
     totalCBS: 750.0,
     empresaNegociacao: "002 - Sankhya São Paulo S.A.",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -1217,8 +1227,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "600.002",
         vlrDesdobramento: 15000.0,
-        totalIBSUF: 525.0,
-        totalIBSMun: 525.0,
+        totalIBS: 525.0,
         totalCBS: 750.0,
         nroNota: "NF-006601",
         desdob: "001/001",
@@ -1247,8 +1256,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "101",
     chaveDFe: "35260101234567890001550010000001010000010101",
     valor: 20.0,
-    totalIBSUF: 0.7,
-    totalIBSMun: 0.7,
+    totalIBS: 0.7,
     totalCBS: 1.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1274,8 +1282,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "100.101",
         vlrDesdobramento: 20.0,
-        totalIBSUF: 0.7,
-        totalIBSMun: 0.7,
+        totalIBS: 0.7,
         totalCBS: 1.0,
         nroNota: "ND-000101",
         desdob: "001/001",
@@ -1305,8 +1312,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "102",
     chaveDFe: "35260201234567890001550010000001020000010201",
     valor: 30.0,
-    totalIBSUF: 1.05,
-    totalIBSMun: 1.05,
+    totalIBS: 1.05,
     totalCBS: 1.5,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1332,8 +1338,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "100.102",
         vlrDesdobramento: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.5,
         nroNota: "ND-000102",
         desdob: "001/001",
@@ -1363,8 +1368,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "300",
     chaveDFe: "35260301234567890001550010000003000000030001",
     valor: 50.0,
-    totalIBSUF: 1.75,
-    totalIBSMun: 1.75,
+    totalIBS: 1.75,
     totalCBS: 2.5,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -1391,8 +1395,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "101",
         chaveDFe: "35260101234567890001550010000001010000010101",
         valor: 20.0,
-        totalIBSUF: 0.7,
-        totalIBSMun: 0.7,
+        totalIBS: 0.7,
         totalCBS: 1.0,
       },
       {
@@ -1406,12 +1409,38 @@ const MOCK: DocumentoMovimento[] = [
         numero: "102",
         chaveDFe: "35260201234567890001550010000001020000010201",
         valor: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.5,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-forn-nd",
+        dataNegociacao: "20/03/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Comércio Brasil Ltda",
+        parceiroCNPJ: "45.678.901/0001-23",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "100.301",
+        vlrDesdobramento: 50.0,
+        totalIBS: 1.75,
+        totalCBS: 2.5,
+        nroNota: "NF-000300",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "20/03/2026",
+        dtVencimento: "20/03/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 50.0, dataBaixa: "20/03/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 50, baseReduzida: 0, aliquota: "5,00%", valor: 2.5,  digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 50, baseReduzida: 0, aliquota: "3,50%", valor: 1.75, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.300", nroNota: "NF-000300", chaveDFe: "35260301234567890001550010000003000000030001", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+      },
+    ],
   },
 
   // ── Pedido de Compra – Fornecedor Alpha Ltda (R$ 200,00) ────────────────────
@@ -1425,8 +1454,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PC-001",
     chaveDFe: "—",
     valor: 200.0,
-    totalIBSUF: 7.0,
-    totalIBSMun: 7.0,
+    totalIBS: 7.0,
     totalCBS: 10.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "2.001 - Pedido de Compra",
@@ -1452,8 +1480,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Compra",
         nroUnico: "500.200",
         vlrDesdobramento: 200.0,
-        totalIBSUF: 7.0,
-        totalIBSMun: 7.0,
+        totalIBS: 7.0,
         totalCBS: 10.0,
         nroNota: "—",
         desdob: "001/001",
@@ -1483,8 +1510,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-002",
     chaveDFe: "—",
     valor: 800.0,
-    totalIBSUF: 28.0,
-    totalIBSMun: 28.0,
+    totalIBS: 28.0,
     totalCBS: 40.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -1512,8 +1538,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0301",
         chaveDFe: "35260501234567890001550010000003011234560301",
         valor: 400.0,
-        totalIBSUF: 14.0,
-        totalIBSMun: 14.0,
+        totalIBS: 14.0,
         totalCBS: 20.0,
       },
       {
@@ -1527,8 +1552,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0302",
         chaveDFe: "35260601234567890001550010000003021234560302",
         valor: 400.0,
-        totalIBSUF: 14.0,
-        totalIBSMun: 14.0,
+        totalIBS: 14.0,
         totalCBS: 20.0,
       },
     ],
@@ -1543,8 +1567,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.401",
         vlrDesdobramento: 400.0,
-        totalIBSUF: 14.0,
-        totalIBSMun: 14.0,
+        totalIBS: 14.0,
         totalCBS: 20.0,
         nroNota: "ND-0301",
         desdob: "001/002",
@@ -1571,8 +1594,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.402",
         vlrDesdobramento: 400.0,
-        totalIBSUF: 14.0,
-        totalIBSMun: 14.0,
+        totalIBS: 14.0,
         totalCBS: 20.0,
         nroNota: "ND-0302",
         desdob: "002/002",
@@ -1603,8 +1625,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0301",
     chaveDFe: "35260501234567890001550010000003011234560301",
     valor: 400.0,
-    totalIBSUF: 14.0,
-    totalIBSMun: 14.0,
+    totalIBS: 14.0,
     totalCBS: 20.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1620,7 +1641,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv002", numero: "PV-002" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv002-1",
+        dataNegociacao: "15/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Tech Solutions S.A.",
+        parceiroCNPJ: "67.890.123/0001-45",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.401",
+        vlrDesdobramento: 400.0,
+        totalIBS: 14.0,
+        totalCBS: 20.0,
+        nroNota: "ND-0301",
+        desdob: "001/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "15/05/2026",
+        dtVencimento: "01/05/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 400.0, dataBaixa: "01/05/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "5,00%", valor: 20.0, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "3,50%", valor: 14.0, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.401", nroNota: "ND-0301", chaveDFe: "35260501234567890001550010000003011234560301", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv002", numero: "PV-002" },
+      },
+    ],
   },
 
   // ── Nota de Débito – PV-002 Parcela 2 (ND-0302 / R$ 400,00 / venc 01/06/2026) ─
@@ -1634,8 +1683,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0302",
     chaveDFe: "35260601234567890001550010000003021234560302",
     valor: 400.0,
-    totalIBSUF: 14.0,
-    totalIBSMun: 14.0,
+    totalIBS: 14.0,
     totalCBS: 20.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1651,7 +1699,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv002", numero: "PV-002" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv002-2",
+        dataNegociacao: "15/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Tech Solutions S.A.",
+        parceiroCNPJ: "67.890.123/0001-45",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.402",
+        vlrDesdobramento: 400.0,
+        totalIBS: 14.0,
+        totalCBS: 20.0,
+        nroNota: "ND-0302",
+        desdob: "002/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "15/05/2026",
+        dtVencimento: "01/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 400.0, dataBaixa: "01/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "5,00%", valor: 20.0, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 400, baseReduzida: 0, aliquota: "3,50%", valor: 14.0, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.402", nroNota: "ND-0302", chaveDFe: "35260601234567890001550010000003021234560302", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv002", numero: "PV-002" },
+      },
+    ],
   },
 
   // ── Pedido de Venda – PV-003 (R$ 900,00 / 2 títulos + NF Normal) ────────────
@@ -1665,8 +1741,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-003",
     chaveDFe: "—",
     valor: 900.0,
-    totalIBSUF: 31.5,
-    totalIBSMun: 31.5,
+    totalIBS: 31.5,
     totalCBS: 45.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -1693,8 +1768,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0401",
         chaveDFe: "35260501234567890001550010000004011234560401",
         valor: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
       },
       {
@@ -1708,8 +1782,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0402",
         chaveDFe: "35260601234567890001550010000004021234560402",
         valor: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
       },
       {
@@ -1723,8 +1796,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "NF-0901",
         chaveDFe: "35260601234567890001550010000009011234560901",
         valor: 900.0,
-        totalIBSUF: 31.5,
-        totalIBSMun: 31.5,
+        totalIBS: 31.5,
         totalCBS: 45.0,
       },
     ],
@@ -1739,8 +1811,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.501",
         vlrDesdobramento: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
         nroNota: "ND-0401",
         desdob: "001/002",
@@ -1767,8 +1838,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.502",
         vlrDesdobramento: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
         nroNota: "ND-0402",
         desdob: "002/002",
@@ -1799,8 +1869,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0401",
     chaveDFe: "35260501234567890001550010000004011234560401",
     valor: 450.0,
-    totalIBSUF: 15.75,
-    totalIBSMun: 15.75,
+    totalIBS: 15.75,
     totalCBS: 22.5,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1816,7 +1885,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv003", numero: "PV-003" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv003-1",
+        dataNegociacao: "20/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Varejo Central S.A.",
+        parceiroCNPJ: "98.765.432/0001-11",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.501",
+        vlrDesdobramento: 450.0,
+        totalIBS: 15.75,
+        totalCBS: 22.5,
+        nroNota: "ND-0401",
+        desdob: "001/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "20/05/2026",
+        dtVencimento: "01/05/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 450.0, dataBaixa: "01/05/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "5,00%", valor: 22.5,  digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.501", nroNota: "ND-0401", chaveDFe: "35260501234567890001550010000004011234560401", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv003", numero: "PV-003" },
+      },
+    ],
   },
 
   // ── Nota de Débito – PV-003 Parcela 2 (ND-0402 / R$ 450,00 / venc 01/06/2026) ─
@@ -1830,8 +1927,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0402",
     chaveDFe: "35260601234567890001550010000004021234560402",
     valor: 450.0,
-    totalIBSUF: 15.75,
-    totalIBSMun: 15.75,
+    totalIBS: 15.75,
     totalCBS: 22.5,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -1847,7 +1943,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv003", numero: "PV-003" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv003-2",
+        dataNegociacao: "20/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Varejo Central S.A.",
+        parceiroCNPJ: "98.765.432/0001-11",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.502",
+        vlrDesdobramento: 450.0,
+        totalIBS: 15.75,
+        totalCBS: 22.5,
+        nroNota: "ND-0402",
+        desdob: "002/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "20/05/2026",
+        dtVencimento: "01/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 450.0, dataBaixa: "01/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "5,00%", valor: 22.5,  digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 450, baseReduzida: 0, aliquota: "3,50%", valor: 15.75, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.502", nroNota: "ND-0402", chaveDFe: "35260601234567890001550010000004021234560402", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv003", numero: "PV-003" },
+      },
+    ],
   },
 
   // ── NF Normal – PV-003 (NF-0901 / R$ 900,00 / referencia ND-0401 + ND-0402) ─
@@ -1861,8 +1985,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "NF-0901",
     chaveDFe: "35260601234567890001550010000009011234560901",
     valor: 900.0,
-    totalIBSUF: 31.5,
-    totalIBSMun: 31.5,
+    totalIBS: 31.5,
     totalCBS: 45.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -1890,8 +2013,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0401",
         chaveDFe: "35260501234567890001550010000004011234560401",
         valor: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
       },
       {
@@ -1905,12 +2027,39 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0402",
         chaveDFe: "35260601234567890001550010000004021234560402",
         valor: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-nf-pv003",
+        dataNegociacao: "01/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Varejo Central S.A.",
+        parceiroCNPJ: "98.765.432/0001-11",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "100.506",
+        vlrDesdobramento: 900.0,
+        totalIBS: 31.5,
+        totalCBS: 45.0,
+        nroNota: "NF-0901",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "01/06/2026",
+        dtVencimento: "01/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 900.0, dataBaixa: "01/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 900, baseReduzida: 0, aliquota: "5,00%", valor: 45.0,  digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 900, baseReduzida: 0, aliquota: "3,50%", valor: 31.5,  digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.505", nroNota: "NF-0901", chaveDFe: "35260601234567890001550010000009011234560901", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+        pedidoRef: { id: "pedido-pv003", numero: "PV-003" },
+      },
+    ],
   },
 
   // ── Pedido de Venda – PV-004 (R$ 1.200,00 / antecipação R$ 600 + NF Normal) ──
@@ -1924,8 +2073,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-004",
     chaveDFe: "—",
     valor: 1200.0,
-    totalIBSUF: 42.0,
-    totalIBSMun: 42.0,
+    totalIBS: 42.0,
     totalCBS: 60.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -1952,8 +2100,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0501",
         chaveDFe: "35260601234567890001550010000005011234560501",
         valor: 600.0,
-        totalIBSUF: 21.0,
-        totalIBSMun: 21.0,
+        totalIBS: 21.0,
         totalCBS: 30.0,
       },
       {
@@ -1967,8 +2114,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "NF-1201",
         chaveDFe: "35260601234567890001550010000012011234561201",
         valor: 1200.0,
-        totalIBSUF: 42.0,
-        totalIBSMun: 42.0,
+        totalIBS: 42.0,
         totalCBS: 60.0,
       },
     ],
@@ -1983,8 +2129,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.601",
         vlrDesdobramento: 600.0,
-        totalIBSUF: 21.0,
-        totalIBSMun: 21.0,
+        totalIBS: 21.0,
         totalCBS: 30.0,
         nroNota: "ND-0501",
         desdob: "001/002",
@@ -2011,8 +2156,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.602",
         vlrDesdobramento: 600.0,
-        totalIBSUF: 21.0,
-        totalIBSMun: 21.0,
+        totalIBS: 21.0,
         totalCBS: 30.0,
         nroNota: "NF-1201",
         desdob: "002/002",
@@ -2043,8 +2187,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0501",
     chaveDFe: "35260601234567890001550010000005011234560501",
     valor: 600.0,
-    totalIBSUF: 21.0,
-    totalIBSMun: 21.0,
+    totalIBS: 21.0,
     totalCBS: 30.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -2060,7 +2203,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv004", numero: "PV-004" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv004-1",
+        dataNegociacao: "25/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Logística Express Ltda",
+        parceiroCNPJ: "88.999.000/0001-44",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.601",
+        vlrDesdobramento: 600.0,
+        totalIBS: 21.0,
+        totalCBS: 30.0,
+        nroNota: "ND-0501",
+        desdob: "001/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "25/05/2026",
+        dtVencimento: "01/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 600.0, dataBaixa: "01/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "5,00%", valor: 30.0, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "3,50%", valor: 21.0, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.601", nroNota: "ND-0501", chaveDFe: "35260601234567890001550010000005011234560501", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv004", numero: "PV-004" },
+      },
+    ],
   },
 
   // ── NF Normal – PV-004 fornecimento (NF-1201 / R$ 1.200,00) ─────────────────
@@ -2074,8 +2245,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "NF-1201",
     chaveDFe: "35260601234567890001550010000012011234561201",
     valor: 1200.0,
-    totalIBSUF: 42.0,
-    totalIBSMun: 42.0,
+    totalIBS: 42.0,
     totalCBS: 60.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -2103,12 +2273,39 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0501",
         chaveDFe: "35260601234567890001550010000005011234560501",
         valor: 600.0,
-        totalIBSUF: 21.0,
-        totalIBSMun: 21.0,
+        totalIBS: 21.0,
         totalCBS: 30.0,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv004-2",
+        dataNegociacao: "25/05/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Logística Express Ltda",
+        parceiroCNPJ: "88.999.000/0001-44",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.603",
+        vlrDesdobramento: 600.0,
+        totalIBS: 21.0,
+        totalCBS: 30.0,
+        nroNota: "NF-1201",
+        desdob: "002/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "25/05/2026",
+        dtVencimento: "10/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 600.0, dataBaixa: "10/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "5,00%", valor: 30.0, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 600, baseReduzida: 0, aliquota: "3,50%", valor: 21.0, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.603", nroNota: "NF-1201", chaveDFe: "35260601234567890001550010000012011234561201", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+        pedidoRef: { id: "pedido-pv004", numero: "PV-004" },
+      },
+    ],
   },
 
   // ── Pedido de Venda – PV-005 (R$ 60,00 / 1 parcela antecipada em 2 / antecipação total) ──
@@ -2122,8 +2319,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-005",
     chaveDFe: "—",
     valor: 60.0,
-    totalIBSUF: 2.10,
-    totalIBSMun: 2.10,
+    totalIBS: 2.10,
     totalCBS: 3.00,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -2150,8 +2346,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0601",
         chaveDFe: "35260701234567890001550010000006011234560601",
         valor: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.50,
       },
       {
@@ -2165,8 +2360,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0602",
         chaveDFe: "35260701234567890001550010000006021234560602",
         valor: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.50,
       },
       {
@@ -2180,8 +2374,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "NF-1301",
         chaveDFe: "35260701234567890001550010000013011234561301",
         valor: 60.0,
-        totalIBSUF: 2.10,
-        totalIBSMun: 2.10,
+        totalIBS: 2.10,
         totalCBS: 3.00,
       },
     ],
@@ -2196,8 +2389,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.701",
         vlrDesdobramento: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.50,
         nroNota: "ND-0601",
         desdob: "001/002",
@@ -2224,8 +2416,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.702",
         vlrDesdobramento: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.50,
         nroNota: "ND-0602",
         desdob: "002/002",
@@ -2256,8 +2447,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0601",
     chaveDFe: "35260701234567890001550010000006011234560601",
     valor: 30.0,
-    totalIBSUF: 1.05,
-    totalIBSMun: 1.05,
+    totalIBS: 1.05,
     totalCBS: 1.50,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -2273,7 +2463,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv005", numero: "PV-005" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv005-1",
+        dataNegociacao: "20/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Indústria Nova Ltda",
+        parceiroCNPJ: "77.888.999/0001-66",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.701",
+        vlrDesdobramento: 30.0,
+        totalIBS: 1.05,
+        totalCBS: 1.50,
+        nroNota: "ND-0601",
+        desdob: "001/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "20/06/2026",
+        dtVencimento: "06/07/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 30.0, dataBaixa: "06/07/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "5,00%", valor: 1.50, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "3,50%", valor: 1.05, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.701", nroNota: "ND-0601", chaveDFe: "35260701234567890001550010000006011234560601", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv005", numero: "PV-005" },
+      },
+    ],
   },
 
   // ── Nota de Débito – PV-005 Antecipação 2 (ND-0602 / R$ 30,00 / 27/07/2026) ─
@@ -2287,8 +2505,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0602",
     chaveDFe: "35260701234567890001550010000006021234560602",
     valor: 30.0,
-    totalIBSUF: 1.05,
-    totalIBSMun: 1.05,
+    totalIBS: 1.05,
     totalCBS: 1.50,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -2304,7 +2521,35 @@ const MOCK: DocumentoMovimento[] = [
     notaModelo: "55 - NF-e",
     tipoMovimento: "Venda",
     pedidoRef: { id: "pedido-pv005", numero: "PV-005" },
-    titulos: [],
+    titulos: [
+      {
+        id: "t-pv005-2",
+        dataNegociacao: "20/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Indústria Nova Ltda",
+        parceiroCNPJ: "77.888.999/0001-66",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.702",
+        vlrDesdobramento: 30.0,
+        totalIBS: 1.05,
+        totalCBS: 1.50,
+        nroNota: "ND-0602",
+        desdob: "002/002",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "20/06/2026",
+        dtVencimento: "27/07/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 30.0, dataBaixa: "27/07/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "5,00%", valor: 1.50, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 30, baseReduzida: 0, aliquota: "3,50%", valor: 1.05, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.702", nroNota: "ND-0602", chaveDFe: "35260701234567890001550010000006021234560602", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pedido-pv005", numero: "PV-005" },
+      },
+    ],
   },
 
   // ── NF Fornecimento – PV-005 (NF-1301 / R$ 60,00 / 30/07/2026 / ref ND-0601 + ND-0602) ─
@@ -2318,8 +2563,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "NF-1301",
     chaveDFe: "35260701234567890001550010000013011234561301",
     valor: 60.0,
-    totalIBSUF: 2.10,
-    totalIBSMun: 2.10,
+    totalIBS: 2.10,
     totalCBS: 3.00,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -2347,8 +2591,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0601",
         chaveDFe: "35260701234567890001550010000006011234560601",
         valor: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.50,
       },
       {
@@ -2362,12 +2605,39 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0602",
         chaveDFe: "35260701234567890001550010000006021234560602",
         valor: 30.0,
-        totalIBSUF: 1.05,
-        totalIBSMun: 1.05,
+        totalIBS: 1.05,
         totalCBS: 1.50,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-nf-pv005",
+        dataNegociacao: "30/07/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Indústria Nova Ltda",
+        parceiroCNPJ: "77.888.999/0001-66",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "100.706",
+        vlrDesdobramento: 60.0,
+        totalIBS: 2.10,
+        totalCBS: 3.00,
+        nroNota: "NF-1301",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "30/07/2026",
+        dtVencimento: "30/07/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 60.0, dataBaixa: "30/07/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 60, baseReduzida: 0, aliquota: "5,00%", valor: 3.00, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 60, baseReduzida: 0, aliquota: "3,50%", valor: 2.10, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.705", nroNota: "NF-1301", chaveDFe: "35260701234567890001550010000013011234561301", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+        pedidoRef: { id: "pedido-pv005", numero: "PV-005" },
+      },
+    ],
   },
 
   // ── Pedido de Venda – XPTO (R$ 500,00) ──────────────────────────────────────
@@ -2381,8 +2651,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-001",
     chaveDFe: "—",
     valor: 500.0,
-    totalIBSUF: 17.5,
-    totalIBSMun: 17.5,
+    totalIBS: 17.5,
     totalCBS: 25.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -2409,8 +2678,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.200",
         vlrDesdobramento: 100.0,
-        totalIBSUF: 3.5,
-        totalIBSMun: 3.5,
+        totalIBS: 3.5,
         totalCBS: 5.0,
         nroNota: "—",
         desdob: "001/001",
@@ -2436,8 +2704,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.201",
         vlrDesdobramento: 150.0,
-        totalIBSUF: 5.25,
-        totalIBSMun: 5.25,
+        totalIBS: 5.25,
         totalCBS: 7.5,
         nroNota: "—",
         desdob: "002/003",
@@ -2462,8 +2729,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "100.202",
         vlrDesdobramento: 250.0,
-        totalIBSUF: 8.75,
-        totalIBSMun: 8.75,
+        totalIBS: 8.75,
         totalCBS: 12.5,
         nroNota: "—",
         desdob: "003/003",
@@ -2492,8 +2758,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "2200",
     chaveDFe: "35260502345678901002550010000022001000022000",
     valor: 29800.0,
-    totalIBSUF: 1043.0,
-    totalIBSMun: 1043.0,
+    totalIBS: 1043.0,
     totalCBS: 1490.0,
     empresaNegociacao: "002 - Sankhya São Paulo S.A.",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -2519,8 +2784,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "200.020",
         vlrDesdobramento: 29800.0,
-        totalIBSUF: 1043.0,
-        totalIBSMun: 1043.0,
+        totalIBS: 1043.0,
         totalCBS: 1490.0,
         nroNota: "NF-002200",
         desdob: "001/001",
@@ -2554,8 +2818,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1234",
     chaveDFe: "35260101234567890001550010000012341000012340",
     valor: 24500.0,
-    totalIBSUF: 857.5,
-    totalIBSMun: 857.5,
+    totalIBS: 857.5,
     totalCBS: 1225.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -2581,8 +2844,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "100.001",
         vlrDesdobramento: 24500.0,
-        totalIBSUF: 857.5,
-        totalIBSMun: 857.5,
+        totalIBS: 857.5,
         totalCBS: 1225.0,
         nroNota: "NF-001234",
         desdob: "001/001",
@@ -2612,8 +2874,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-010",
     chaveDFe: "—",
     valor: 20000.0,
-    totalIBSUF: 700.0,
-    totalIBSMun: 700.0,
+    totalIBS: 700.0,
     totalCBS: 1000.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -2640,12 +2901,66 @@ const MOCK: DocumentoMovimento[] = [
         numero: "1601",
         chaveDFe: "35260601234567890001550010000016011000016011",
         valor: 20000.0,
-        totalIBSUF: 700.0,
-        totalIBSMun: 700.0,
+        totalIBS: 700.0,
         totalCBS: 1000.0,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-010-t1",
+        dataNegociacao: "05/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Digital Supply Ltda",
+        parceiroCNPJ: "12.345.678/0001-55",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "100.802",
+        vlrDesdobramento: 10000.0,
+        totalIBS: 350.0,
+        totalCBS: 500.0,
+        nroNota: "NF-001601",
+        desdob: "001/002",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "05/06/2026",
+        dtVencimento: "05/07/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 10000.0, dataBaixa: "10/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "5,00%", valor: 500.0, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "3,50%", valor: 350.0, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.801", nroNota: "NF-001601", chaveDFe: "35260601234567890001550010000016011000016011", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+        pedidoRef: { id: "pv-010", numero: "PV-010" },
+      },
+      {
+        id: "t-010-t2",
+        dataNegociacao: "05/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Digital Supply Ltda",
+        parceiroCNPJ: "12.345.678/0001-55",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "100.803",
+        vlrDesdobramento: 10000.0,
+        totalIBS: 350.0,
+        totalCBS: 500.0,
+        nroNota: "NF-001601",
+        desdob: "002/002",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "05/06/2026",
+        dtVencimento: "05/07/2026",
+        vlrDesconto: 0, vlrMulta: 300.0, vlrJuros: 150.0, vlrBaixa: 10450.0, dataBaixa: "10/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "5,00%", valor: 500.0,  digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 10000, baseReduzida: 0, aliquota: "3,50%", valor: 350.0,  digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "100.801", nroNota: "NF-001601", chaveDFe: "35260601234567890001550010000016011000016011", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+        pedidoRef: { id: "pv-010", numero: "PV-010" },
+      },
+    ],
   },
 
   // ── NF-001601 — Faturamento do PV-010 (parcelas 100.802 + 100.803) ─────────────
@@ -2659,8 +2974,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1601",
     chaveDFe: "35260601234567890001550010000016011000016011",
     valor: 20000.0,
-    totalIBSUF: 700.0,
-    totalIBSMun: 700.0,
+    totalIBS: 700.0,
     totalCBS: 1000.0,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -2688,8 +3002,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "1602",
         chaveDFe: "35260601234567890001550010000016021000016021",
         valor: 450.0,
-        totalIBSUF: 15.75,
-        totalIBSMun: 15.75,
+        totalIBS: 15.75,
         totalCBS: 22.5,
       },
     ],
@@ -2704,8 +3017,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "100.802",
         vlrDesdobramento: 10000.0,
-        totalIBSUF: 350.0,
-        totalIBSMun: 350.0,
+        totalIBS: 350.0,
         totalCBS: 500.0,
         nroNota: "NF-001601",
         desdob: "001/002",
@@ -2732,8 +3044,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Venda",
         nroUnico: "100.803",
         vlrDesdobramento: 10000.0,
-        totalIBSUF: 350.0,
-        totalIBSMun: 350.0,
+        totalIBS: 350.0,
         totalCBS: 500.0,
         nroNota: "NF-001601",
         desdob: "002/002",
@@ -2768,8 +3079,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1602",
     chaveDFe: "35260601234567890001550010000016021000016021",
     valor: 450.0,
-    totalIBSUF: 15.75,
-    totalIBSMun: 15.75,
+    totalIBS: 15.75,
     totalCBS: 22.5,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -2796,8 +3106,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "1601",
         chaveDFe: "35260601234567890001550010000016011000016011",
         valor: 20000.0,
-        totalIBSUF: 700.0,
-        totalIBSMun: 700.0,
+        totalIBS: 700.0,
         totalCBS: 1000.0,
       },
     ],
@@ -2815,8 +3124,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "PV-072",
     chaveDFe: "—",
     valor: 72.0,
-    totalIBSUF: 2.52,
-    totalIBSMun: 2.52,
+    totalIBS: 2.52,
     totalCBS: 3.60,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.001 - Pedido de Venda",
@@ -2843,8 +3151,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0072",
         chaveDFe: "35260601234567890001550010000000072123456720",
         valor: 72.0,
-        totalIBSUF: 2.52,
-        totalIBSMun: 2.52,
+        totalIBS: 2.52,
         totalCBS: 3.60,
       },
       {
@@ -2858,8 +3165,7 @@ const MOCK: DocumentoMovimento[] = [
         numero: "1072",
         chaveDFe: "35260601234567890001550010000001072123456721",
         valor: 72.0,
-        totalIBSUF: 2.52,
-        totalIBSMun: 2.52,
+        totalIBS: 2.52,
         totalCBS: 3.60,
       },
     ],
@@ -2874,8 +3180,7 @@ const MOCK: DocumentoMovimento[] = [
         tipoMovimento: "Pedido de Venda",
         nroUnico: "150.001",
         vlrDesdobramento: 72.0,
-        totalIBSUF: 2.52,
-        totalIBSMun: 2.52,
+        totalIBS: 2.52,
         totalCBS: 3.60,
         nroNota: "ND-000072",
         desdob: "001/001",
@@ -2906,8 +3211,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "ND-0072",
     chaveDFe: "35260601234567890001550010000000072123456720",
     valor: 72.0,
-    totalIBSUF: 2.52,
-    totalIBSMun: 2.52,
+    totalIBS: 2.52,
     totalCBS: 3.60,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.209 - Nota de Débito",
@@ -2935,12 +3239,39 @@ const MOCK: DocumentoMovimento[] = [
         numero: "1072",
         chaveDFe: "35260601234567890001550010000001072123456721",
         valor: 72.0,
-        totalIBSUF: 2.52,
-        totalIBSMun: 2.52,
+        totalIBS: 2.52,
         totalCBS: 3.60,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-sc-pv-72",
+        dataNegociacao: "16/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Fênix Serviços Ltda",
+        parceiroCNPJ: "12.876.543/0001-21",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "150.001",
+        vlrDesdobramento: 72.0,
+        totalIBS: 2.52,
+        totalCBS: 3.60,
+        nroNota: "ND-000072",
+        desdob: "001/001",
+        tipoOperacao: "1.001 - Pedido de Venda",
+        dtEntradaSaida: "16/06/2026",
+        dtVencimento: "16/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 72.0, dataBaixa: "16/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "5,00%", valor: 3.60, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "3,50%", valor: 2.52, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "150.002", nroNota: "ND-000072", chaveDFe: "35260601234567890001550010000000072123456720", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "sc-pv-72", numero: "PV-072" },
+      },
+    ],
   },
 
   // ── NFe de Fornecimento – NF-1072 / Fênix Serviços (R$ 72,00 / sem título) ──
@@ -2954,8 +3285,7 @@ const MOCK: DocumentoMovimento[] = [
     numero: "1072",
     chaveDFe: "35260601234567890001550010000001072123456721",
     valor: 72.0,
-    totalIBSUF: 2.52,
-    totalIBSMun: 2.52,
+    totalIBS: 2.52,
     totalCBS: 3.60,
     empresaNegociacao: "001 - Sankhya Gestão de Negócios Ltda",
     tipoOperacao: "1.201 - Venda de Mercadoria",
@@ -2983,12 +3313,39 @@ const MOCK: DocumentoMovimento[] = [
         numero: "ND-0072",
         chaveDFe: "35260601234567890001550010000000072123456720",
         valor: 72.0,
-        totalIBSUF: 2.52,
-        totalIBSMun: 2.52,
+        totalIBS: 2.52,
         totalCBS: 3.60,
       },
     ],
-    titulos: [],
+    titulos: [
+      {
+        id: "t-sc-nfe-72",
+        dataNegociacao: "18/06/2026",
+        empresa: "001 - Sankhya Gestão de Negócios Ltda",
+        parceiroNome: "Fênix Serviços Ltda",
+        parceiroCNPJ: "12.876.543/0001-21",
+        tipo: "Receita",
+        tipoMovimento: "Venda",
+        nroUnico: "150.004",
+        vlrDesdobramento: 72.0,
+        totalIBS: 2.52,
+        totalCBS: 3.60,
+        nroNota: "1072",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "18/06/2026",
+        dtVencimento: "18/06/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 72.0, dataBaixa: "18/06/2026",
+        tributos: [
+          { imposto: "CBS",  incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "5,00%", valor: 3.60, digitado: "Não" },
+          { imposto: "IBS",  incidencia: "Saída", cst: "01", base: 72, baseReduzida: 0, aliquota: "3,50%", valor: 2.52, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "150.003", nroNota: "1072", chaveDFe: "35260601234567890001550010000001072123456721", statusDFe: "Autorizado", finalidade: "Normal" },
+        ],
+        pedidoRef: { id: "sc-pv-72", numero: "PV-072" },
+      },
+    ],
   },
 ];
 
@@ -3459,8 +3816,7 @@ export default function MovimentacoesDocumentosMovimento() {
                     <TableHead className="text-[12px]">Número</TableHead>
                     <TableHead className="text-[12px]">Chave DFe</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS</TableHead>
                     <TableHead className="text-[12px] text-right">Total CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -3491,8 +3847,7 @@ export default function MovimentacoesDocumentosMovimento() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-mono">{brl(r.valor)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(r.totalIBSUF)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(r.totalIBSMun)}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(r.totalIBS)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.totalCBS)}</TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -3625,8 +3980,7 @@ function DocumentDetailView({
             <SummaryCard label="Número"            value={d.numero}         mono />
             <SummaryCard label="Valor"             value={brl(d.valor)}     mono />
             <SummaryCard label="Total CBS"         value={brl(d.totalCBS)}  mono />
-            <SummaryCard label="Total IBS UF"      value={brl(d.totalIBSUF)} mono />
-            <SummaryCard label="Total IBS Mun"     value={brl(d.totalIBSMun)} mono />
+            <SummaryCard label="Total IBS"      value={brl(d.totalIBS)} mono />
             <div className="col-span-2 md:col-span-3 overflow-hidden">
               <div className="rounded-lg border bg-card p-3 overflow-hidden">
                 <div className="text-[11px] text-muted-foreground mb-0.5">Chave DFe</div>
@@ -3715,12 +4069,6 @@ function DocumentDetailView({
             ) : (
               <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
                 <p className="text-[13px] text-muted-foreground">Não existe um pedido relacionado</p>
-                {d.tipoMovimento !== "Pedido de Venda" && d.tipoMovimento !== "Pedido de Compra" && (
-                  <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                    <Link2 className="h-3.5 w-3.5" />
-                    Relacionar documento
-                  </Button>
-                )}
               </div>
             )}
           </CollapsibleSection>
@@ -3745,8 +4093,7 @@ function DocumentDetailView({
                       <TableHead className="text-[12px]">Número</TableHead>
                       <TableHead className="text-[12px]">Chave DFe</TableHead>
                       <TableHead className="text-right text-[12px]">Valor</TableHead>
-                      <TableHead className="text-right text-[12px]">Total IBS UF</TableHead>
-                      <TableHead className="text-right text-[12px]">Total IBS Mun</TableHead>
+                      <TableHead className="text-right text-[12px]">Total IBS</TableHead>
                       <TableHead className="text-right text-[12px]">Total CBS</TableHead>
                       <TableHead className="text-center text-[12px]">Ação</TableHead>
                     </TableRow>
@@ -3780,8 +4127,7 @@ function DocumentDetailView({
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-mono">{brl(ref.valor)}</TableCell>
-                        <TableCell className="text-right font-mono">{brl(ref.totalIBSUF)}</TableCell>
-                        <TableCell className="text-right font-mono">{brl(ref.totalIBSMun)}</TableCell>
+                        <TableCell className="text-right font-mono">{brl(ref.totalIBS)}</TableCell>
                         <TableCell className="text-right font-mono">{brl(ref.totalCBS)}</TableCell>
                         <TableCell className="text-center">
                           <Button
@@ -3821,8 +4167,7 @@ function DocumentDetailView({
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
                     <TableHead className="text-[12px] text-right">Valor Baixa</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS</TableHead>
                     <TableHead className="text-[12px] text-right">Total CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -3855,8 +4200,7 @@ function DocumentDetailView({
                       <TableCell className="font-mono">{t.nroUnico}</TableCell>
                       <TableCell className="text-right font-mono">{brl(t.vlrDesdobramento)}</TableCell>
                       <TableCell className="text-right font-mono">{t.vlrBaixa > 0 ? brl(t.vlrBaixa) : "—"}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(t.totalIBSUF)}</TableCell>
-                      <TableCell className="text-right font-mono">{brl(t.totalIBSMun)}</TableCell>
+                      <TableCell className="text-right font-mono">{brl(t.totalIBS)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(t.totalCBS)}</TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -3885,16 +4229,6 @@ function DocumentDetailView({
           ) : (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um título relacionado a esse documento.</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                  <FilePlus className="h-3.5 w-3.5" />
-                  Lançar título
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                  <Link2 className="h-3.5 w-3.5" />
-                  Relacionar título
-                </Button>
-              </div>
             </div>
           )}
         </CollapsibleSection>
@@ -3967,8 +4301,7 @@ function TituloDetailView({
             />
             <SummaryCard label="Valor"             value={brl(t.vlrDesdobramento)} mono />
             <SummaryCard label="Total CBS"         value={brl(t.totalCBS)}         mono />
-            <SummaryCard label="Total IBS UF"      value={brl(t.totalIBSUF)}       mono />
-            <SummaryCard label="Total IBS Mun"     value={brl(t.totalIBSMun)}      mono />
+            <SummaryCard label="Total IBS"      value={brl(t.totalIBS)}       mono />
           </div>
         </CollapsibleSection>
 
@@ -4028,10 +4361,6 @@ function TituloDetailView({
           ) : (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um pedido relacionado</p>
-              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                <Link2 className="h-3.5 w-3.5" />
-                Relacionar documento
-              </Button>
             </div>
           )}
         </CollapsibleSection>
@@ -4083,10 +4412,6 @@ function TituloDetailView({
                   <Upload className="h-3.5 w-3.5" />
                   Importar XML
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                  <Link2 className="h-3.5 w-3.5" />
-                  Relacionar documento
-                </Button>
                 {t.pedidoRef && (
                   <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
                     <FileText className="h-3.5 w-3.5" />
@@ -4113,8 +4438,7 @@ function TituloDetailView({
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS UF</TableHead>
-                    <TableHead className="text-[12px] text-right">Total IBS Mun</TableHead>
+                    <TableHead className="text-[12px] text-right">Total IBS</TableHead>
                     <TableHead className="text-[12px] text-right">Total CBS</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -4143,8 +4467,7 @@ function TituloDetailView({
                     <TableCell className="font-mono">{t.tituloRef.nroUnico}</TableCell>
                     <TableCell className="font-mono">{t.tituloRef.nroNota}</TableCell>
                     <TableCell className="text-right font-mono">{brl(t.tituloRef.vlrDesdobramento)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(t.tituloRef.totalIBSUF)}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(t.tituloRef.totalIBSMun)}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(t.tituloRef.totalIBS)}</TableCell>
                     <TableCell className="text-right font-mono">{brl(t.tituloRef.totalCBS)}</TableCell>
                     <TableCell className="text-center">
                       <Button
