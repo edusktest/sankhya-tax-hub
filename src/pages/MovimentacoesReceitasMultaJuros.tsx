@@ -1403,7 +1403,7 @@ function MultaJurosDetailView({
         </CollapsibleSection>
 
         {/* Documento Fiscal Origem */}
-        <CollapsibleSection title="Documento Fiscal Origem">
+        <CollapsibleSection title="Documento Fiscal de Origem">
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>

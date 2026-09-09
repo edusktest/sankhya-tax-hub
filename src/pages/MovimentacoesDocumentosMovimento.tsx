@@ -3587,7 +3587,7 @@ function DetailField({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-type View = "list" | "doc-detail" | "titulo-detail";
+type View = "list" | "doc-detail" | "titulo-detail" | "not-found";
 
 export default function MovimentacoesDocumentosMovimento() {
   const location = useLocation();
@@ -3610,6 +3610,7 @@ export default function MovimentacoesDocumentosMovimento() {
     if (state?.openChaveDFe) {
       const doc = MOCK.find((r) => r.chaveDFe === state.openChaveDFe);
       if (doc) { setSelectedDoc(doc); setView("doc-detail"); }
+      else { setView("not-found"); }
     } else if (state?.openNroUnico) {
       const doc = MOCK.find((r) => r.id === state.openNroUnico);
       if (doc) { setSelectedDoc(doc); setView("doc-detail"); }
@@ -3643,6 +3644,31 @@ export default function MovimentacoesDocumentosMovimento() {
   useEffect(() => { setPage(1); }, [rows]);
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (view === "not-found") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b text-[13px] text-muted-foreground">
+          <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => setView("list")}>
+            Documentos
+          </span>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span>Movimento</span>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-8">
+          <div className="rounded-lg border bg-muted/20 p-8 flex flex-col items-center gap-4 text-center max-w-md">
+            <AlertTriangle className="h-8 w-8 text-amber-500" />
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
+              O registro que você está tentando acessar não existe. Verifique se o registro se encontra na tela de Movimentação Financeira e Portal de Vendas ou Portal de Compras.
+            </p>
+            <Button variant="outline" size="sm" className="h-8 text-[12px] mt-1" onClick={() => setView("list")}>
+              Voltar para a lista
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (view === "titulo-detail" && selectedTitulo && selectedDoc) {
     return (
