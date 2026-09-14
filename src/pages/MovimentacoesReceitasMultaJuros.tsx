@@ -1173,7 +1173,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                 <TableHeader>
                   <TableRow className="bg-muted/40">
                     <TableHead className="text-[12px] text-center">Pendências</TableHead>
-                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Dt. Baixa</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
@@ -1196,7 +1196,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                           <PendenciaIcon pendencias={getMultaJurosPendencias(r)} />
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dataBaixa}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
                         <div>{r.parceiroNome}</div>
@@ -1210,8 +1210,6 @@ export default function MovimentacoesReceitasMultaJuros() {
                       <TableCell className="text-right font-mono">{brl(r.juros)}</TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
                         {ibsValue(r.totalIBS, r.statusGeracaoNota)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-muted-foreground">
                       </TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
                         {ibsValue(r.totalCBS, r.statusGeracaoNota)}
@@ -1408,6 +1406,7 @@ function MultaJurosDetailView({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">
+                  <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
                   <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                   <TableHead className="text-[12px]">Empresa</TableHead>
                   <TableHead className="text-[12px]">Parceiro</TableHead>
@@ -1422,6 +1421,7 @@ function MultaJurosDetailView({
               </TableHeader>
               <TableBody>
                 <TableRow className="text-[13px]">
+                  <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
                   <TableCell className="font-mono text-[12px]">{r.documentoFiscal.dataNegociacao}</TableCell>
                   <TableCell>{r.documentoFiscal.empresa}</TableCell>
                   <TableCell>
@@ -1467,6 +1467,7 @@ function MultaJurosDetailView({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
@@ -1480,6 +1481,7 @@ function MultaJurosDetailView({
                 </TableHeader>
                 <TableBody>
                   <TableRow className="text-[13px]">
+                    <TableCell className="text-center w-10"><div className="flex justify-center">{["Autorizado","Cancelado","Denegado"].includes(r.notaDebito.statusDFe) ? <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /> : <AlertTriangle className="h-4 w-4 text-amber-500" />}</div></TableCell>
                     <TableCell className="font-mono text-[12px]">{r.notaDebito.dataNegociacao}</TableCell>
                     <TableCell className="font-mono">{r.notaDebito.nroUnico}</TableCell>
                     <TableCell className="font-mono">{r.notaDebito.nroNota}</TableCell>

@@ -157,12 +157,14 @@ interface DocumentoMovimento {
   documentosFiscaisRef?: DocumentoFiscalRef[];
   pedidoRef?: { id: string; numero: string };
   pendencia?: string;
+  semDocumentoFinalidadeNormal?: boolean;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
 
 export const PENDENCIAS_DOC = {
   PRT0001: "Títulos com pendências",
+  PRT0006: "Documento não tem um documento fiscal com finalidade normal emitida.",
 } as const;
 
 export type CodigoPRT_DOC = keyof typeof PENDENCIAS_DOC;
@@ -173,9 +175,12 @@ export interface PendenciaDoc {
 }
 
 export function getDocumentoPendencias(d: DocumentoMovimento): PendenciaDoc[] {
+  const p: PendenciaDoc[] = [];
   if (d.pendencia || d.titulos.some((t) => t.pendencia))
-    return [{ codigo: "PRT0001", descricao: PENDENCIAS_DOC.PRT0001 }];
-  return [];
+    p.push({ codigo: "PRT0001", descricao: PENDENCIAS_DOC.PRT0001 });
+  if (d.semDocumentoFinalidadeNormal)
+    p.push({ codigo: "PRT0006", descricao: PENDENCIAS_DOC.PRT0006 });
+  return p;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -3347,6 +3352,218 @@ const MOCK: DocumentoMovimento[] = [
       },
     ],
   },
+
+  // ── PV-030 — Pedido de Venda (Atacado Central / PRT0005: título baixado sem doc fiscal) ─
+  {
+    id: "pv-030",
+    dataNegociacao: "03/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    numero: "PV-030",
+    chaveDFe: "—",
+    valor: 8000.0,
+    totalIBS: 0,
+    totalCBS: 0,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    tipoNegociacao: "A Prazo",
+    dtEntradaSaida: "03/09/2026",
+    dtFaturamento: "—",
+    dtMovimento: "03/09/2026",
+    finalidadeOperacao: "Normal",
+    nroNFSe: "—",
+    nroUnico: "101.000",
+    serieNota: "—",
+    statusNota: "—",
+    notaModelo: "—",
+    tipoMovimento: "Pedido de Venda",
+    pendencia: "Existem títulos com pendências.",
+    titulos: [
+      {
+        id: "t-pv030-t1",
+        dataNegociacao: "03/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.955",
+        vlrDesdobramento: 8000.0,
+        totalIBS: 0,
+        totalCBS: 0,
+        nroNota: "—",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "03/09/2026",
+        dtVencimento: "03/10/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 8000.0, dataBaixa: "09/09/2026",
+        tributos: [],
+        documentos: [],
+        pendencia: "Esse título não tem um documento fiscal relacionado. Veja as opções disponíveis através do grupo Documentos do Título.",
+        pedidoRef: { id: "pv-030", numero: "PV-030" },
+      },
+    ],
+  },
+
+  // ── PV-031 — Pedido de Venda (Atacado Central / PRT0006: sem doc fiscal finalidade Normal) ─
+  {
+    id: "pv-031",
+    dataNegociacao: "05/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    numero: "PV-031",
+    chaveDFe: "—",
+    valor: 8000.0,
+    totalIBS: 0,
+    totalCBS: 0,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    tipoNegociacao: "A Prazo",
+    dtEntradaSaida: "05/09/2026",
+    dtFaturamento: "—",
+    dtMovimento: "05/09/2026",
+    finalidadeOperacao: "Remessa",
+    nroNFSe: "—",
+    nroUnico: "101.001",
+    serieNota: "—",
+    statusNota: "—",
+    notaModelo: "—",
+    tipoMovimento: "Pedido de Venda",
+    semDocumentoFinalidadeNormal: true,
+    documentosFiscaisRef: [
+      {
+        id: "nf-pv031-remessa",
+        dataNegociacao: "05/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipoMovimento: "Pedido de Venda",
+        finalidadeOperacao: "Remessa",
+        numero: "NF-005001",
+        chaveDFe: "35260902899911100122550010000050011000050011",
+        valor: 8000.0,
+        totalIBS: 0,
+        totalCBS: 0,
+      },
+      {
+        id: "nd-031",
+        dataNegociacao: "11/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipoMovimento: "Pedido de Venda",
+        finalidadeOperacao: "Débito",
+        numero: "ND-031",
+        chaveDFe: "35260902899911100122550010000000311000000311",
+        valor: 680.0,
+        totalIBS: 280.0,
+        totalCBS: 400.0,
+      },
+    ],
+    titulos: [
+      {
+        id: "t-pv031-t1",
+        dataNegociacao: "05/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.956",
+        vlrDesdobramento: 8000.0,
+        totalIBS: 0,
+        totalCBS: 0,
+        nroNota: "NF-005001",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "05/09/2026",
+        dtVencimento: "05/10/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 8000.0, dataBaixa: "10/09/2026",
+        tributos: [],
+        documentos: [
+          { nroUnico: "101.001", nroNota: "NF-005001", chaveDFe: "35260902899911100122550010000050011000050011", statusDFe: "Autorizado", finalidade: "Remessa" },
+        ],
+        pedidoRef: { id: "pv-031", numero: "PV-031" },
+      },
+    ],
+  },
+
+  // ── ND-031 — Nota de Débito do PA 100.956 (CBS/IBS pagamento antecipado PRT0006) ─
+  {
+    id: "nd-031",
+    dataNegociacao: "11/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    numero: "ND-031",
+    chaveDFe: "35260902899911100122550010000000311000000311",
+    valor: 680.0,
+    totalIBS: 280.0,
+    totalCBS: 400.0,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.001 - Pedido de Venda",
+    tipoNegociacao: "Boleto",
+    dtEntradaSaida: "11/09/2026",
+    dtFaturamento: "11/09/2026",
+    dtMovimento: "11/09/2026",
+    finalidadeOperacao: "Débito",
+    nroNFSe: "—",
+    nroUnico: "101.010",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Pedido de Venda",
+    documentosFiscaisRef: [
+      {
+        id: "pv-031",
+        dataNegociacao: "05/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipoMovimento: "Pedido de Venda",
+        finalidadeOperacao: "Remessa",
+        numero: "PV-031",
+        chaveDFe: "—",
+        valor: 8000.0,
+        totalIBS: 0,
+        totalCBS: 0,
+      },
+    ],
+    titulos: [
+      {
+        id: "t-nd031-t1",
+        dataNegociacao: "11/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipo: "Receita",
+        tipoMovimento: "Pedido de Venda",
+        nroUnico: "100.956",
+        vlrDesdobramento: 8000.0,
+        totalIBS: 280.0,
+        totalCBS: 400.0,
+        nroNota: "ND-031",
+        desdob: "001/001",
+        tipoOperacao: "1.201 - Recebimento",
+        dtEntradaSaida: "11/09/2026",
+        dtVencimento: "05/10/2026",
+        vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 8000.0, dataBaixa: "10/09/2026",
+        tributos: [
+          { imposto: "CBS", incidencia: "Saída", cst: "01", base: 8000, baseReduzida: 0, aliquota: "5,00%", valor: 400.0, digitado: "Não" },
+          { imposto: "IBS", incidencia: "Saída", cst: "01", base: 8000, baseReduzida: 0, aliquota: "3,50%", valor: 280.0, digitado: "Não" },
+        ],
+        documentos: [
+          { nroUnico: "101.010", nroNota: "ND-031", chaveDFe: "35260902899911100122550010000000311000000311", statusDFe: "Autorizado", finalidade: "Débito" },
+        ],
+        pedidoRef: { id: "pv-031", numero: "PV-031" },
+      },
+    ],
+  },
 ];
 
 export const MOCK_DOCUMENTOS_MOVIMENTO = MOCK;
@@ -3424,6 +3641,7 @@ function TributoTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
             <TableHead className="text-[12px]">Data</TableHead>
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
@@ -3445,6 +3663,7 @@ function TributoTable({
         <TableBody>
           {tributos.map((tri, i) => (
             <TableRow key={`orig-${i}`} className="text-[13px]">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell>{tri.incidencia}</TableCell>
@@ -3467,6 +3686,7 @@ function TributoTable({
           ))}
           {tributosMultaJuros?.map((tri, i) => (
             <TableRow key={`mj-${i}`} className="text-[13px] bg-amber-50/40 dark:bg-amber-950/10">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{dataMultaJuros ?? data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell className="text-amber-700 dark:text-amber-400 font-medium">{tri.incidencia}</TableCell>
@@ -3489,6 +3709,7 @@ function TributoTable({
           ))}
           {tributosDevolvidos?.map((tri, i) => (
             <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{dataDevolucao ?? data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
@@ -3633,7 +3854,8 @@ export default function MovimentacoesDocumentosMovimento() {
       const byAte = !filtroDataAte || dt <= filtroDataAte;
       const byTipoMovimento = !filtroTipoMovimento || r.tipoMovimento === filtroTipoMovimento;
       const byFinalidade = !filtroFinalidade || r.finalidadeOperacao === filtroFinalidade;
-      const byPendencia = !filtroPendencia || (filtroPendencia === "sim" ? !!r.pendencia : !r.pendencia);
+      const hasPendencia = getDocumentoPendencias(r).length > 0;
+      const byPendencia = !filtroPendencia || (filtroPendencia === "sim" ? hasPendencia : !hasPendencia);
       const byNroUnico = !filtroNroUnico || r.id === filtroNroUnico;
       return byEmpresa && byDe && byAte && byTipoMovimento && byFinalidade && byPendencia && byNroUnico;
     });
@@ -4362,12 +4584,14 @@ function TituloDetailView({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
                     <TableHead className="text-[12px]">Número</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow className="text-[13px]">
+                    <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
                     <TableCell className="font-mono font-medium">{t.pedidoRef.numero}</TableCell>
                     <TableCell className="text-center">
                       <Button

@@ -31,6 +31,7 @@ export enum ERoutes {
    DIGITAL_WORKERS_CONFIG_WORKER = "/digital-workers/configuracao-por-worker",
    MOVIMENTACOES_RECEITAS_MOVIMENTO = "/movimentacoes/receitas/movimento",
    MOVIMENTACOES_RECEITAS_MULTA_JUROS = "/movimentacoes/receitas/multa-juros",
+   MOVIMENTACOES_RECEITAS_PAGAMENTO_ANTECIPADO = "/movimentacoes/receitas/pagamento-antecipado",
    MOVIMENTACOES_DESPESAS_MOVIMENTO = "/movimentacoes/despesas/movimento",
    MOVIMENTACOES_DOCUMENTOS_MOVIMENTO = "/movimentacoes/documentos/movimento",
    APURACAO_CONCILIACAO_FISCAL = "/apuracao-cbs/conciliacao-fiscal",

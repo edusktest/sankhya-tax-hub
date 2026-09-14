@@ -1451,7 +1451,53 @@ const MOCK: ReceitaMovimento[] = [
       tipoOperacao: "1.001 - Pedido de Venda",
     },
   },
+
+  // ── Pedido de Venda – Título 100.955 (PRT0005: baixado com Pedido sem doc fiscal) ──
+  {
+    id: "pa-955",
+    dataNegociacao: "03/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    nroUnico: "100.955",
+    tipo: "Receita",
+    tipoMovimento: "Pedido de Venda",
+    tipoTitulo: "Boleto",
+    vlrDesdobramento: 8000.0,
+    totalIBS: 0,
+    totalCBS: 0,
+    nroNota: "—",
+    desdob: "001/001",
+    tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "03/09/2026",
+    dtVencimento: "03/10/2026",
+    vlrDesconto: 0, vlrMulta: 0, vlrJuros: 0, vlrBaixa: 8000.0, dataBaixa: "09/09/2026",
+    tributos: [],
+    documentos: [],
+    pedidoRef: {
+      id: "pv-030",
+      numero: "PV-030",
+      dataNegociacao: "03/09/2026",
+      empresa: "002 - Sankhya São Paulo S.A.",
+      parceiroNome: "Atacado Central Ltda",
+      parceiroCNPJ: "88.999.111/0001-22",
+      nroUnico: "101.000",
+      valor: 8000.0,
+      tipoOperacao: "1.001 - Pedido de Venda",
+    },
+    pendencia: "PRT0005 — Título baixado com Pedido sem um documento fiscal referenciado.",
+  },
 ];
+
+export const MOCK_RECEITAS_MOVIMENTO = MOCK;
+
+export function getReceitaMovimentoPendencias(r: ReceitaMovimento): { codigo: string; descricao: string }[] {
+  if (!r.pendencia) return [];
+  const match = r.pendencia.match(/^(PRT\d{4})\s*[—-]\s*(.+)$/s);
+  if (!match) return [];
+  return [{ codigo: match[1], descricao: match[2].trim() }];
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1478,11 +1524,16 @@ function PendenciaIcon({ pendencia }: { pendencia?: string }) {
 
 function PendenciaAlerta({ pendencia, navigate, nroUnico }: { pendencia: string; navigate: ReturnType<typeof useNavigate>; nroUnico: string }) {
   const isMJ = pendencia.includes("multa e juros");
+  const prtMatch = pendencia.match(/^(PRT\d{4})\s*[—-]\s*(.+)$/s);
   return (
     <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
       <p className="text-[13px] text-amber-800 dark:text-amber-300 leading-relaxed">
-        {pendencia}
+        {prtMatch ? (
+          <><strong>{prtMatch[1]}</strong> — {prtMatch[2]}</>
+        ) : (
+          pendencia
+        )}
         {isMJ && (
           <>
             {" "}
@@ -1865,6 +1916,7 @@ function TributoTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
             <TableHead className="text-[12px]">Data</TableHead>
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
@@ -1886,6 +1938,7 @@ function TributoTable({
         <TableBody>
           {tributos.map((tri, i) => (
             <TableRow key={`orig-${i}`} className="text-[13px]">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell>{tri.incidencia}</TableCell>
@@ -1908,6 +1961,7 @@ function TributoTable({
           ))}
           {tributosMultaJuros?.map((tri, i) => (
             <TableRow key={`mj-${i}`} className="text-[13px] bg-amber-50/40 dark:bg-amber-950/10">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{dataMultaJuros ?? data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell className="text-amber-700 dark:text-amber-400 font-medium">{tri.incidencia}</TableCell>
@@ -1932,6 +1986,7 @@ function TributoTable({
             const isGuia = tri.incidencia === "DARF" || tri.incidencia === "DAR";
             return (
               <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+                <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
                 <TableCell className="font-mono text-[12px]">{dataDevolucao ?? data}</TableCell>
                 <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
                 <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
@@ -2086,6 +2141,7 @@ function DetailView({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
                     <TableHead className="text-[12px]">Número</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
@@ -2098,6 +2154,13 @@ function DetailView({
                 </TableHeader>
                 <TableBody>
                   <TableRow className="text-[13px]">
+                    <TableCell className="text-center w-10">
+                      <div className="flex justify-center">
+                        {r.pendencia
+                          ? <AlertTriangle className="h-4 w-4 text-amber-500" title="PRT0001: Títulos com pendências" />
+                          : <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-mono font-medium">{r.pedidoRef.numero}</TableCell>
                     <TableCell className="font-mono text-[12px]">{r.pedidoRef.dataNegociacao}</TableCell>
                     <TableCell>{r.pedidoRef.empresa}</TableCell>
@@ -2187,7 +2250,7 @@ function DetailView({
                 </TableBody>
               </Table>
             </div>
-          ) : r.vlrBaixa > 0 ? (
+          ) : (r.vlrMulta > 0 || r.vlrJuros > 0) ? (
             <div className="rounded-lg border bg-muted/20 p-6 flex flex-col items-center gap-3 text-center">
               <p className="text-[13px] text-muted-foreground">Não existe um documento fiscal relacionado</p>
               <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">

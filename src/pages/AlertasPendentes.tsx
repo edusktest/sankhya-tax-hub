@@ -22,6 +22,14 @@ import {
   MOCK_DOCUMENTOS_MOVIMENTO,
   getDocumentoPendencias,
 } from "@/pages/MovimentacoesDocumentosMovimento";
+import {
+  MOCK_RECEITAS_MOVIMENTO,
+  getReceitaMovimentoPendencias,
+} from "@/pages/MovimentacoesReceitasMovimento";
+import {
+  MOCK_PAGAMENTO_ANTECIPADO,
+  getPagamentoAntecipadoPendencias,
+} from "@/pages/MovimentacoesReceitasPagamentoAntecipado";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -60,7 +68,38 @@ const ALERTAS_MULTA_JUROS: AlertaItem[] = MOCK_MULTA_JUROS.flatMap((r) =>
   }))
 );
 
-export const ALERTAS: AlertaItem[] = [...ALERTAS_DOCUMENTOS, ...ALERTAS_MULTA_JUROS];
+// ── Pendências computadas — Receitas > Movimento ───────────────────
+
+const ALERTAS_RECEITAS_MOVIMENTO: AlertaItem[] = MOCK_RECEITAS_MOVIMENTO.flatMap((r) =>
+  getReceitaMovimentoPendencias(r).map((p) => ({
+    codigo: p.codigo,
+    descricao: p.descricao,
+    menuOrigem: "Receitas > Movimento",
+    registro: r.nroUnico,
+    routeTo: ERoutes.MOVIMENTACOES_RECEITAS_MOVIMENTO,
+    routeState: { openNroUnico: r.nroUnico },
+  }))
+);
+
+// ── Pendências computadas — Receitas > Pagamento Antecipado ────────
+
+const ALERTAS_PA: AlertaItem[] = MOCK_PAGAMENTO_ANTECIPADO.flatMap((r) =>
+  getPagamentoAntecipadoPendencias(r).map((p) => ({
+    codigo: p.codigo,
+    descricao: p.descricao,
+    menuOrigem: "Receitas > Pagamento Antecipado",
+    registro: r.nroUnico,
+    routeTo: ERoutes.MOVIMENTACOES_RECEITAS_PAGAMENTO_ANTECIPADO,
+    routeState: { openNroUnico: r.nroUnico },
+  }))
+);
+
+export const ALERTAS: AlertaItem[] = [
+  ...ALERTAS_DOCUMENTOS,
+  ...ALERTAS_MULTA_JUROS,
+  ...ALERTAS_RECEITAS_MOVIMENTO,
+  ...ALERTAS_PA,
+];
 const TODOS_ALERTAS = ALERTAS;
 
 // ── Badge por prefixo ─────────────────────────────────────────────

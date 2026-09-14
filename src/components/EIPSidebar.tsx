@@ -23,7 +23,8 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
         icon: TrendingUp,
         subItems: [
           { title: "Movimento",     url: ERoutes.MOVIMENTACOES_RECEITAS_MOVIMENTO   },
-          { title: "Multa e Juros", url: ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS },
+          { title: "Multa e Juros",        url: ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS             },
+          { title: "Pagamento Antecipado", url: ERoutes.MOVIMENTACOES_RECEITAS_PAGAMENTO_ANTECIPADO    },
         ],
       },
       {

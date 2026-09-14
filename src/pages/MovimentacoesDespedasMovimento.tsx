@@ -937,6 +937,7 @@ function TributoTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
+            <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
             <TableHead className="text-[12px]">Data</TableHead>
             <TableHead className="text-[12px]">Imposto</TableHead>
             <TableHead className="text-[12px]">Incidência</TableHead>
@@ -958,6 +959,7 @@ function TributoTable({
         <TableBody>
           {tributos.map((tri, i) => (
             <TableRow key={`orig-${i}`} className="text-[13px]">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell>{tri.incidencia}</TableCell>
@@ -980,6 +982,7 @@ function TributoTable({
           ))}
           {tributosDevolvidos?.map((tri, i) => (
             <TableRow key={`dev-${i}`} className="text-[13px] bg-rose-50/40 dark:bg-rose-950/10">
+              <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
               <TableCell className="font-mono text-[12px]">{dataDevolucao ?? data}</TableCell>
               <TableCell><ImpostoBadge imposto={tri.imposto} /></TableCell>
               <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{tri.incidencia}</TableCell>
@@ -1131,6 +1134,7 @@ function DetailView({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
                     <TableHead className="text-[12px]">Número</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
@@ -1143,6 +1147,7 @@ function DetailView({
                 </TableHeader>
                 <TableBody>
                   <TableRow className="text-[13px]">
+                    <TableCell className="text-center w-10"><div className="flex justify-center"><CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" /></div></TableCell>
                     <TableCell className="font-mono font-medium">{r.pedidoRef.numero}</TableCell>
                     <TableCell className="font-mono text-[12px]">{r.pedidoRef.dataNegociacao}</TableCell>
                     <TableCell>{r.pedidoRef.empresa}</TableCell>

@@ -18,6 +18,7 @@ import AssistenteNfeDebitoPage from "./pages/AssistenteNfeDebitoPage";
 import AssistenteNfeCreditoPage from "./pages/AssistenteNfeCreditoPage";
 import MovimentacoesReceitasMovimento from "./pages/MovimentacoesReceitasMovimento";
 import MovimentacoesReceitasMultaJuros from "./pages/MovimentacoesReceitasMultaJuros";
+import MovimentacoesReceitasPagamentoAntecipado from "./pages/MovimentacoesReceitasPagamentoAntecipado";
 import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
 import MovimentacoesDocumentosMovimento from "./pages/MovimentacoesDocumentosMovimento";
 import ConciliacaoFiscal from "./pages/ConciliacaoFiscal";
@@ -79,6 +80,7 @@ const App = () => (
             <Route path={ERoutes.DIGITAL_WORKERS_CONFIG_WORKER} element={<PlaceholderPage />} />
             <Route path={ERoutes.MOVIMENTACOES_RECEITAS_MOVIMENTO} element={<MovimentacoesReceitasMovimento />} />
             <Route path={ERoutes.MOVIMENTACOES_RECEITAS_MULTA_JUROS} element={<MovimentacoesReceitasMultaJuros />} />
+            <Route path={ERoutes.MOVIMENTACOES_RECEITAS_PAGAMENTO_ANTECIPADO} element={<MovimentacoesReceitasPagamentoAntecipado />} />
             <Route path={ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO} element={<MovimentacoesDespedasMovimento />} />
             <Route path={ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO} element={<MovimentacoesDocumentosMovimento />} />
             <Route path={ERoutes.APURACAO_CONCILIACAO_FISCAL} element={<ConciliacaoFiscal />} />
