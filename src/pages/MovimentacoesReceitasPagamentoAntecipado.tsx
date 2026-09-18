@@ -1321,7 +1321,6 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
-                    <TableHead className="text-[12px] text-center">Parcela</TableHead>
                     <TableHead className="text-[12px]">Pagamento Antecipado</TableHead>
                     <TableHead className="text-[12px]">Cálculo de Rateio</TableHead>
                     <TableHead className="text-[12px]">Geração da Nota</TableHead>
@@ -1353,7 +1352,6 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                       </TableCell>
                       <TableCell className="text-[13px] font-medium">{r.tipoMovimento}</TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
-                      <TableCell className="text-center font-mono text-[12px]">{r.parcela}</TableCell>
                       <TableCell><BadgePagamentoAntecipado status={r.statusPagamentoAntecipado} /></TableCell>
                       <TableCell>
                         {r.statusPagamentoAntecipado === "Confirmado"
@@ -1377,8 +1375,8 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                               className="h-7 text-[12px] gap-1"
                               onClick={() => openConfirm(r)}
                             >
-                              <BadgeCheck className="h-3.5 w-3.5" />
-                              Confirmar PA
+                              <FileText className="h-3.5 w-3.5" />
+                              Gerar nota
                             </Button>
                           )}
                           {r.statusPagamentoAntecipado === "Confirmado" &&
@@ -1460,8 +1458,8 @@ function PagamentoAntecipadoDetailView({
           {!isConfirmado && (
             <DevTooltip hint="Classifica o título como pagamento antecipado e habilita o cálculo de rateio e geração da nota de débito. Remover este tooltip na versão do cliente.">
               <Button variant="default" size="sm" className="h-8 text-[12px] gap-1.5" onClick={onConfirmarPA}>
-                <BadgeCheck className="h-3.5 w-3.5" />
-                Confirmar como Pagamento Antecipado
+                <FileText className="h-3.5 w-3.5" />
+                Gerar nota
               </Button>
             </DevTooltip>
           )}
