@@ -42,6 +42,8 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import type { DateRange } from "react-day-picker";
+import { Input } from "@/components/ui/input";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -596,12 +598,15 @@ export default function MovimentacoesDespedasMovimento() {
   const [selected, setSelected] = useState<DespesaMovimento | null>(null);
   const [selectedRef, setSelectedRef] = useState<TituloRef | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
-  const [filtroDataDe, setFiltroDataDe] = useState<Date | undefined>(undefined);
-  const [filtroDataAte, setFiltroDataAte] = useState<Date | undefined>(undefined);
+  const [filtroNegociacao, setFiltroNegociacao] = useState<DateRange | undefined>(undefined);
+  const [filtroVencimento, setFiltroVencimento] = useState<DateRange | undefined>(undefined);
+  const [filtroBaixa, setFiltroBaixa] = useState<DateRange | undefined>(undefined);
+  const [filtroNroUnico, setFiltroNroUnico] = useState("");
+  const [filtroNroUnicoPedido, setFiltroNroUnicoPedido] = useState("");
   const [filtroTipoTitulo, setFiltroTipoTitulo] = useState("");
   const [filtroPendencia, setFiltroPendencia] = useState("");
 
-  const hasFilter = filtroEmpresa !== "" || filtroDataDe !== undefined || filtroDataAte !== undefined || filtroTipoTitulo !== "" || filtroPendencia !== "";
+  const hasFilter = filtroEmpresa !== "" || filtroNegociacao !== undefined || filtroVencimento !== undefined || filtroBaixa !== undefined || filtroTipoTitulo !== "" || filtroPendencia !== "" || filtroNroUnico !== "" || filtroNroUnicoPedido !== "";
 
   const TIPOS_TITULO = useMemo(() => Array.from(new Set(MOCK.map(r => r.tipoTitulo))).sort(), []);
 
@@ -611,15 +616,20 @@ export default function MovimentacoesDespedasMovimento() {
       return new Date(Number(y), Number(m) - 1, Number(d));
     };
     return MOCK.filter((r) => {
-      const dt = parseDate(r.dataNegociacao);
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const byDe = !filtroDataDe || dt >= filtroDataDe;
-      const byAte = !filtroDataAte || dt <= filtroDataAte;
+      const dtNeg = parseDate(r.dataNegociacao);
+      const byNeg = (!filtroNegociacao?.from || dtNeg >= filtroNegociacao.from) && (!filtroNegociacao?.to || dtNeg <= filtroNegociacao.to);
+      const dtVenc = parseDate(r.dtVencimento);
+      const byVenc = (!filtroVencimento?.from || dtVenc >= filtroVencimento.from) && (!filtroVencimento?.to || dtVenc <= filtroVencimento.to);
+      const dtBaixa = r.dataBaixa ? parseDate(r.dataBaixa) : null;
+      const byBaixa = !filtroBaixa?.from || (dtBaixa && dtBaixa >= filtroBaixa.from && (!filtroBaixa.to || dtBaixa <= filtroBaixa.to));
       const byTipoTitulo = !filtroTipoTitulo || r.tipoTitulo === filtroTipoTitulo;
       const byPendencia = !filtroPendencia || (filtroPendencia === "sim" ? !!r.pendencia : !r.pendencia);
-      return byEmpresa && byDe && byAte && byTipoTitulo && byPendencia;
+      const byNroUnico = !filtroNroUnico || r.nroUnico.includes(filtroNroUnico);
+      const byNroUnicoPedido = !filtroNroUnicoPedido || (r.pedidoRef?.nroUnico ?? "").includes(filtroNroUnicoPedido);
+      return byEmpresa && byNeg && byVenc && byBaixa && byTipoTitulo && byPendencia && byNroUnico && byNroUnicoPedido;
     });
-  }, [filtroEmpresa, filtroDataDe, filtroDataAte, filtroTipoTitulo, filtroPendencia]);
+  }, [filtroEmpresa, filtroNegociacao, filtroVencimento, filtroBaixa, filtroTipoTitulo, filtroPendencia, filtroNroUnico, filtroNroUnicoPedido]);
 
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
@@ -687,14 +697,14 @@ export default function MovimentacoesDespedasMovimento() {
             <PopoverTrigger asChild>
               <button className={cn(
                 "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
-                !filtroDataDe && "text-muted-foreground"
+                !filtroNegociacao?.from && "text-muted-foreground"
               )}>
                 <CalendarIcon className="h-3.5 w-3.5" />
-                {filtroDataDe ? format(filtroDataDe, "dd/MM/yyyy") : "De"}
+                <span>Negociação{filtroNegociacao?.from ? `: ${format(filtroNegociacao.from, "dd/MM")}${filtroNegociacao.to ? ` → ${format(filtroNegociacao.to, "dd/MM")}` : ""}` : ""}</span>
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={filtroDataDe} onSelect={setFiltroDataDe} initialFocus />
+              <Calendar mode="range" selected={filtroNegociacao} onSelect={setFiltroNegociacao} initialFocus numberOfMonths={1} />
             </PopoverContent>
           </Popover>
 
@@ -702,14 +712,29 @@ export default function MovimentacoesDespedasMovimento() {
             <PopoverTrigger asChild>
               <button className={cn(
                 "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
-                !filtroDataAte && "text-muted-foreground"
+                !filtroVencimento?.from && "text-muted-foreground"
               )}>
                 <CalendarIcon className="h-3.5 w-3.5" />
-                {filtroDataAte ? format(filtroDataAte, "dd/MM/yyyy") : "Até"}
+                <span>Vencimento{filtroVencimento?.from ? `: ${format(filtroVencimento.from, "dd/MM")}${filtroVencimento.to ? ` → ${format(filtroVencimento.to, "dd/MM")}` : ""}` : ""}</span>
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={filtroDataAte} onSelect={setFiltroDataAte} initialFocus />
+              <Calendar mode="range" selected={filtroVencimento} onSelect={setFiltroVencimento} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroBaixa?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Baixa{filtroBaixa?.from ? `: ${format(filtroBaixa.from, "dd/MM")}${filtroBaixa.to ? ` → ${format(filtroBaixa.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroBaixa} onSelect={setFiltroBaixa} initialFocus numberOfMonths={1} />
             </PopoverContent>
           </Popover>
 
@@ -734,9 +759,22 @@ export default function MovimentacoesDespedasMovimento() {
             </SelectContent>
           </Select>
 
+          <Input
+            placeholder="Nro Único"
+            value={filtroNroUnico}
+            onChange={(e) => setFiltroNroUnico(e.target.value)}
+            className="w-[120px] h-8 text-[13px] font-mono"
+          />
+          <Input
+            placeholder="Nro Único Pedido"
+            value={filtroNroUnicoPedido}
+            onChange={(e) => setFiltroNroUnicoPedido(e.target.value)}
+            className="w-[150px] h-8 text-[13px] font-mono"
+          />
+
           {hasFilter && (
             <button
-              onClick={() => { setFiltroEmpresa(""); setFiltroDataDe(undefined); setFiltroDataAte(undefined); setFiltroTipoTitulo(""); setFiltroPendencia(""); }}
+              onClick={() => { setFiltroEmpresa(""); setFiltroNegociacao(undefined); setFiltroVencimento(undefined); setFiltroBaixa(undefined); setFiltroTipoTitulo(""); setFiltroPendencia(""); setFiltroNroUnico(""); setFiltroNroUnicoPedido(""); }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-3 w-3" />
@@ -763,10 +801,13 @@ export default function MovimentacoesDespedasMovimento() {
                   <TableRow className="bg-muted/40">
                     <TableHead className="text-[12px] text-center">Pendências</TableHead>
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Dt. Vencimento</TableHead>
+                    <TableHead className="text-[12px]">Dt. Baixa</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Nro Único Pedido</TableHead>
                     <TableHead className="text-[12px]">Tipo Título</TableHead>
                     <TableHead className="text-[12px] text-right">Valor</TableHead>
                     <TableHead className="text-[12px] text-right">IBS</TableHead>
@@ -783,6 +824,8 @@ export default function MovimentacoesDespedasMovimento() {
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dtVencimento}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dataBaixa || "—"}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
                         <div>{r.parceiroNome}</div>
@@ -792,6 +835,7 @@ export default function MovimentacoesDespedasMovimento() {
                         {r.tipoMovimento}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.pedidoRef?.nroUnico ?? "—"}</TableCell>
                       <TableCell><TipoTituloBadge tipo={r.tipoTitulo} /></TableCell>
                       <TableCell className="text-right font-mono">{brl(r.vlrDesdobramento)}</TableCell>
                       <TableCell className="text-right font-mono">{saldo(r.tributos, "IBS")}</TableCell>

@@ -2,8 +2,11 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   TrendingUp, ChevronRight, ExternalLink, Eye, Filter, X,
-  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw,
+  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, CalendarIcon, Link2, FileSearch,
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { ERoutes } from "@/routes/interface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +16,13 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import type { DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,6 +37,14 @@ interface NotaDebito {
   chaveDFe?:      string;   // somente quando Autorizado
   chaveDFeOrigem: string;
   statusDFe:      StatusDFe;
+}
+
+interface DocumentoDestino {
+  nroUnico:       string;
+  nroNota:        string;
+  dataNegociacao: string;
+  tipoMovimento:  string;
+  chaveDFe:       string;
 }
 
 interface TituloDoc {
@@ -104,21 +120,33 @@ interface MultaJurosReceita {
   notaDebito?:        NotaDebito;
   baixaEstornada?:    boolean;
   vendaCancelada?:    boolean;
+  semDFeReferenciado?: boolean;
+  documentosDestino?: DocumentoDestino[];
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
 
-export const PENDENCIAS_MJ = {
-  PRT0002: "Título foi recebido com multa e juros. É necessário gerar uma Nota de Débito.",
-  PRT0003: "Baixa estornada. A baixa deste título foi estornada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
-  PRT0004: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
-} as const;
+export const PENDENCIAS_MJ: Record<string, { descricao: string; comoResolver?: string }> = {
+  PRT0002: {
+    descricao: "Título foi recebido com multa e juros. É necessário gerar uma Nota de Débito.",
+  },
+  PRT0003: {
+    descricao: "Baixa estornada. A baixa deste título foi estornada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
+  },
+  PRT0004: {
+    descricao: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
+  },
+  PRT0007: {
+    descricao: "Título de um Pedido foi baixado com multa e juros. É necessário informar um documento fiscal para ser referenciado.",
+  },
+};
 
-export type CodigoPRT = keyof typeof PENDENCIAS_MJ;
+export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0007";
 
 export interface PendenciaMJ {
-  codigo: CodigoPRT;
-  descricao: string;
+  codigo:      CodigoPRT;
+  descricao:   string;
+  comoResolver?: string;
 }
 
 const DFE_DEFINITIVO = new Set<StatusDFe>(["Autorizado", "Cancelado", "Denegado"]);
@@ -129,12 +157,14 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 
 export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
   const p: PendenciaMJ[] = [];
-  if (!isDFeDefinitivo(r.statusDFe))
-    p.push({ codigo: "PRT0002", descricao: PENDENCIAS_MJ.PRT0002 });
+  if (r.semDFeReferenciado)
+    p.push({ codigo: "PRT0007", ...PENDENCIAS_MJ.PRT0007 });
+  if (!r.semDFeReferenciado && !r.notaDebito && !isDFeDefinitivo(r.statusDFe))
+    p.push({ codigo: "PRT0002", ...PENDENCIAS_MJ.PRT0002 });
   if (r.baixaEstornada)
-    p.push({ codigo: "PRT0003", descricao: PENDENCIAS_MJ.PRT0003 });
+    p.push({ codigo: "PRT0003", ...PENDENCIAS_MJ.PRT0003 });
   if (r.vendaCancelada && r.statusDFe === "Autorizado")
-    p.push({ codigo: "PRT0004", descricao: PENDENCIAS_MJ.PRT0004 });
+    p.push({ codigo: "PRT0004", ...PENDENCIAS_MJ.PRT0004 });
   return p;
 }
 
@@ -145,8 +175,6 @@ const EMPRESAS = [
   { cod: "002", nome: "Sankhya São Paulo S.A." },
   { cod: "003", nome: "Distribuidora Norte Ltda" },
 ];
-
-const TIPOS_MOVIMENTO = ["Venda", "Pedido de Venda"];
 
 const MOCK: MultaJurosReceita[] = [
   // ── 1 · Cálculo: Pendente ─────────────────────────────────────────────────
@@ -749,6 +777,59 @@ const MOCK: MultaJurosReceita[] = [
     },
   },
 
+  // ── mj-pv045 — Mercado Sul Ltda / PRT0007: título de pedido baixado com multa e juros sem DFe referenciado ─
+  {
+    id: "mj-pv045",
+    dataNegociacao:    "10/01/2027",
+    empresa:           "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod:        "001",
+    parceiroNome:      "Mercado Sul Ltda",
+    parceiroCNPJ:      "55.888.000/0001-11",
+    tipo:              "Receita",
+    tipoMovimento:     "Pedido de Venda",
+    nroUnico:          "300.300",
+    multa: 300.0, juros: 150.0,
+    totalIBS: 0, totalCBS: 0,
+    statusCalculo: "Pendente", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
+    nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "10/01/2027", dtVencimento: "05/01/2027",
+    vlrDesdobramento: 15000.0, vlrDesconto: 0, vlrBaixa: 15450.0, dataBaixa: "10/01/2027",
+    semDFeReferenciado: true,
+    documentoFiscal: {
+      dataNegociacao:     "20/11/2026",
+      empresa:            "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:       "Mercado Sul Ltda",
+      parceiroCNPJ:       "55.888.000/0001-11",
+      tipoMovimento:      "Pedido de Venda",
+      numero:             "PV-045",
+      chaveDFe:           "—",
+      valor:              15000.0,
+      totalIBS:           0,
+      totalCBS:           0,
+      empresaNegociacao:  "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao:       "1.001 - Pedido de Venda",
+      tipoNegociacao:     "Boleto",
+      dtEntradaSaida:     "20/11/2026",
+      dtFaturamento:      "—",
+      dtMovimento:        "20/11/2026",
+      finalidadeOperacao: "Remessa",
+      nroNFSe:            "—",
+      nroUnico:           "600.200",
+      serieNota:          "—",
+      statusNota:         "—",
+      notaModelo:         "—",
+    },
+    documentosDestino: [
+      {
+        nroUnico:       "600.200",
+        nroNota:        "NF-007001",
+        dataNegociacao: "20/11/2026",
+        tipoMovimento:  "Pedido de Venda",
+        chaveDFe:       "35261101234567890001550010000070011000070011",
+      },
+    ],
+  },
+
   // ── Baixa estornada ──────────────────────────────────────────────────────────
   {
     id: "mj_est1",
@@ -800,6 +881,12 @@ const brl = (v: number) =>
 function parseDate(date: string): Date {
   const [d, m, y] = date.split("/");
   return new Date(Number(y), Number(m) - 1, Number(d));
+}
+
+function get30DaysAgo(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 30);
+  return d.toISOString().split("T")[0];
 }
 
 function BadgeCalculo({ status }: { status: StatusCalculo }) {
@@ -913,15 +1000,16 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [view, setView]                 = useState<View>("list");
   const [selected, setSelected]         = useState<MultaJurosReceita | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
-  const [filtroDe, setFiltroDe] = useState("");
-  const [filtroAte, setFiltroAte] = useState("");
-  const [filtroCalculo, setFiltroCalculo] = useState("");
-  const [filtroGeracao, setFiltroGeracao] = useState("");
-  const [filtroDFe, setFiltroDFe] = useState("");
-  const [filtroTipoMovimento, setFiltroTipoMovimento] = useState("");
   const [filtroNroUnico, setFiltroNroUnico] = useState("");
+  const [filtroPendencia, setFiltroPendencia] = useState<"" | "sim" | "nao">("");
+  const [filtroNegociacao, setFiltroNegociacao] = useState<DateRange | undefined>(undefined);
+  const [filtroVencimento, setFiltroVencimento] = useState<DateRange | undefined>(undefined);
+  const [filtroBaixa, setFiltroBaixa]           = useState<DateRange | undefined>(undefined);
+  const [filtroNroUnicoPedido, setFiltroNroUnicoPedido] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [mockOverrides, setMockOverrides] = useState<Record<string, Partial<MultaJurosReceita>>>({});
+  const [autoReferenciar, setAutoReferenciar] = useState(false);
+  const [referenciarPopup, setReferenciarPopup] = useState<MultaJurosReceita | null>(null);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -966,25 +1054,24 @@ export default function MovimentacoesReceitasMultaJuros() {
     }
   }, [location.state]);
 
-  const hasFilter = filtroEmpresa !== "" || filtroDe !== "" || filtroAte !== "" ||
-    filtroCalculo !== "" || filtroGeracao !== "" || filtroDFe !== "" || filtroTipoMovimento !== "" || filtroNroUnico !== "";
+  const hasFilter = filtroEmpresa !== "" || filtroNroUnico !== "" || filtroPendencia !== "" || filtroNegociacao !== undefined || filtroVencimento !== undefined || filtroBaixa !== undefined || filtroNroUnicoPedido !== "";
 
   const rows = useMemo(() => {
-    const de = filtroDe ? new Date(filtroDe) : null;
-    const ate = filtroAte ? new Date(filtroAte) : null;
     return MOCK.map((r) => ({ ...r, ...mockOverrides[r.id] } as MultaJurosReceita)).filter((r) => {
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const dt = parseDate(r.dataBaixa);
-      const byDe = !de || dt >= de;
-      const byAte = !ate || dt <= ate;
-      const byCalculo = !filtroCalculo || r.statusCalculo === filtroCalculo;
-      const byGeracao = !filtroGeracao || r.statusGeracaoNota === filtroGeracao;
-      const byDFe = !filtroDFe || r.statusDFe === filtroDFe;
-      const byTipo = !filtroTipoMovimento || r.tipoMovimento === filtroTipoMovimento;
-      const byNroUnico = !filtroNroUnico || r.nroUnico === filtroNroUnico;
-      return byEmpresa && byDe && byAte && byCalculo && byGeracao && byDFe && byTipo && byNroUnico;
+      const byNroUnico = !filtroNroUnico || r.nroUnico.includes(filtroNroUnico);
+      const pendencias = getMultaJurosPendencias(r);
+      const byPendencia = !filtroPendencia ||
+        (filtroPendencia === "sim" ? pendencias.length > 0 : pendencias.length === 0);
+      const dtNeg = parseDate(r.dataNegociacao);
+      const byNeg = (!filtroNegociacao?.from || dtNeg >= filtroNegociacao.from) && (!filtroNegociacao?.to || dtNeg <= filtroNegociacao.to);
+      const dtVenc = parseDate(r.dtVencimento);
+      const byVenc = (!filtroVencimento?.from || dtVenc >= filtroVencimento.from) && (!filtroVencimento?.to || dtVenc <= filtroVencimento.to);
+      const dtBaixa = parseDate(r.dataBaixa);
+      const byBaixa = (!filtroBaixa?.from || dtBaixa >= filtroBaixa.from) && (!filtroBaixa?.to || dtBaixa <= filtroBaixa.to);
+      return byEmpresa && byNroUnico && byPendencia && byNeg && byVenc && byBaixa;
     });
-  }, [filtroEmpresa, filtroDe, filtroAte, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento, filtroNroUnico, mockOverrides]);
+  }, [filtroEmpresa, filtroNroUnico, filtroPendencia, filtroNegociacao, filtroVencimento, filtroBaixa, filtroNroUnicoPedido, mockOverrides]);
 
   if (view === "doc-fiscal" && selected) {
     return (
@@ -999,8 +1086,9 @@ export default function MovimentacoesReceitasMultaJuros() {
     return (
       <MultaJurosDetailView
         record={selected}
-        onBack={() => { setView("list"); setSelected(null); }}
+        onBack={() => { setView("list"); setSelected(null); setAutoReferenciar(false); }}
         onDetalharDoc={() => setView("doc-fiscal")}
+        autoReferenciar={autoReferenciar}
       />
     );
   }
@@ -1035,7 +1123,7 @@ export default function MovimentacoesReceitasMultaJuros() {
 
           {/* Empresa */}
           <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
-            <SelectTrigger className="w-[260px] h-8 text-[13px]">
+            <SelectTrigger className="w-[220px] h-8 text-[13px]">
               <SelectValue placeholder="Empresa" />
             </SelectTrigger>
             <SelectContent>
@@ -1047,82 +1135,83 @@ export default function MovimentacoesReceitasMultaJuros() {
             </SelectContent>
           </Select>
 
-          {/* De */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[12px] text-muted-foreground">De</span>
-            <input
-              type="date"
-              value={filtroDe}
-              onChange={(e) => setFiltroDe(e.target.value)}
-              className="h-8 text-[13px] rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
-
-          {/* Até */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[12px] text-muted-foreground">Até</span>
-            <input
-              type="date"
-              value={filtroAte}
-              onChange={(e) => setFiltroAte(e.target.value)}
-              className="h-8 text-[13px] rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
-
-          {/* Cálculo */}
-          <Select value={filtroCalculo} onValueChange={setFiltroCalculo}>
-            <SelectTrigger className="w-[145px] h-8 text-[13px]">
-              <SelectValue placeholder="Cálculo de Rateio" />
+          {/* Pendências */}
+          <Select value={filtroPendencia} onValueChange={(v) => setFiltroPendencia(v as "" | "sim" | "nao")}>
+            <SelectTrigger className="w-[140px] h-8 text-[13px]">
+              <SelectValue placeholder="Pendências" />
             </SelectTrigger>
             <SelectContent>
-              {(["Não configurado", "Pendente", "Processando", "Concluído", "Erro"] as StatusCalculo[]).map((s) => (
-                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
-              ))}
+              <SelectItem value="sim" className="text-[13px]">Sim</SelectItem>
+              <SelectItem value="nao" className="text-[13px]">Não</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Geração da Nota */}
-          <Select value={filtroGeracao} onValueChange={setFiltroGeracao}>
-            <SelectTrigger className="w-[175px] h-8 text-[13px]">
-              <SelectValue placeholder="Geração da Nota" />
-            </SelectTrigger>
-            <SelectContent>
-              {(["Não configurado", "Pendente", "Processando", "Confirmada", "Erro"] as StatusGeracaoNota[]).map((s) => (
-                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroNegociacao?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Negociação{filtroNegociacao?.from ? `: ${format(filtroNegociacao.from, "dd/MM")}${filtroNegociacao.to ? ` → ${format(filtroNegociacao.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroNegociacao} onSelect={setFiltroNegociacao} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
 
-          {/* Status DFe */}
-          <Select value={filtroDFe} onValueChange={setFiltroDFe}>
-            <SelectTrigger className="w-[200px] h-8 text-[13px]">
-              <SelectValue placeholder="Status DFe" />
-            </SelectTrigger>
-            <SelectContent>
-              {(["Não enviado", "Aguardando autorização", "Erro", "Autorizado", "Cancelado", "Denegado"] as StatusDFe[]).map((s) => (
-                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroVencimento?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Vencimento{filtroVencimento?.from ? `: ${format(filtroVencimento.from, "dd/MM")}${filtroVencimento.to ? ` → ${format(filtroVencimento.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroVencimento} onSelect={setFiltroVencimento} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
 
-          {/* Tipo de Movimento */}
-          <Select value={filtroTipoMovimento} onValueChange={setFiltroTipoMovimento}>
-            <SelectTrigger className="w-[185px] h-8 text-[13px]">
-              <SelectValue placeholder="Tipo de Movimento" />
-            </SelectTrigger>
-            <SelectContent>
-              {TIPOS_MOVIMENTO.map((t) => (
-                <SelectItem key={t} value={t} className="text-[13px]">{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroBaixa?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Baixa{filtroBaixa?.from ? `: ${format(filtroBaixa.from, "dd/MM")}${filtroBaixa.to ? ` → ${format(filtroBaixa.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroBaixa} onSelect={setFiltroBaixa} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
+
+          {/* Nro Único */}
+          <Input
+            placeholder="Nro Único"
+            value={filtroNroUnico}
+            onChange={(e) => setFiltroNroUnico(e.target.value)}
+            className="w-[120px] h-8 text-[13px] font-mono"
+          />
+
+          <Input
+            placeholder="Nro Único Pedido"
+            value={filtroNroUnicoPedido}
+            onChange={(e) => setFiltroNroUnicoPedido(e.target.value)}
+            className="w-[150px] h-8 text-[13px] font-mono"
+          />
 
           {hasFilter && (
             <button
               onClick={() => {
-                setFiltroEmpresa(""); setFiltroDe(""); setFiltroAte("");
-                setFiltroCalculo(""); setFiltroGeracao(""); setFiltroDFe("");
-                setFiltroTipoMovimento(""); setFiltroNroUnico("");
+                setFiltroEmpresa(""); setFiltroNroUnico(""); setFiltroPendencia("");
+                setFiltroNegociacao(undefined); setFiltroVencimento(undefined); setFiltroBaixa(undefined);
+                setFiltroNroUnicoPedido("");
               }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -1144,19 +1233,6 @@ export default function MovimentacoesReceitasMultaJuros() {
         </div>
       </div>
 
-      {/* Chip: filtro por nº único vindo de Alertas */}
-      {filtroNroUnico && (
-        <div className="px-6 py-2 border-b bg-primary/5 flex items-center gap-2">
-          <span className="text-[12px] text-muted-foreground">Filtrado por:</span>
-          <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded-full">
-            Nº único: {filtroNroUnico}
-            <button onClick={() => setFiltroNroUnico("")} className="hover:text-destructive ml-0.5 leading-none">
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        </div>
-      )}
-
       {/* Content */}
       <div className="flex-1 overflow-auto">
         {rows.length === 0 && (
@@ -1173,11 +1249,14 @@ export default function MovimentacoesReceitasMultaJuros() {
                 <TableHeader>
                   <TableRow className="bg-muted/40">
                     <TableHead className="text-[12px] text-center">Pendências</TableHead>
-                    <TableHead className="text-[12px]">Dt. Baixa</TableHead>
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Dt. Vencimento</TableHead>
+                    <TableHead className="text-[12px]">Data de Baixa</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Nro Único Pedido</TableHead>
                     <TableHead className="text-[12px] text-right">Multa</TableHead>
                     <TableHead className="text-[12px] text-right">Juros</TableHead>
                     <TableHead className="text-[12px] text-right">IBS Calculado</TableHead>
@@ -1196,6 +1275,8 @@ export default function MovimentacoesReceitasMultaJuros() {
                           <PendenciaIcon pendencias={getMultaJurosPendencias(r)} />
                         </div>
                       </TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dtVencimento}</TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataBaixa}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
@@ -1206,6 +1287,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                         {r.tipoMovimento}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
+                      <TableCell className="font-mono text-[12px]">—</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.multa)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.juros)}</TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
@@ -1231,6 +1313,17 @@ export default function MovimentacoesReceitasMultaJuros() {
                               Reprocessar
                             </Button>
                           )}
+                          {r.semDFeReferenciado && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-[12px] gap-1 text-amber-700 border-amber-400 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-600 dark:hover:bg-amber-950/40"
+                              onClick={() => setReferenciarPopup(r)}
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              Referenciar DFe
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
@@ -1253,6 +1346,73 @@ export default function MovimentacoesReceitasMultaJuros() {
           </div>
         )}
       </div>
+
+      {/* Popup — Referenciar DFe */}
+      <Dialog open={!!referenciarPopup} onOpenChange={(open) => { if (!open) setReferenciarPopup(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[15px]">
+              <FileSearch className="h-4 w-4 text-amber-500" />
+              Referenciar DFe — Selecione o documento fiscal
+            </DialogTitle>
+          </DialogHeader>
+          {referenciarPopup?.documentosDestino && referenciarPopup.documentosDestino.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-[13px] font-medium">Documentos de Destino do Pedido</p>
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40">
+                      <TableHead className="text-[12px]">Nro Único</TableHead>
+                      <TableHead className="text-[12px]">Nro Nota</TableHead>
+                      <TableHead className="text-[12px]">Dt. Neg.</TableHead>
+                      <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
+                      <TableHead className="text-[12px]">Ch. de Acesso</TableHead>
+                      <TableHead className="text-[12px] text-center">Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {referenciarPopup.documentosDestino.map((doc) => (
+                      <TableRow key={doc.nroUnico} className="text-[13px]">
+                        <TableCell className="font-mono">{doc.nroUnico}</TableCell>
+                        <TableCell className="font-mono">{doc.nroNota}</TableCell>
+                        <TableCell className="font-mono text-[12px]">{doc.dataNegociacao}</TableCell>
+                        <TableCell>{doc.tipoMovimento}</TableCell>
+                        <TableCell className="max-w-[180px]">
+                          <span
+                            className="font-mono text-[11px] text-muted-foreground truncate block"
+                            title={doc.chaveDFe}
+                          >
+                            {doc.chaveDFe}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-7 text-[12px] gap-1"
+                            onClick={() => {
+                              const rec = referenciarPopup;
+                              setReferenciarPopup(null);
+                              setSelected(rec);
+                              setView("detail");
+                            }}
+                          >
+                            <Link2 className="h-3.5 w-3.5" />
+                            Referenciar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground">Nenhum documento disponível para referenciar.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1263,13 +1423,15 @@ function MultaJurosDetailView({
   record: r,
   onBack,
   onDetalharDoc,
+  autoReferenciar = false,
 }: {
   record: MultaJurosReceita;
   onBack: () => void;
   onDetalharDoc: () => void;
+  autoReferenciar?: boolean;
 }) {
   const navigate = useNavigate();
-  const showGerar   = r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado";
+  const showGerar      = r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado";
   const notaConfirmada = r.statusGeracaoNota === "Confirmada";
 
   return (
@@ -1293,6 +1455,7 @@ function MultaJurosDetailView({
           <h1 className="text-[16px] font-semibold">Detalhamento — Multa e Juros</h1>
         </div>
         <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+
           {showGerar && (
             <DevTooltip hint="Abre Central de Vendas filtrada pela nota e Status NFe = 'Não enviado'. A transmissão é realizada no Portal de Vendas. Remover este tooltip na versão do cliente.">
               <Button variant="default" size="sm" className="h-8 text-[12px] gap-1.5">
@@ -1314,9 +1477,11 @@ function MultaJurosDetailView({
 
         {/* Alertas de pendência */}
         {getMultaJurosPendencias(r).map((p) => (
-          <div key={p.codigo} className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span><strong>{p.codigo}</strong> — {p.descricao}</span>
+          <div key={p.codigo} className="flex gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <div><strong>{p.codigo}</strong> — {p.descricao}</div>
+            </div>
           </div>
         ))}
 

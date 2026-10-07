@@ -41,7 +41,7 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TipoMovimento = "Venda" | "Compra" | "Devolução de Venda" | "Devolução de Compra" | "Multa e Juros" | "Pedido de Venda" | "Pedido de Compra";
+type TipoMovimento = "Venda" | "Compra" | "Devolução de Venda" | "Devolução de Compra" | "Multa e Juros" | "Pedido de Venda" | "Pedido de Compra" | "Pagamento Antecipado";
 
 type StatusDFe = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado";
 
@@ -162,24 +162,30 @@ interface DocumentoMovimento {
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
 
-export const PENDENCIAS_DOC = {
-  PRT0001: "Títulos com pendências",
-  PRT0006: "Documento não tem um documento fiscal com finalidade normal emitida.",
-} as const;
+export const PENDENCIAS_DOC: Record<string, { descricao: string; comoResolver?: string }> = {
+  PRT0001: {
+    descricao: "Títulos com pendências",
+  },
+  PRT0006: {
+    descricao: "Documento com Notas de Débito de Pagamento Antecipado sem Nota de Fornecimento.",
+    comoResolver: "Emitir um documento fiscal com finalidade normal.",
+  },
+};
 
-export type CodigoPRT_DOC = keyof typeof PENDENCIAS_DOC;
+export type CodigoPRT_DOC = "PRT0001" | "PRT0006";
 
 export interface PendenciaDoc {
-  codigo: CodigoPRT_DOC;
-  descricao: string;
+  codigo:      CodigoPRT_DOC;
+  descricao:   string;
+  comoResolver?: string;
 }
 
 export function getDocumentoPendencias(d: DocumentoMovimento): PendenciaDoc[] {
   const p: PendenciaDoc[] = [];
   if (d.pendencia || d.titulos.some((t) => t.pendencia))
-    p.push({ codigo: "PRT0001", descricao: PENDENCIAS_DOC.PRT0001 });
+    p.push({ codigo: "PRT0001", ...PENDENCIAS_DOC.PRT0001 });
   if (d.semDocumentoFinalidadeNormal)
-    p.push({ codigo: "PRT0006", descricao: PENDENCIAS_DOC.PRT0006 });
+    p.push({ codigo: "PRT0006", ...PENDENCIAS_DOC.PRT0006 });
   return p;
 }
 
@@ -3455,7 +3461,7 @@ const MOCK: DocumentoMovimento[] = [
         empresa: "002 - Sankhya São Paulo S.A.",
         parceiroNome: "Atacado Central Ltda",
         parceiroCNPJ: "88.999.111/0001-22",
-        tipoMovimento: "Pedido de Venda",
+        tipoMovimento: "Pagamento Antecipado",
         finalidadeOperacao: "Débito",
         numero: "ND-031",
         chaveDFe: "35260902899911100122550010000000311000000311",
@@ -3486,6 +3492,7 @@ const MOCK: DocumentoMovimento[] = [
         tributos: [],
         documentos: [
           { nroUnico: "101.001", nroNota: "NF-005001", chaveDFe: "35260902899911100122550010000050011000050011", statusDFe: "Autorizado", finalidade: "Remessa" },
+          { nroUnico: "101.010", nroNota: "ND-031", chaveDFe: "35260902899911100122550010000000311000000311", statusDFe: "Autorizado", finalidade: "Débito" },
         ],
         pedidoRef: { id: "pv-031", numero: "PV-031" },
       },
@@ -3604,14 +3611,16 @@ function PendenciaIcon({ pendencias }: { pendencias: PendenciaDoc[] }) {
   );
 }
 
-function PendenciaAlerta({ pendencias }: { pendencias: { codigo: string; descricao: string }[] }) {
+function PendenciaAlerta({ pendencias }: { pendencias: { codigo: string; descricao: string; comoResolver?: string }[] }) {
   if (pendencias.length === 0) return null;
   return (
     <div className="space-y-2">
       {pendencias.map((p) => (
-        <div key={p.codigo} className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <span><strong>{p.codigo}</strong> — {p.descricao}</span>
+        <div key={p.codigo} className="flex gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+          <div>
+            <div><strong>{p.codigo}</strong> — {p.descricao}</div>
+          </div>
         </div>
       ))}
     </div>

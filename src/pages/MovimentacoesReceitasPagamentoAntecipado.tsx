@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   TrendingUp, ChevronRight, ExternalLink, Eye, Filter, X,
-  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, BadgeCheck,
+  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, BadgeCheck, CalendarIcon,
 } from "lucide-react";
 import { ERoutes } from "@/routes/interface";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import type { DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -122,16 +127,20 @@ interface PagamentoAntecipadoReceita {
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
 
-export const PENDENCIAS_PA = {
-  PRT0005: "Título baixado com Pedido sem um documento fiscal referenciado.",
-  PRT0006: "Documento não tem um documento fiscal com finalidade normal emitida.",
-} as const;
+export const PENDENCIAS_PA: Record<string, { descricao: string }> = {
+  PRT0005: {
+    descricao: "Título baixado com Pedido sem um documento fiscal referenciado.",
+  },
+  PRT0006: {
+    descricao: "Documento com Notas de Débito de Pagamento Antecipado sem Nota de Fornecimento.",
+  },
+};
 
-export type CodigoPRTPA = keyof typeof PENDENCIAS_PA;
+export type CodigoPRTPA = "PRT0005" | "PRT0006";
 
 export interface PendenciaPA {
-  codigo:   CodigoPRTPA;
-  descricao: string;
+  codigo:      CodigoPRTPA;
+  descricao:   string;
 }
 
 const DFE_DEFINITIVO = new Set<StatusDFe>(["Autorizado", "Cancelado", "Denegado"]);
@@ -143,9 +152,9 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 export function getPagamentoAntecipadoPendencias(r: PagamentoAntecipadoReceita): PendenciaPA[] {
   const p: PendenciaPA[] = [];
   if (!r.documentoFiscal)
-    p.push({ codigo: "PRT0005", descricao: PENDENCIAS_PA.PRT0005 });
+    p.push({ codigo: "PRT0005", ...PENDENCIAS_PA.PRT0005 });
   if (r.semDocumentoFinalidadeNormal)
-    p.push({ codigo: "PRT0006", descricao: PENDENCIAS_PA.PRT0006 });
+    p.push({ codigo: "PRT0006", ...PENDENCIAS_PA.PRT0006 });
   return p;
 }
 
@@ -652,7 +661,7 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     },
   },
 
-  // ── pa-009 — Atacado Central, PRT0006: doc referenciado sem finalidade Normal ─
+  // ── pa-009 — Atacado Central, PRT0006: nota de débito de PA sem doc fiscal finalidade Normal ─
   {
     id:                          "pa-009",
     dataNegociacao:              "05/09/2026",
@@ -680,6 +689,7 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     vlrBaixa:                    8000.0,
     dataBaixa:                   "10/09/2026",
     documentoFiscal:             DOC_PV030,
+    semDocumentoFinalidadeNormal: true,
     pedidoRef: {
       id:             "pv-031",
       numero:         "PV-031",
@@ -701,6 +711,7 @@ const MOCK: PagamentoAntecipadoReceita[] = [
       statusDFe:      "Autorizado",
     },
   },
+
 ];
 
 export const MOCK_PAGAMENTO_ANTECIPADO = MOCK;
@@ -962,8 +973,10 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
   const [confirmTarget, setConfirmTarget] = useState<PagamentoAntecipadoReceita | null>(null);
 
   const [filtroEmpresa, setFiltroEmpresa]         = useState("");
-  const [filtroDe, setFiltroDe]                   = useState("");
-  const [filtroAte, setFiltroAte]                 = useState("");
+  const [filtroNegociacao, setFiltroNegociacao]   = useState<DateRange | undefined>(undefined);
+  const [filtroVencimento, setFiltroVencimento]   = useState<DateRange | undefined>(undefined);
+  const [filtroBaixa, setFiltroBaixa]             = useState<DateRange | undefined>(undefined);
+  const [filtroNroUnicoPedido, setFiltroNroUnicoPedido] = useState("");
   const [filtroPA, setFiltroPA]                   = useState("");
   const [filtroCalculo, setFiltroCalculo]         = useState("");
   const [filtroGeracao, setFiltroGeracao]         = useState("");
@@ -1067,27 +1080,29 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
     }
   }, [location.state]);
 
-  const hasFilter = filtroEmpresa !== "" || filtroDe !== "" || filtroAte !== "" ||
+  const hasFilter = filtroEmpresa !== "" || filtroNegociacao !== undefined || filtroVencimento !== undefined || filtroBaixa !== undefined ||
     filtroPA !== "" || filtroCalculo !== "" || filtroGeracao !== "" ||
-    filtroDFe !== "" || filtroTipoMovimento !== "" || filtroNroUnico !== "";
+    filtroDFe !== "" || filtroTipoMovimento !== "" || filtroNroUnico !== "" || filtroNroUnicoPedido !== "";
 
   const rows = useMemo(() => {
-    const de = filtroDe ? new Date(filtroDe) : null;
-    const ate = filtroAte ? new Date(filtroAte) : null;
     return MOCK.map((r) => ({ ...r, ...mockOverrides[r.id] } as PagamentoAntecipadoReceita)).filter((r) => {
       const byEmpresa = !filtroEmpresa || r.empresaCod === filtroEmpresa;
-      const dt = parseDate(r.dataBaixa);
-      const byDe = !de || dt >= de;
-      const byAte = !ate || dt <= ate;
+      const dtNeg = parseDate(r.dataNegociacao);
+      const byNeg = (!filtroNegociacao?.from || dtNeg >= filtroNegociacao.from) && (!filtroNegociacao?.to || dtNeg <= filtroNegociacao.to);
+      const dtVenc = parseDate(r.dtVencimento);
+      const byVenc = (!filtroVencimento?.from || dtVenc >= filtroVencimento.from) && (!filtroVencimento?.to || dtVenc <= filtroVencimento.to);
+      const dtBaixa = parseDate(r.dataBaixa);
+      const byBaixa = (!filtroBaixa?.from || dtBaixa >= filtroBaixa.from) && (!filtroBaixa?.to || dtBaixa <= filtroBaixa.to);
       const byPA = !filtroPA || r.statusPagamentoAntecipado === filtroPA;
       const byCalculo = !filtroCalculo || r.statusCalculo === filtroCalculo;
       const byGeracao = !filtroGeracao || r.statusGeracaoNota === filtroGeracao;
       const byDFe = !filtroDFe || r.statusDFe === filtroDFe;
       const byTipo = !filtroTipoMovimento || r.tipoMovimento === filtroTipoMovimento;
-      const byNroUnico = !filtroNroUnico || r.nroUnico === filtroNroUnico;
-      return byEmpresa && byDe && byAte && byPA && byCalculo && byGeracao && byDFe && byTipo && byNroUnico;
+      const byNroUnico = !filtroNroUnico || r.nroUnico.includes(filtroNroUnico);
+      const byNroUnicoPedido = !filtroNroUnicoPedido || (r.pedidoRef?.nroUnico ?? "").includes(filtroNroUnicoPedido);
+      return byEmpresa && byNeg && byVenc && byBaixa && byPA && byCalculo && byGeracao && byDFe && byTipo && byNroUnico && byNroUnicoPedido;
     });
-  }, [filtroEmpresa, filtroDe, filtroAte, filtroPA, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento, filtroNroUnico, mockOverrides]);
+  }, [filtroEmpresa, filtroNegociacao, filtroVencimento, filtroBaixa, filtroPA, filtroCalculo, filtroGeracao, filtroDFe, filtroTipoMovimento, filtroNroUnico, filtroNroUnicoPedido, mockOverrides]);
 
   if (view === "detail" && selected) {
     return (
@@ -1166,27 +1181,50 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
             </SelectContent>
           </Select>
 
-          {/* De */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[12px] text-muted-foreground">De</span>
-            <input
-              type="date"
-              value={filtroDe}
-              onChange={(e) => setFiltroDe(e.target.value)}
-              className="h-8 text-[13px] rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroNegociacao?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Negociação{filtroNegociacao?.from ? `: ${format(filtroNegociacao.from, "dd/MM")}${filtroNegociacao.to ? ` → ${format(filtroNegociacao.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroNegociacao} onSelect={setFiltroNegociacao} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
 
-          {/* Até */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[12px] text-muted-foreground">Até</span>
-            <input
-              type="date"
-              value={filtroAte}
-              onChange={(e) => setFiltroAte(e.target.value)}
-              className="h-8 text-[13px] rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroVencimento?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Vencimento{filtroVencimento?.from ? `: ${format(filtroVencimento.from, "dd/MM")}${filtroVencimento.to ? ` → ${format(filtroVencimento.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroVencimento} onSelect={setFiltroVencimento} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-[13px] hover:bg-muted/50 transition-colors",
+                !filtroBaixa?.from && "text-muted-foreground"
+              )}>
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span>Baixa{filtroBaixa?.from ? `: ${format(filtroBaixa.from, "dd/MM")}${filtroBaixa.to ? ` → ${format(filtroBaixa.to, "dd/MM")}` : ""}` : ""}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={filtroBaixa} onSelect={setFiltroBaixa} initialFocus numberOfMonths={1} />
+            </PopoverContent>
+          </Popover>
 
           {/* Pagamento Antecipado */}
           <Select value={filtroPA} onValueChange={setFiltroPA}>
@@ -1248,12 +1286,25 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
             </SelectContent>
           </Select>
 
+          <Input
+            placeholder="Nro Único"
+            value={filtroNroUnico}
+            onChange={(e) => setFiltroNroUnico(e.target.value)}
+            className="w-[120px] h-8 text-[13px] font-mono"
+          />
+          <Input
+            placeholder="Nro Único Pedido"
+            value={filtroNroUnicoPedido}
+            onChange={(e) => setFiltroNroUnicoPedido(e.target.value)}
+            className="w-[150px] h-8 text-[13px] font-mono"
+          />
+
           {hasFilter && (
             <button
               onClick={() => {
-                setFiltroEmpresa(""); setFiltroDe(""); setFiltroAte(""); setFiltroPA("");
+                setFiltroEmpresa(""); setFiltroNegociacao(undefined); setFiltroVencimento(undefined); setFiltroBaixa(undefined); setFiltroPA("");
                 setFiltroCalculo(""); setFiltroGeracao(""); setFiltroDFe("");
-                setFiltroTipoMovimento(""); setFiltroNroUnico("");
+                setFiltroTipoMovimento(""); setFiltroNroUnico(""); setFiltroNroUnicoPedido("");
               }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -1316,11 +1367,14 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                 <TableHeader>
                   <TableRow className="bg-muted/40">
                     <TableHead className="text-[12px] text-center">Pendências</TableHead>
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Dt. Vencimento</TableHead>
                     <TableHead className="text-[12px]">Dt. Baixa</TableHead>
                     <TableHead className="text-[12px]">Empresa</TableHead>
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Nro Único Pedido</TableHead>
                     <TableHead className="text-[12px]">Pagamento Antecipado</TableHead>
                     <TableHead className="text-[12px]">Cálculo de Rateio</TableHead>
                     <TableHead className="text-[12px]">Geração da Nota</TableHead>
@@ -1344,6 +1398,8 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                           <PendenciaIcon pendencias={getPagamentoAntecipadoPendencias(r)} />
                         </div>
                       </TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dataNegociacao}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.dtVencimento}</TableCell>
                       <TableCell className="font-mono text-[12px]">{r.dataBaixa}</TableCell>
                       <TableCell>{r.empresa}</TableCell>
                       <TableCell>
@@ -1352,6 +1408,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                       </TableCell>
                       <TableCell className="text-[13px] font-medium">{r.tipoMovimento}</TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
+                      <TableCell className="font-mono text-[12px]">{r.pedidoRef?.nroUnico ?? "—"}</TableCell>
                       <TableCell><BadgePagamentoAntecipado status={r.statusPagamentoAntecipado} /></TableCell>
                       <TableCell>
                         {r.statusPagamentoAntecipado === "Confirmado"
@@ -1483,9 +1540,11 @@ function PagamentoAntecipadoDetailView({
 
         {/* Alertas de pendência */}
         {getPagamentoAntecipadoPendencias(r).map((p) => (
-          <div key={p.codigo} className="flex items-center gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span><strong>{p.codigo}</strong> — {p.descricao}</span>
+          <div key={p.codigo} className="flex gap-2.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-2.5 text-[13px] text-amber-800 dark:text-amber-300">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <div><strong>{p.codigo}</strong> — {p.descricao}</div>
+            </div>
           </div>
         ))}
 
