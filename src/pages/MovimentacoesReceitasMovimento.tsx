@@ -1523,6 +1523,51 @@ const MOCK: ReceitaMovimento[] = [
     },
     pendencia: "PRT0007 — Título de um Pedido foi baixado com multa e juros. É necessário informar um documento fiscal para ser referenciado.",
   },
+
+  // ── rm-pa031 — Atacado Central / Pagamento Antecipado de PV-031 ─────────────
+  {
+    id: "rm-pa031",
+    dataNegociacao:  "05/09/2026",
+    empresa:         "002 - Sankhya São Paulo S.A.",
+    empresaCod:      "002",
+    parceiroNome:    "Atacado Central Ltda",
+    parceiroCNPJ:    "88.999.111/0001-22",
+    nroUnico:        "100.956",
+    tipo:            "Receita",
+    tipoMovimento:   "Pagamento Antecipado",
+    tipoTitulo:      "Boleto",
+    vlrDesdobramento: 8000.0,
+    totalIBS:        280.0,
+    totalCBS:        400.0,
+    nroNota:         "ND-031",
+    desdob:          "001/001",
+    tipoOperacao:    "1.201 - Recebimento",
+    dtEntradaSaida:  "05/09/2026",
+    dtVencimento:    "05/10/2026",
+    vlrDesconto:     0,
+    vlrMulta:        0,
+    vlrJuros:        0,
+    vlrBaixa:        8000.0,
+    dataBaixa:       "10/09/2026",
+    tributos: [
+      { imposto: "CBS", incidencia: "Saída", cst: "01", base: 8000, baseReduzida: 0, aliquota: "5,00%", valor: 400.0, digitado: "Não" },
+      { imposto: "IBS", incidencia: "Saída", cst: "01", base: 8000, baseReduzida: 0, aliquota: "3,50%", valor: 280.0, digitado: "Não" },
+    ],
+    documentos: [
+      { nroUnico: "101.010", nroNota: "ND-031", chaveDFe: "35260902899911100122550010000000311000000311", statusDFe: "Autorizado", finalidade: "Débito" },
+    ],
+    pedidoRef: {
+      id:             "pv-031",
+      numero:         "PV-031",
+      dataNegociacao: "05/09/2026",
+      empresa:        "002 - Sankhya São Paulo S.A.",
+      parceiroNome:   "Atacado Central Ltda",
+      parceiroCNPJ:   "88.999.111/0001-22",
+      nroUnico:       "101.001",
+      valor:          8000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+  },
 ];
 
 export const MOCK_RECEITAS_MOVIMENTO = MOCK;
