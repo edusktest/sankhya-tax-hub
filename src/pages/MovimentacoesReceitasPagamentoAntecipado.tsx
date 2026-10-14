@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StatusCalculo             = "Pendente" | "Processando" | "Concluído" | "Erro" | "Não configurado";
-type StatusGeracaoNota         = "Pendente" | "Processando" | "Confirmada" | "Erro" | "Não configurado";
+type StatusGeracaoNota         = "Pendente" | "Processando" | "Pronta para revisão" | "Confirmada" | "Erro" | "Não configurado";
 type StatusDFe                 = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado" | "Cancelado" | "Denegado";
 type StatusPagamentoAntecipado = "Pendente" | "Confirmado";
 
@@ -33,7 +33,6 @@ interface NotaDebito {
   nroUnico:       string;
   nroNota:        string;
   chaveDFe?:      string;
-  chaveDFeOrigem: string;
   statusDFe:      StatusDFe;
 }
 
@@ -119,10 +118,10 @@ interface PagamentoAntecipadoReceita {
   dataBaixa:        string;
   // refs
   documentoFiscal?:          DocumentoFiscalOrigem;
-  semDocumentoFinalidadeNormal?: boolean;
   pedidoRef:       PedidoRef;
   notaDebito?:     NotaDebito;
   baixaEstornada?: boolean;
+  vendaCancelada?: boolean;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
@@ -131,12 +130,15 @@ export const PENDENCIAS_PA: Record<string, { descricao: string }> = {
   PRT0005: {
     descricao: "Título baixado com Pedido sem um documento fiscal referenciado.",
   },
-  PRT0006: {
-    descricao: "Documento com Notas de Débito de Pagamento Antecipado sem Nota de Fornecimento.",
+  PRT0003: {
+    descricao: "Baixa estornada. A baixa deste título foi estornada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
+  },
+  PRT0004: {
+    descricao: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
   },
 };
 
-export type CodigoPRTPA = "PRT0005" | "PRT0006";
+export type CodigoPRTPA = "PRT0003" | "PRT0004" | "PRT0005";
 
 export interface PendenciaPA {
   codigo:      CodigoPRTPA;
@@ -153,8 +155,10 @@ export function getPagamentoAntecipadoPendencias(r: PagamentoAntecipadoReceita):
   const p: PendenciaPA[] = [];
   if (!r.documentoFiscal)
     p.push({ codigo: "PRT0005", ...PENDENCIAS_PA.PRT0005 });
-  if (r.semDocumentoFinalidadeNormal)
-    p.push({ codigo: "PRT0006", ...PENDENCIAS_PA.PRT0006 });
+  if (r.baixaEstornada && r.notaDebito?.statusDFe === "Autorizado")
+    p.push({ codigo: "PRT0003", ...PENDENCIAS_PA.PRT0003 });
+  if (r.vendaCancelada && r.notaDebito?.statusDFe === "Autorizado")
+    p.push({ codigo: "PRT0004", ...PENDENCIAS_PA.PRT0004 });
   return p;
 }
 
@@ -445,7 +449,6 @@ const MOCK: PagamentoAntecipadoReceita[] = [
       nroUnico:       "100.710",
       nroNota:        "ND-0701",
       chaveDFe:       "35260801234567890001550010000007011234560701",
-      chaveDFeOrigem: "35260801234567890001550010000006011234560601",
       statusDFe:      "Autorizado",
     },
   },
@@ -616,7 +619,6 @@ const MOCK: PagamentoAntecipadoReceita[] = [
       dataNegociacao: "09/09/2026",
       nroUnico:       "100.975",
       nroNota:        "ND-004502",
-      chaveDFeOrigem: "35260903344455500199550010000045011000045011",
       statusDFe:      "Aguardando autorização",
     },
   },
@@ -661,7 +663,7 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     },
   },
 
-  // ── pa-009 — Atacado Central, PRT0006: nota de débito de PA sem doc fiscal finalidade Normal ─
+  // ── pa-009 — Atacado Central, ND de PA autorizada, pedido sem NF Normal (PRT0006 só em Documentos > Movimento) ─
   {
     id:                          "pa-009",
     dataNegociacao:              "05/09/2026",
@@ -689,7 +691,6 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     vlrBaixa:                    8000.0,
     dataBaixa:                   "10/09/2026",
     documentoFiscal:             DOC_PV030,
-    semDocumentoFinalidadeNormal: true,
     pedidoRef: {
       id:             "pv-031",
       numero:         "PV-031",
@@ -707,8 +708,152 @@ const MOCK: PagamentoAntecipadoReceita[] = [
       nroUnico:       "101.010",
       nroNota:        "ND-031",
       chaveDFe:       "35260902899911100122550010000000311000000311",
-      chaveDFeOrigem: "35260902899911100122550010000050011000050011",
       statusDFe:      "Autorizado",
+    },
+  },
+
+  // ── pa-010 — PRT0003: baixa estornada após ND autorizada (linha congelada) ───
+  {
+    id:                          "pa-010",
+    dataNegociacao:              "05/09/2026",
+    empresa:                     "002 - Sankhya São Paulo S.A.",
+    empresaCod:                  "002",
+    parceiroNome:                "Atacado Central Ltda",
+    parceiroCNPJ:                "88.999.111/0001-22",
+    tipo:                        "Receita",
+    tipoMovimento:               "Pedido de Venda",
+    nroUnico:                    "100.957",
+    parcela:                     "1/2",
+    totalIBS:                    140.0,
+    totalCBS:                    200.0,
+    statusPagamentoAntecipado:   "Confirmado",
+    statusCalculo:               "Concluído",
+    statusGeracaoNota:           "Confirmada",
+    statusDFe:                   "Autorizado",
+    nroNota:                     "NF-005002",
+    desdob:                      "001/002",
+    tipoOperacao:                "1.201 - Recebimento",
+    dtEntradaSaida:              "05/09/2026",
+    dtVencimento:                "05/10/2026",
+    vlrDesdobramento:            4000.0,
+    vlrDesconto:                 0,
+    vlrBaixa:                    4000.0,
+    dataBaixa:                   "10/09/2026",
+    documentoFiscal:             DOC_PV030,
+    baixaEstornada:              true,
+    pedidoRef: {
+      id:             "pv-031",
+      numero:         "PV-031",
+      dataNegociacao: "05/09/2026",
+      empresa:        "002 - Sankhya São Paulo S.A.",
+      parceiroNome:   "Atacado Central Ltda",
+      parceiroCNPJ:   "88.999.111/0001-22",
+      nroUnico:       "101.001",
+      valor:          8000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+    notaDebito: {
+      dataNegociacao: "11/09/2026",
+      nroUnico:       "101.011",
+      nroNota:        "ND-032",
+      chaveDFe:       "35260902899911100122550010000000321000000321",
+      statusDFe:      "Autorizado",
+    },
+  },
+
+  // ── pa-011 — PRT0004: venda cancelada após ND autorizada ─────────────────────
+  {
+    id:                          "pa-011",
+    dataNegociacao:              "05/09/2026",
+    empresa:                     "002 - Sankhya São Paulo S.A.",
+    empresaCod:                  "002",
+    parceiroNome:                "Atacado Central Ltda",
+    parceiroCNPJ:                "88.999.111/0001-22",
+    tipo:                        "Receita",
+    tipoMovimento:               "Pedido de Venda",
+    nroUnico:                    "100.958",
+    parcela:                     "2/2",
+    totalIBS:                    140.0,
+    totalCBS:                    200.0,
+    statusPagamentoAntecipado:   "Confirmado",
+    statusCalculo:               "Concluído",
+    statusGeracaoNota:           "Confirmada",
+    statusDFe:                   "Autorizado",
+    nroNota:                     "NF-005003",
+    desdob:                      "002/002",
+    tipoOperacao:                "1.201 - Recebimento",
+    dtEntradaSaida:              "05/09/2026",
+    dtVencimento:                "05/11/2026",
+    vlrDesdobramento:            4000.0,
+    vlrDesconto:                 0,
+    vlrBaixa:                    4000.0,
+    dataBaixa:                   "12/09/2026",
+    documentoFiscal:             DOC_PV030,
+    vendaCancelada:              true,
+    pedidoRef: {
+      id:             "pv-031",
+      numero:         "PV-031",
+      dataNegociacao: "05/09/2026",
+      empresa:        "002 - Sankhya São Paulo S.A.",
+      parceiroNome:   "Atacado Central Ltda",
+      parceiroCNPJ:   "88.999.111/0001-22",
+      nroUnico:       "101.001",
+      valor:          8000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+    notaDebito: {
+      dataNegociacao: "13/09/2026",
+      nroUnico:       "101.012",
+      nroNota:        "ND-033",
+      chaveDFe:       "35260902899911100122550010000000331000000331",
+      statusDFe:      "Autorizado",
+    },
+  },
+
+  // ── pa-012 — ND gerada, Pronta para revisão (aguardando transmissão pelo analista) ─
+  {
+    id:                          "pa-012",
+    dataNegociacao:              "20/09/2026",
+    empresa:                     "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod:                  "001",
+    parceiroNome:                "Indústria Nova Ltda",
+    parceiroCNPJ:                "77.888.999/0001-66",
+    tipo:                        "Receita",
+    tipoMovimento:               "Pedido de Venda",
+    nroUnico:                    "100.959",
+    parcela:                     "1/1",
+    totalIBS:                    70.0,
+    totalCBS:                    100.0,
+    statusPagamentoAntecipado:   "Confirmado",
+    statusCalculo:               "Concluído",
+    statusGeracaoNota:           "Pronta para revisão",
+    statusDFe:                   "Não enviado",
+    nroNota:                     "NF-005004",
+    desdob:                      "001/001",
+    tipoOperacao:                "1.201 - Recebimento",
+    dtEntradaSaida:              "20/09/2026",
+    dtVencimento:                "20/10/2026",
+    vlrDesdobramento:            2000.0,
+    vlrDesconto:                 0,
+    vlrBaixa:                    2000.0,
+    dataBaixa:                   "22/09/2026",
+    documentoFiscal:             DOC_PV005,
+    pedidoRef: {
+      id:             "pv-005",
+      numero:         "PV-005",
+      dataNegociacao: "20/09/2026",
+      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:   "Indústria Nova Ltda",
+      parceiroCNPJ:   "77.888.999/0001-66",
+      nroUnico:       "100.700",
+      valor:          2000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+    notaDebito: {
+      dataNegociacao: "23/09/2026",
+      nroUnico:       "101.013",
+      nroNota:        "ND-034",
+      statusDFe:      "Não enviado",
     },
   },
 
@@ -740,11 +885,12 @@ function BadgeCalculo({ status }: { status: StatusCalculo }) {
 
 function BadgeGeracao({ status }: { status: StatusGeracaoNota }) {
   const cls =
-    status === "Confirmada"      ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
-    status === "Processando"     ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
-    status === "Erro"            ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
-    status === "Não configurado" ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
-                                   "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
+    status === "Confirmada"          ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
+    status === "Pronta para revisão" ? "border-indigo-300 text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40" :
+    status === "Processando"         ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Erro"                ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
+    status === "Não configurado"     ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
+                                       "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
 }
 
@@ -791,7 +937,7 @@ function DetailField({ label, value, mono = false }: { label: string; value: str
 }
 
 function ibsValue(v: number, statusGeracao: StatusGeracaoNota) {
-  return statusGeracao === "Confirmada" ? brl(v) : "—";
+  return statusGeracao === "Confirmada" || statusGeracao === "Pronta para revisão" ? brl(v) : "—";
 }
 
 function PendenciaIcon({ pendencias }: { pendencias: PendenciaPA[] }) {
@@ -1054,7 +1200,6 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
               dataNegociacao: new Date().toLocaleDateString("pt-BR"),
               nroUnico: `100.${parseInt(base.nroUnico.replace(".", "")) + 10}`,
               nroNota: `ND-${base.id.toUpperCase()}`,
-              chaveDFeOrigem: base.documentoFiscal?.chaveDFe ?? "",
               statusDFe: "Não enviado",
             };
         return {
@@ -1062,7 +1207,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
           [id]: {
             ...prev[id],
             statusCalculo: "Concluído",
-            statusGeracaoNota: "Confirmada",
+            statusGeracaoNota: "Pronta para revisão",
             notaDebito,
           },
         };
@@ -1256,7 +1401,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
               <SelectValue placeholder="Geração da Nota" />
             </SelectTrigger>
             <SelectContent>
-              {(["Não configurado", "Pendente", "Processando", "Confirmada", "Erro"] as StatusGeracaoNota[]).map((s) => (
+              {(["Não configurado", "Pendente", "Processando", "Pronta para revisão", "Confirmada", "Erro"] as StatusGeracaoNota[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
@@ -1489,7 +1634,7 @@ function PagamentoAntecipadoDetailView({
 }) {
   const navigate = useNavigate();
   const isConfirmado = r.statusPagamentoAntecipado === "Confirmado";
-  const showGerar    = isConfirmado && r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado";
+  const notaGerada   = r.statusGeracaoNota === "Confirmada" || r.statusGeracaoNota === "Pronta para revisão";
 
   return (
     <div className="flex flex-col h-full">
@@ -1520,17 +1665,15 @@ function PagamentoAntecipadoDetailView({
               </Button>
             </DevTooltip>
           )}
-          {showGerar && (
-            <DevTooltip hint="Abre Central de Vendas filtrada pela nota e Status NFe = 'Não enviado'. Remover este tooltip na versão do cliente.">
-              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                Transmitir DFe
-              </Button>
-            </DevTooltip>
-          )}
+          <DevTooltip hint="Abre o Portal de Vendas posicionado na Nota de Débito, sem filtro de Status NFe. A revisão e a transmissão são feitas lá. Remover este tooltip na versão do cliente.">
+            <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+              <ExternalLink className="h-3.5 w-3.5" />
+              Portal de Vendas
+            </Button>
+          </DevTooltip>
           <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
             <ExternalLink className="h-3.5 w-3.5" />
-            Central de Vendas
+            Movimentação Financeira
           </Button>
         </div>
       </div>
@@ -1600,13 +1743,13 @@ function PagamentoAntecipadoDetailView({
                   label="IBS Calculado"
                   value={ibsValue(r.totalIBS, r.statusGeracaoNota)}
                   mono
-                  colorClass={r.statusGeracaoNota !== "Confirmada" ? "text-muted-foreground" : undefined}
+                  colorClass={!notaGerada ? "text-muted-foreground" : undefined}
                 />
                 <SummaryCard
                   label="CBS Calculado"
                   value={ibsValue(r.totalCBS, r.statusGeracaoNota)}
                   mono
-                  colorClass={r.statusGeracaoNota !== "Confirmada" ? "text-muted-foreground" : undefined}
+                  colorClass={!notaGerada ? "text-muted-foreground" : undefined}
                 />
                 <SummaryCard
                   label="Cálculo de Rateio"
@@ -1701,7 +1844,7 @@ function PagamentoAntecipadoDetailView({
         </CollapsibleSection>
 
         {/* Nota de Débito */}
-        {r.statusGeracaoNota === "Confirmada" && r.notaDebito && (
+        {notaGerada && r.notaDebito && (
           <CollapsibleSection title="Nota de Débito">
             <div className="rounded-lg border overflow-hidden">
               <Table>
@@ -1714,7 +1857,6 @@ function PagamentoAntecipadoDetailView({
                     {r.notaDebito.statusDFe === "Autorizado" && (
                       <TableHead className="text-[12px]">Chave DFe</TableHead>
                     )}
-                    <TableHead className="text-[12px]">Chave DFe Origem</TableHead>
                     <TableHead className="text-[12px]">Status DFe</TableHead>
                     <TableHead className="text-[12px] text-center">Ação</TableHead>
                   </TableRow>
@@ -1735,14 +1877,6 @@ function PagamentoAntecipadoDetailView({
                         </span>
                       </TableCell>
                     )}
-                    <TableCell className="max-w-[160px]">
-                      <span
-                        className="font-mono text-[11px] text-muted-foreground truncate block"
-                        title={r.notaDebito.chaveDFeOrigem}
-                      >
-                        {r.notaDebito.chaveDFeOrigem}
-                      </span>
-                    </TableCell>
                     <TableCell><BadgeDFe status={r.notaDebito.statusDFe} /></TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -1751,7 +1885,9 @@ function PagamentoAntecipadoDetailView({
                         className="h-7 text-[12px] gap-1"
                         onClick={() =>
                           navigate(ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO, {
-                            state: { openChaveDFe: r.notaDebito!.chaveDFe ?? r.notaDebito!.chaveDFeOrigem },
+                            state: r.notaDebito!.chaveDFe
+                              ? { openChaveDFe: r.notaDebito!.chaveDFe }
+                              : { filterNroUnico: r.notaDebito!.nroUnico },
                           })
                         }
                       >

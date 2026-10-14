@@ -136,12 +136,15 @@ export const PENDENCIAS_MJ: Record<string, { descricao: string; comoResolver?: s
   PRT0004: {
     descricao: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
   },
+  PRT0005: {
+    descricao: "Título baixado com Pedido sem um documento fiscal referenciado.",
+  },
   PRT0007: {
     descricao: "Título de um Pedido foi baixado com multa e juros. É necessário informar um documento fiscal para ser referenciado.",
   },
 };
 
-export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0007";
+export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0005" | "PRT0007";
 
 export interface PendenciaMJ {
   codigo:      CodigoPRT;
@@ -157,6 +160,8 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 
 export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
   const p: PendenciaMJ[] = [];
+  if (r.semDFeReferenciado && !r.documentosDestino?.length)
+    p.push({ codigo: "PRT0005", ...PENDENCIAS_MJ.PRT0005 });
   if (r.semDFeReferenciado)
     p.push({ codigo: "PRT0007", ...PENDENCIAS_MJ.PRT0007 });
   if (!r.semDFeReferenciado && !r.notaDebito && !isDFeDefinitivo(r.statusDFe))
@@ -830,6 +835,50 @@ const MOCK: MultaJurosReceita[] = [
     ],
   },
 
+  // ── mj-pv046 — Pedido baixado com multa e juros, ainda sem nenhum documento fiscal: PRT0005 + PRT0007 ─
+  {
+    id: "mj-pv046",
+    dataNegociacao:    "12/01/2027",
+    empresa:           "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod:        "001",
+    parceiroNome:      "Mercado Sul Ltda",
+    parceiroCNPJ:      "55.888.000/0001-11",
+    tipo:              "Receita",
+    tipoMovimento:     "Pedido de Venda",
+    nroUnico:          "300.301",
+    multa: 120.0, juros: 60.0,
+    totalIBS: 0, totalCBS: 0,
+    statusCalculo: "Pendente", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
+    nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "12/01/2027", dtVencimento: "07/01/2027",
+    vlrDesdobramento: 6000.0, vlrDesconto: 0, vlrBaixa: 6180.0, dataBaixa: "12/01/2027",
+    semDFeReferenciado: true,
+    documentoFiscal: {
+      dataNegociacao:     "22/11/2026",
+      empresa:            "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:       "Mercado Sul Ltda",
+      parceiroCNPJ:       "55.888.000/0001-11",
+      tipoMovimento:      "Pedido de Venda",
+      numero:             "PV-046",
+      chaveDFe:           "—",
+      valor:              6000.0,
+      totalIBS:           0,
+      totalCBS:           0,
+      empresaNegociacao:  "001 - Sankhya Gestão de Negócios Ltda",
+      tipoOperacao:       "1.001 - Pedido de Venda",
+      tipoNegociacao:     "Boleto",
+      dtEntradaSaida:     "22/11/2026",
+      dtFaturamento:      "—",
+      dtMovimento:        "22/11/2026",
+      finalidadeOperacao: "Remessa",
+      nroNFSe:            "—",
+      nroUnico:           "600.201",
+      serieNota:          "—",
+      statusNota:         "—",
+      notaModelo:         "—",
+    },
+  },
+
   // ── Baixa estornada ──────────────────────────────────────────────────────────
   {
     id: "mj_est1",
@@ -1409,7 +1458,7 @@ export default function MovimentacoesReceitasMultaJuros() {
               </div>
             </div>
           ) : (
-            <p className="text-[13px] text-muted-foreground">Nenhum documento disponível para referenciar.</p>
+            <p className="text-[13px] text-muted-foreground">Não existem documentos fiscais autorizados para referenciar nessa nota. Verifique no detalhamento se existem outras pendências.</p>
           )}
         </DialogContent>
       </Dialog>
