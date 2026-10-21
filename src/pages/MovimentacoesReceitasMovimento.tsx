@@ -1488,10 +1488,10 @@ const MOCK: ReceitaMovimento[] = [
       valor: 8000.0,
       tipoOperacao: "1.001 - Pedido de Venda",
     },
-    pendencia: "PRT0005 — Título baixado com Pedido sem um documento fiscal referenciado.",
+    pendencia: "PRT0005 — Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
   },
 
-  // ── rm-pv045-mj — Mercado Sul Ltda / PRT0007: título de pedido baixado com multa e juros ─
+  // ── rm-pv045-mj — Mercado Sul Ltda / PRT0005: título de pedido baixado com multa e juros, sem nota autorizada ─
   {
     id: "rm-pv045-mj",
     dataNegociacao:  "10/01/2027",
@@ -1521,7 +1521,7 @@ const MOCK: ReceitaMovimento[] = [
       valor:          15000.0,
       tipoOperacao:   "1.001 - Pedido de Venda",
     },
-    pendencia: "PRT0007 — Título de um Pedido foi baixado com multa e juros. É necessário informar um documento fiscal para ser referenciado.",
+    pendencia: "PRT0005 — Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
   },
 
   // ── rm-pa031 — Atacado Central / Pagamento Antecipado de PV-031 ─────────────

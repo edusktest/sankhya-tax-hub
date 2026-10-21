@@ -128,7 +128,7 @@ interface PagamentoAntecipadoReceita {
 
 export const PENDENCIAS_PA: Record<string, { descricao: string }> = {
   PRT0005: {
-    descricao: "Título baixado com Pedido sem um documento fiscal referenciado.",
+    descricao: "Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
   },
   PRT0003: {
     descricao: "Baixa estornada. A baixa deste título foi estornada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
@@ -153,12 +153,14 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 
 export function getPagamentoAntecipadoPendencias(r: PagamentoAntecipadoReceita): PendenciaPA[] {
   const p: PendenciaPA[] = [];
-  if (!r.documentoFiscal)
+  if (r.notaDebito?.statusDFe !== "Autorizado")
     p.push({ codigo: "PRT0005", ...PENDENCIAS_PA.PRT0005 });
-  if (r.baixaEstornada && r.notaDebito?.statusDFe === "Autorizado")
-    p.push({ codigo: "PRT0003", ...PENDENCIAS_PA.PRT0003 });
-  if (r.vendaCancelada && r.notaDebito?.statusDFe === "Autorizado")
-    p.push({ codigo: "PRT0004", ...PENDENCIAS_PA.PRT0004 });
+  if (r.notaDebito?.statusDFe === "Autorizado") {
+    if (r.vendaCancelada)
+      p.push({ codigo: "PRT0004", ...PENDENCIAS_PA.PRT0004 });
+    else if (r.baixaEstornada)
+      p.push({ codigo: "PRT0003", ...PENDENCIAS_PA.PRT0003 });
+  }
   return p;
 }
 
@@ -1583,6 +1585,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                           )}
                           {r.statusPagamentoAntecipado === "Confirmado" &&
                             r.statusCalculo !== "Não configurado" &&
+                            !r.baixaEstornada &&
                             !isDFeDefinitivo(r.statusDFe) && (
                             <Button
                               size="sm"

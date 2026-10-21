@@ -3544,6 +3544,52 @@ const MOCK: DocumentoMovimento[] = [
     ],
     titulos: [],
   },
+
+  // ── ND-040 — Nota de Débito de Multa e Juros do PA 100.956, referencia a ND-031 (ND de PA) ─
+  {
+    id: "nd-040",
+    dataNegociacao: "11/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    pedidoRef: { id: "pv-031", numero: "PV-031" },
+    numero: "ND-040",
+    chaveDFe: "35260902899911100122550010000000401000000401",
+    valor: 120.0,
+    totalIBS: 4.2,
+    totalCBS: 6.0,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.209 - Nota de Débito",
+    tipoNegociacao: "Boleto",
+    dtEntradaSaida: "11/09/2026",
+    dtFaturamento: "11/09/2026",
+    dtMovimento: "11/09/2026",
+    finalidadeOperacao: "Débito",
+    nroNFSe: "—",
+    nroUnico: "101.020",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    documentosFiscaisRef: [
+      {
+        id: "nd-031",
+        dataNegociacao: "11/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipoMovimento: "Venda",
+        finalidadeOperacao: "Débito",
+        numero: "ND-031",
+        chaveDFe: "35260902899911100122550010000000311000000311",
+        valor: 680.0,
+        totalIBS: 280.0,
+        totalCBS: 400.0,
+      },
+    ],
+    titulos: [],
+  },
 ];
 
 export const MOCK_DOCUMENTOS_MOVIMENTO = MOCK;
@@ -4304,17 +4350,33 @@ function DocumentDetailView({
           </CollapsibleSection>
 
         {/* Documento Referenciado */}
-        <CollapsibleSection title="Documento Referenciado">
+        <CollapsibleSection title="Documentos Referenciados">
           {(() => {
-            const refs = (d.documentosFiscaisRef ?? []).filter(
-              r => r.tipoMovimento !== "Pedido de Venda" && r.tipoMovimento !== "Pedido de Compra"
-            );
+            const isPedido = (t: string) => t === "Pedido de Venda" || t === "Pedido de Compra";
+            const refsOut = (d.documentosFiscaisRef ?? [])
+              .filter(r => !isPedido(r.tipoMovimento))
+              .map(r => ({ ...r, relacao: "Referencia" as const }));
+            const outIds = new Set(refsOut.map(r => r.id));
+            const refsIn = MOCK
+              .filter(m => m.id !== d.id && !outIds.has(m.id)
+                && !(isPedido(m.tipoMovimento) && m.finalidadeOperacao !== "Débito")
+                && (m.documentosFiscaisRef ?? []).some(r => r.id === d.id))
+              .map(m => ({
+                id: m.id, dataNegociacao: m.dataNegociacao, empresa: m.empresa,
+                parceiroNome: m.parceiroNome, parceiroCNPJ: m.parceiroCNPJ,
+                tipoMovimento: m.tipoMovimento, finalidadeOperacao: m.finalidadeOperacao,
+                numero: m.numero, chaveDFe: m.chaveDFe, valor: m.valor,
+                totalIBS: m.totalIBS, totalCBS: m.totalCBS, pendencia: m.pendencia,
+                relacao: "Referenciada por" as const,
+              }));
+            const refs = [...refsOut, ...refsIn];
             return refs.length > 0 ? (
               <div className="rounded-lg border overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/40">
                       <TableHead className="text-[12px] text-center">Pendências</TableHead>
+                      <TableHead className="text-[12px]">Relação</TableHead>
                       <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                       <TableHead className="text-[12px]">Empresa</TableHead>
                       <TableHead className="text-[12px]">Parceiro</TableHead>
@@ -4336,6 +4398,7 @@ function DocumentDetailView({
                             <PendenciaIcon pendencias={ref.pendencia ? [{ codigo: "PRT0001" as const, descricao: ref.pendencia }] : []} />
                           </div>
                         </TableCell>
+                        <TableCell className="whitespace-nowrap text-[12px]">{ref.relacao}</TableCell>
                         <TableCell className="font-mono text-[12px]">{ref.dataNegociacao}</TableCell>
                         <TableCell>{ref.empresa}</TableCell>
                         <TableCell>
@@ -4376,7 +4439,7 @@ function DocumentDetailView({
                 </Table>
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground py-6 text-center">Sem documentos referenciados</p>
+              <p className="text-[13px] text-muted-foreground py-6 text-center">Não existem dados a serem exibidos</p>
             );
           })()}
         </CollapsibleSection>

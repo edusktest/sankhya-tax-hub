@@ -2,11 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   TrendingUp, ChevronRight, ExternalLink, Eye, Filter, X,
-  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, CalendarIcon, Link2, FileSearch,
+  FileText, FileStack, AlertTriangle, CheckCircle2, RefreshCw, CalendarIcon,
 } from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
 import { ERoutes } from "@/routes/interface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,12 +36,17 @@ interface NotaDebito {
   statusDFe:      StatusDFe;
 }
 
-interface DocumentoDestino {
-  nroUnico:       string;
-  nroNota:        string;
+interface PedidoRef {
+  id:             string;
+  numero:         string;
   dataNegociacao: string;
-  tipoMovimento:  string;
-  chaveDFe:       string;
+  empresa:        string;
+  parceiroNome:   string;
+  parceiroCNPJ:   string;
+  nroUnico:       string;
+  valor:          number;
+  tipoOperacao:   string;
+  pendencia?:     boolean;
 }
 
 interface TituloDoc {
@@ -120,8 +122,8 @@ interface MultaJurosReceita {
   notaDebito?:        NotaDebito;
   baixaEstornada?:    boolean;
   vendaCancelada?:    boolean;
-  semDFeReferenciado?: boolean;
-  documentosDestino?: DocumentoDestino[];
+  semDocumentoAutorizado?: boolean;
+  pedidoRef?:         PedidoRef;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
@@ -137,14 +139,11 @@ export const PENDENCIAS_MJ: Record<string, { descricao: string; comoResolver?: s
     descricao: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
   },
   PRT0005: {
-    descricao: "Título baixado com Pedido sem um documento fiscal referenciado.",
-  },
-  PRT0007: {
-    descricao: "Título de um Pedido foi baixado com multa e juros. É necessário informar um documento fiscal para ser referenciado.",
+    descricao: "Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
   },
 };
 
-export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0005" | "PRT0007";
+export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0005";
 
 export interface PendenciaMJ {
   codigo:      CodigoPRT;
@@ -160,11 +159,9 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 
 export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
   const p: PendenciaMJ[] = [];
-  if (r.semDFeReferenciado && !r.documentosDestino?.length)
+  if (r.semDocumentoAutorizado)
     p.push({ codigo: "PRT0005", ...PENDENCIAS_MJ.PRT0005 });
-  if (r.semDFeReferenciado)
-    p.push({ codigo: "PRT0007", ...PENDENCIAS_MJ.PRT0007 });
-  if (!r.semDFeReferenciado && !r.notaDebito && !isDFeDefinitivo(r.statusDFe))
+  if (!r.semDocumentoAutorizado && !r.notaDebito && !isDFeDefinitivo(r.statusDFe))
     p.push({ codigo: "PRT0002", ...PENDENCIAS_MJ.PRT0002 });
   if (r.baixaEstornada)
     p.push({ codigo: "PRT0003", ...PENDENCIAS_MJ.PRT0003 });
@@ -782,7 +779,7 @@ const MOCK: MultaJurosReceita[] = [
     },
   },
 
-  // ── mj-pv045 — Mercado Sul Ltda / PRT0007: título de pedido baixado com multa e juros sem DFe referenciado ─
+  // ── mj-pv045 — Mercado Sul Ltda: título de pedido baixado com multa e juros; documento de origem = ND de PA autorizada (PRT0002: falta gerar a nota de Multa e Juros) ─
   {
     id: "mj-pv045",
     dataNegociacao:    "10/01/2027",
@@ -799,43 +796,44 @@ const MOCK: MultaJurosReceita[] = [
     nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "10/01/2027", dtVencimento: "05/01/2027",
     vlrDesdobramento: 15000.0, vlrDesconto: 0, vlrBaixa: 15450.0, dataBaixa: "10/01/2027",
-    semDFeReferenciado: true,
+    pedidoRef: {
+      id:             "pv-045",
+      numero:         "PV-045",
+      dataNegociacao: "20/11/2026",
+      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:   "Mercado Sul Ltda",
+      parceiroCNPJ:   "55.888.000/0001-11",
+      nroUnico:       "600.200",
+      valor:          15000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
     documentoFiscal: {
-      dataNegociacao:     "20/11/2026",
+      dataNegociacao:     "08/01/2027",
       empresa:            "001 - Sankhya Gestão de Negócios Ltda",
       parceiroNome:       "Mercado Sul Ltda",
       parceiroCNPJ:       "55.888.000/0001-11",
-      tipoMovimento:      "Pedido de Venda",
-      numero:             "PV-045",
-      chaveDFe:           "—",
+      tipoMovimento:      "Venda",
+      numero:             "ND-045",
+      chaveDFe:           "35270101234567890001550010000004501000004501",
       valor:              15000.0,
-      totalIBS:           0,
-      totalCBS:           0,
+      totalIBS:           525.0,
+      totalCBS:           750.0,
       empresaNegociacao:  "001 - Sankhya Gestão de Negócios Ltda",
-      tipoOperacao:       "1.001 - Pedido de Venda",
+      tipoOperacao:       "1.209 - Nota de Débito",
       tipoNegociacao:     "Boleto",
-      dtEntradaSaida:     "20/11/2026",
-      dtFaturamento:      "—",
-      dtMovimento:        "20/11/2026",
-      finalidadeOperacao: "Remessa",
+      dtEntradaSaida:     "08/01/2027",
+      dtFaturamento:      "08/01/2027",
+      dtMovimento:        "08/01/2027",
+      finalidadeOperacao: "Débito",
       nroNFSe:            "—",
-      nroUnico:           "600.200",
-      serieNota:          "—",
-      statusNota:         "—",
-      notaModelo:         "—",
+      nroUnico:           "600.210",
+      serieNota:          "001",
+      statusNota:         "Autorizado",
+      notaModelo:         "55 - NF-e",
     },
-    documentosDestino: [
-      {
-        nroUnico:       "600.200",
-        nroNota:        "NF-007001",
-        dataNegociacao: "20/11/2026",
-        tipoMovimento:  "Pedido de Venda",
-        chaveDFe:       "35261101234567890001550010000070011000070011",
-      },
-    ],
   },
 
-  // ── mj-pv046 — Pedido baixado com multa e juros, ainda sem nenhum documento fiscal: PRT0005 + PRT0007 ─
+  // ── mj-pv046 — Pedido baixado com multa e juros, ainda sem nota autorizada: PRT0005, rateio e geração Pendente (não iniciam) ─
   {
     id: "mj-pv046",
     dataNegociacao:    "12/01/2027",
@@ -852,7 +850,19 @@ const MOCK: MultaJurosReceita[] = [
     nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
     dtEntradaSaida: "12/01/2027", dtVencimento: "07/01/2027",
     vlrDesdobramento: 6000.0, vlrDesconto: 0, vlrBaixa: 6180.0, dataBaixa: "12/01/2027",
-    semDFeReferenciado: true,
+    semDocumentoAutorizado: true,
+    pedidoRef: {
+      id:             "pv-046",
+      numero:         "PV-046",
+      dataNegociacao: "22/11/2026",
+      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:   "Mercado Sul Ltda",
+      parceiroCNPJ:   "55.888.000/0001-11",
+      nroUnico:       "600.201",
+      valor:          6000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+      pendencia:      true,
+    },
     documentoFiscal: {
       dataNegociacao:     "22/11/2026",
       empresa:            "001 - Sankhya Gestão de Negócios Ltda",
@@ -1057,8 +1067,6 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [filtroNroUnicoPedido, setFiltroNroUnicoPedido] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [mockOverrides, setMockOverrides] = useState<Record<string, Partial<MultaJurosReceita>>>({});
-  const [autoReferenciar, setAutoReferenciar] = useState(false);
-  const [referenciarPopup, setReferenciarPopup] = useState<MultaJurosReceita | null>(null);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -1135,9 +1143,8 @@ export default function MovimentacoesReceitasMultaJuros() {
     return (
       <MultaJurosDetailView
         record={selected}
-        onBack={() => { setView("list"); setSelected(null); setAutoReferenciar(false); }}
+        onBack={() => { setView("list"); setSelected(null); }}
         onDetalharDoc={() => setView("doc-fiscal")}
-        autoReferenciar={autoReferenciar}
       />
     );
   }
@@ -1350,7 +1357,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                       <TableCell><BadgeDFe status={r.statusDFe} /></TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          {r.statusCalculo !== "Não configurado" && !isDFeDefinitivo(r.statusDFe) && (
+                          {r.statusCalculo !== "Não configurado" && !r.semDocumentoAutorizado && !isDFeDefinitivo(r.statusDFe) && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1360,17 +1367,6 @@ export default function MovimentacoesReceitasMultaJuros() {
                             >
                               <RefreshCw className={cn("h-3.5 w-3.5", r.statusCalculo === "Processando" && "animate-spin")} />
                               Reprocessar
-                            </Button>
-                          )}
-                          {r.semDFeReferenciado && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-[12px] gap-1 text-amber-700 border-amber-400 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-600 dark:hover:bg-amber-950/40"
-                              onClick={() => setReferenciarPopup(r)}
-                            >
-                              <Link2 className="h-3.5 w-3.5" />
-                              Referenciar DFe
                             </Button>
                           )}
                           <Button
@@ -1395,73 +1391,6 @@ export default function MovimentacoesReceitasMultaJuros() {
           </div>
         )}
       </div>
-
-      {/* Popup — Referenciar DFe */}
-      <Dialog open={!!referenciarPopup} onOpenChange={(open) => { if (!open) setReferenciarPopup(null); }}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[15px]">
-              <FileSearch className="h-4 w-4 text-amber-500" />
-              Referenciar DFe — Selecione o documento fiscal
-            </DialogTitle>
-          </DialogHeader>
-          {referenciarPopup?.documentosDestino && referenciarPopup.documentosDestino.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-[13px] font-medium">Documentos de Destino do Pedido</p>
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/40">
-                      <TableHead className="text-[12px]">Nro Único</TableHead>
-                      <TableHead className="text-[12px]">Nro Nota</TableHead>
-                      <TableHead className="text-[12px]">Dt. Neg.</TableHead>
-                      <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
-                      <TableHead className="text-[12px]">Ch. de Acesso</TableHead>
-                      <TableHead className="text-[12px] text-center">Ação</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {referenciarPopup.documentosDestino.map((doc) => (
-                      <TableRow key={doc.nroUnico} className="text-[13px]">
-                        <TableCell className="font-mono">{doc.nroUnico}</TableCell>
-                        <TableCell className="font-mono">{doc.nroNota}</TableCell>
-                        <TableCell className="font-mono text-[12px]">{doc.dataNegociacao}</TableCell>
-                        <TableCell>{doc.tipoMovimento}</TableCell>
-                        <TableCell className="max-w-[180px]">
-                          <span
-                            className="font-mono text-[11px] text-muted-foreground truncate block"
-                            title={doc.chaveDFe}
-                          >
-                            {doc.chaveDFe}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="h-7 text-[12px] gap-1"
-                            onClick={() => {
-                              const rec = referenciarPopup;
-                              setReferenciarPopup(null);
-                              setSelected(rec);
-                              setView("detail");
-                            }}
-                          >
-                            <Link2 className="h-3.5 w-3.5" />
-                            Referenciar
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          ) : (
-            <p className="text-[13px] text-muted-foreground">Não existem documentos fiscais autorizados para referenciar nessa nota. Verifique no detalhamento se existem outras pendências.</p>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
@@ -1472,12 +1401,10 @@ function MultaJurosDetailView({
   record: r,
   onBack,
   onDetalharDoc,
-  autoReferenciar = false,
 }: {
   record: MultaJurosReceita;
   onBack: () => void;
   onDetalharDoc: () => void;
-  autoReferenciar?: boolean;
 }) {
   const navigate = useNavigate();
   const showGerar      = r.statusGeracaoNota === "Confirmada" && r.statusDFe === "Não enviado";
@@ -1614,8 +1541,72 @@ function MultaJurosDetailView({
           </div>
         </CollapsibleSection>
 
+        {/* Pedido do Título — igual ao Detalhamento de Pagamento Antecipado */}
+        <CollapsibleSection title="Pedido do Título">
+          {r.pedidoRef ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
+                    <TableHead className="text-[12px]">Número</TableHead>
+                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
+                    <TableHead className="text-[12px]">Empresa</TableHead>
+                    <TableHead className="text-[12px]">Parceiro</TableHead>
+                    <TableHead className="text-[12px]">Nro Único</TableHead>
+                    <TableHead className="text-[12px]">Tipo Operação</TableHead>
+                    <TableHead className="text-[12px] text-right">Valor</TableHead>
+                    <TableHead className="text-[12px] text-center">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow className="text-[13px]">
+                    <TableCell className="text-center w-10">
+                      <div className="flex justify-center">
+                        {(getMultaJurosPendencias(r).length > 0 || r.pedidoRef.pendencia)
+                          ? <span title="PRT0001: Títulos com pendências"><AlertTriangle className="h-4 w-4 text-amber-500" /></span>
+                          : <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono font-medium">{r.pedidoRef.numero}</TableCell>
+                    <TableCell className="font-mono text-[12px]">{r.pedidoRef.dataNegociacao}</TableCell>
+                    <TableCell>{r.pedidoRef.empresa}</TableCell>
+                    <TableCell>
+                      <div>{r.pedidoRef.parceiroNome}</div>
+                      <div className="text-[11px] text-muted-foreground">{r.pedidoRef.parceiroCNPJ}</div>
+                    </TableCell>
+                    <TableCell className="font-mono">{r.pedidoRef.nroUnico}</TableCell>
+                    <TableCell>{r.pedidoRef.tipoOperacao}</TableCell>
+                    <TableCell className="text-right font-mono">{brl(r.pedidoRef.valor)}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[12px] gap-1"
+                        onClick={() =>
+                          navigate(ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO, {
+                            state: { openNroUnico: r.pedidoRef!.id },
+                          })
+                        }
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Detalhar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground py-6 text-center">Não existem dados a serem exibidos</p>
+          )}
+        </CollapsibleSection>
+
         {/* Documento Fiscal Origem */}
         <CollapsibleSection title="Documento Fiscal de Origem">
+          {r.semDocumentoAutorizado ? (
+            <p className="text-[13px] text-muted-foreground py-6 text-center">Não existem dados a serem exibidos</p>
+          ) : (
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
@@ -1672,6 +1663,7 @@ function MultaJurosDetailView({
               </TableBody>
             </Table>
           </div>
+          )}
         </CollapsibleSection>
 
         {/* Nota de Débito */}
