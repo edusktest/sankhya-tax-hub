@@ -173,7 +173,7 @@ export const PENDENCIAS_DOC: Record<string, { descricao: string; comoResolver?: 
   },
   PRT0007: {
     descricao: "Documento referenciado foi cancelado.",
-    comoResolver: "Cancelar Nota de Débito.",
+    comoResolver: "Informativo. Por hora não removemos esse alerta.",
   },
 };
 
