@@ -24,7 +24,7 @@ import { format } from "date-fns";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StatusCalculo      = "Pendente" | "Processando" | "Concluído" | "Erro" | "Não configurado";
-type StatusGeracaoNota  = "Pendente" | "Processando" | "Confirmada" | "Erro" | "Não configurado";
+type StatusGeracaoNota  = "Pendente" | "Processando" | "Pronta para revisão" | "Confirmada" | "Excluída" | "Erro" | "Não configurado";
 type StatusDFe          = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado" | "Cancelado" | "Denegado";
 
 interface NotaDebito {
@@ -141,9 +141,12 @@ export const PENDENCIAS_MJ: Record<string, { descricao: string; comoResolver?: s
   PRT0005: {
     descricao: "Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
   },
+  PRT0008: {
+    descricao: "Baixa estornada. A baixa deste título foi estornada após a geração da Nota de Débito, mas o documento fiscal ainda não foi autorizado.",
+  },
 };
 
-export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0005";
+export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0005" | "PRT0008";
 
 export interface PendenciaMJ {
   codigo:      CodigoPRT;
@@ -163,10 +166,12 @@ export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
     p.push({ codigo: "PRT0005", ...PENDENCIAS_MJ.PRT0005 });
   if (!r.semDocumentoAutorizado && !r.notaDebito && !isDFeDefinitivo(r.statusDFe))
     p.push({ codigo: "PRT0002", ...PENDENCIAS_MJ.PRT0002 });
-  if (r.baixaEstornada)
-    p.push({ codigo: "PRT0003", ...PENDENCIAS_MJ.PRT0003 });
   if (r.vendaCancelada && r.statusDFe === "Autorizado")
     p.push({ codigo: "PRT0004", ...PENDENCIAS_MJ.PRT0004 });
+  else if (r.baixaEstornada && (r.statusGeracaoNota === "Pronta para revisão" || r.statusDFe === "Erro"))
+    p.push({ codigo: "PRT0008", ...PENDENCIAS_MJ.PRT0008 });
+  else if (r.baixaEstornada && r.statusGeracaoNota !== "Excluída" && r.statusDFe === "Autorizado")
+    p.push({ codigo: "PRT0003", ...PENDENCIAS_MJ.PRT0003 });
   return p;
 }
 
@@ -928,6 +933,46 @@ const MOCK: MultaJurosReceita[] = [
       statusDFe: "Aguardando autorização",
     },
   },
+
+  // ── Baixa estornada com nota "Pronta para revisão" → PRT0008 ────────────────
+  {
+    id: "mj_est2",
+    dataNegociacao: "02/08/2026",
+    empresa: "003 - Distribuidora Norte Ltda",
+    empresaCod: "003",
+    parceiroNome: "Logística Oeste S.A.",
+    parceiroCNPJ: "66.777.888/0001-99",
+    tipo: "Receita",
+    tipoMovimento: "Venda",
+    nroUnico: "300.216",
+    multa: 100.0, juros: 50.0,
+    totalIBS: 5.25, totalCBS: 7.5,
+    statusCalculo: "Concluído", statusGeracaoNota: "Pronta para revisão", statusDFe: "Não enviado",
+    baixaEstornada: true,
+    nroNota: "NF-003201", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
+    dtEntradaSaida: "02/08/2026", dtVencimento: "20/06/2026",
+    vlrDesdobramento: 2000.0, vlrDesconto: 0, vlrBaixa: 2150.0, dataBaixa: "02/08/2026",
+    documentoFiscal: {
+      dataNegociacao: "20/06/2026",
+      empresa: "003 - Distribuidora Norte Ltda",
+      parceiroNome: "Logística Oeste S.A.", parceiroCNPJ: "66.777.888/0001-99",
+      tipoMovimento: "Venda", numero: "3201",
+      chaveDFe: "35260866777888000199550010000032011234567931",
+      valor: 2000.0, totalIBS: 70.0, totalCBS: 100.0,
+      empresaNegociacao: "003 - Distribuidora Norte Ltda",
+      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
+      dtEntradaSaida: "20/06/2026", dtFaturamento: "20/06/2026", dtMovimento: "20/06/2026",
+      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "300.211",
+      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
+    },
+    notaDebito: {
+      dataNegociacao: "03/08/2026",
+      nroUnico: "ND-300.216",
+      nroNota: "ND-000031",
+      chaveDFeOrigem: "35260866777888000199550010000032011234567931",
+      statusDFe: "Não enviado",
+    },
+  },
 ];
 
 export const MOCK_MULTA_JUROS = MOCK;
@@ -960,11 +1005,12 @@ function BadgeCalculo({ status }: { status: StatusCalculo }) {
 
 function BadgeGeracao({ status }: { status: StatusGeracaoNota }) {
   const cls =
-    status === "Confirmada"      ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
-    status === "Processando"     ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
-    status === "Erro"            ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
-    status === "Não configurado" ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
-                                   "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
+    status === "Confirmada"          ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
+    status === "Pronta para revisão" ? "border-indigo-300 text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40" :
+    status === "Processando"         ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
+    status === "Erro"                ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
+    status === "Não configurado"     ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
+                                       "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
   return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
 }
 

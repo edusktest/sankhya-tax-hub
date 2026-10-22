@@ -158,6 +158,7 @@ interface DocumentoMovimento {
   pedidoRef?: { id: string; numero: string };
   pendencia?: string;
   semDocumentoFinalidadeNormal?: boolean;
+  documentoReferenciadoCancelado?: boolean;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
@@ -170,9 +171,13 @@ export const PENDENCIAS_DOC: Record<string, { descricao: string; comoResolver?: 
     descricao: "Documento com Notas de Débito de Pagamento Antecipado sem Nota de Fornecimento.",
     comoResolver: "Emitir um documento fiscal com finalidade normal.",
   },
+  PRT0007: {
+    descricao: "Documento referenciado foi cancelado.",
+    comoResolver: "Cancelar Nota de Débito.",
+  },
 };
 
-export type CodigoPRT_DOC = "PRT0001" | "PRT0006";
+export type CodigoPRT_DOC = "PRT0001" | "PRT0006" | "PRT0007";
 
 export interface PendenciaDoc {
   codigo:      CodigoPRT_DOC;
@@ -186,6 +191,8 @@ export function getDocumentoPendencias(d: DocumentoMovimento): PendenciaDoc[] {
     p.push({ codigo: "PRT0001", ...PENDENCIAS_DOC.PRT0001 });
   if (d.semDocumentoFinalidadeNormal)
     p.push({ codigo: "PRT0006", ...PENDENCIAS_DOC.PRT0006 });
+  if (d.documentoReferenciadoCancelado)
+    p.push({ codigo: "PRT0007", ...PENDENCIAS_DOC.PRT0007 });
   return p;
 }
 
@@ -3586,6 +3593,84 @@ const MOCK: DocumentoMovimento[] = [
         valor: 680.0,
         totalIBS: 280.0,
         totalCBS: 400.0,
+      },
+    ],
+    titulos: [],
+  },
+
+  // ── ND-050 — ND de PA cancelada (referenciada pela ND-051) ───────────────────
+  {
+    id: "nd-050",
+    dataNegociacao: "14/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    pedidoRef: { id: "pv-031", numero: "PV-031" },
+    numero: "ND-050",
+    chaveDFe: "35260902899911100122550010000000501000000501",
+    valor: 4000.0,
+    totalIBS: 140.0,
+    totalCBS: 200.0,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.209 - Nota de Débito",
+    tipoNegociacao: "Boleto",
+    dtEntradaSaida: "14/09/2026",
+    dtFaturamento: "14/09/2026",
+    dtMovimento: "14/09/2026",
+    finalidadeOperacao: "Débito",
+    nroNFSe: "—",
+    nroUnico: "101.030",
+    serieNota: "001",
+    statusNota: "Cancelado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    documentosFiscaisRef: [],
+    titulos: [],
+  },
+
+  // ── ND-051 — ND de Multa e Juros cuja ND de PA referenciada (ND-050) foi cancelada depois: PRT0007 ─
+  {
+    id: "nd-051",
+    dataNegociacao: "15/09/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    empresaCod: "002",
+    parceiroNome: "Atacado Central Ltda",
+    parceiroCNPJ: "88.999.111/0001-22",
+    pedidoRef: { id: "pv-031", numero: "PV-031" },
+    numero: "ND-051",
+    chaveDFe: "35260902899911100122550010000000511000000511",
+    valor: 90.0,
+    totalIBS: 3.15,
+    totalCBS: 4.5,
+    empresaNegociacao: "002 - Sankhya São Paulo S.A.",
+    tipoOperacao: "1.209 - Nota de Débito",
+    tipoNegociacao: "Boleto",
+    dtEntradaSaida: "15/09/2026",
+    dtFaturamento: "15/09/2026",
+    dtMovimento: "15/09/2026",
+    finalidadeOperacao: "Débito",
+    nroNFSe: "—",
+    nroUnico: "101.031",
+    serieNota: "001",
+    statusNota: "Autorizado",
+    notaModelo: "55 - NF-e",
+    tipoMovimento: "Venda",
+    documentoReferenciadoCancelado: true,
+    documentosFiscaisRef: [
+      {
+        id: "nd-050",
+        dataNegociacao: "14/09/2026",
+        empresa: "002 - Sankhya São Paulo S.A.",
+        parceiroNome: "Atacado Central Ltda",
+        parceiroCNPJ: "88.999.111/0001-22",
+        tipoMovimento: "Venda",
+        finalidadeOperacao: "Débito",
+        numero: "ND-050",
+        chaveDFe: "35260902899911100122550010000000501000000501",
+        valor: 4000.0,
+        totalIBS: 140.0,
+        totalCBS: 200.0,
       },
     ],
     titulos: [],

@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StatusCalculo             = "Pendente" | "Processando" | "Concluído" | "Erro" | "Não configurado";
-type StatusGeracaoNota         = "Pendente" | "Processando" | "Pronta para revisão" | "Confirmada" | "Erro" | "Não configurado";
+type StatusGeracaoNota         = "Pendente" | "Processando" | "Pronta para revisão" | "Confirmada" | "Excluída" | "Erro" | "Não configurado";
 type StatusDFe                 = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado" | "Cancelado" | "Denegado";
 type StatusPagamentoAntecipado = "Pendente" | "Confirmado";
 
@@ -122,6 +122,7 @@ interface PagamentoAntecipadoReceita {
   notaDebito?:     NotaDebito;
   baixaEstornada?: boolean;
   vendaCancelada?: boolean;
+  notaFornecimentoAutorizada?: boolean;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
@@ -136,9 +137,12 @@ export const PENDENCIAS_PA: Record<string, { descricao: string }> = {
   PRT0004: {
     descricao: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
   },
+  PRT0008: {
+    descricao: "Baixa estornada. A baixa deste título foi estornada após a geração da Nota de Débito, mas o documento fiscal ainda não foi autorizado.",
+  },
 };
 
-export type CodigoPRTPA = "PRT0003" | "PRT0004" | "PRT0005";
+export type CodigoPRTPA = "PRT0003" | "PRT0004" | "PRT0005" | "PRT0008";
 
 export interface PendenciaPA {
   codigo:      CodigoPRTPA;
@@ -153,14 +157,21 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 
 export function getPagamentoAntecipadoPendencias(r: PagamentoAntecipadoReceita): PendenciaPA[] {
   const p: PendenciaPA[] = [];
-  if (r.notaDebito?.statusDFe !== "Autorizado")
-    p.push({ codigo: "PRT0005", ...PENDENCIAS_PA.PRT0005 });
-  if (r.notaDebito?.statusDFe === "Autorizado") {
-    if (r.vendaCancelada)
-      p.push({ codigo: "PRT0004", ...PENDENCIAS_PA.PRT0004 });
-    else if (r.baixaEstornada)
-      p.push({ codigo: "PRT0003", ...PENDENCIAS_PA.PRT0003 });
+  const autorizada = r.notaDebito?.statusDFe === "Autorizado";
+  if (r.baixaEstornada) {
+    // linha congelada: com nota autorizada → PRT0003/PRT0004; com nota pronta para revisão → PRT0008; nota excluída → sem pendência
+    if (autorizada)
+      p.push(r.vendaCancelada
+        ? { codigo: "PRT0004", ...PENDENCIAS_PA.PRT0004 }
+        : { codigo: "PRT0003", ...PENDENCIAS_PA.PRT0003 });
+    else if (r.statusGeracaoNota === "Pronta para revisão" || r.notaDebito?.statusDFe === "Erro")
+      p.push({ codigo: "PRT0008", ...PENDENCIAS_PA.PRT0008 });
+    return p;
   }
+  if (autorizada && r.vendaCancelada)
+    p.push({ codigo: "PRT0004", ...PENDENCIAS_PA.PRT0004 });
+  if (!autorizada && !r.notaFornecimentoAutorizada)
+    p.push({ codigo: "PRT0005", ...PENDENCIAS_PA.PRT0005 });
   return p;
 }
 
@@ -859,6 +870,144 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     },
   },
 
+  // ── pa-013 — Baixa estornada com ND "Pronta para revisão": PRT0008 (excluir a nota no Portal de Vendas) ─
+  {
+    id:                          "pa-013",
+    dataNegociacao:              "22/09/2026",
+    empresa:                     "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod:                  "001",
+    parceiroNome:                "Indústria Nova Ltda",
+    parceiroCNPJ:                "77.888.999/0001-66",
+    tipo:                        "Receita",
+    tipoMovimento:               "Pedido de Venda",
+    nroUnico:                    "100.960",
+    parcela:                     "1/2",
+    totalIBS:                    35.0,
+    totalCBS:                    50.0,
+    statusPagamentoAntecipado:   "Confirmado",
+    statusCalculo:               "Concluído",
+    statusGeracaoNota:           "Pronta para revisão",
+    statusDFe:                   "Não enviado",
+    nroNota:                     "NF-005005",
+    desdob:                      "001/002",
+    tipoOperacao:                "1.201 - Recebimento",
+    dtEntradaSaida:              "22/09/2026",
+    dtVencimento:                "22/10/2026",
+    vlrDesdobramento:            1000.0,
+    vlrDesconto:                 0,
+    vlrBaixa:                    1000.0,
+    dataBaixa:                   "24/09/2026",
+    documentoFiscal:             DOC_PV005,
+    baixaEstornada:              true,
+    pedidoRef: {
+      id:             "pv-005",
+      numero:         "PV-005",
+      dataNegociacao: "22/09/2026",
+      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:   "Indústria Nova Ltda",
+      parceiroCNPJ:   "77.888.999/0001-66",
+      nroUnico:       "100.700",
+      valor:          2000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+    notaDebito: {
+      dataNegociacao: "25/09/2026",
+      nroUnico:       "101.014",
+      nroNota:        "ND-035",
+      statusDFe:      "Não enviado",
+    },
+  },
+
+  // ── pa-014 — Baixa estornada e nota excluída no Portal de Vendas: Geração = Excluída, sem pendência ─
+  {
+    id:                          "pa-014",
+    dataNegociacao:              "22/09/2026",
+    empresa:                     "001 - Sankhya Gestão de Negócios Ltda",
+    empresaCod:                  "001",
+    parceiroNome:                "Indústria Nova Ltda",
+    parceiroCNPJ:                "77.888.999/0001-66",
+    tipo:                        "Receita",
+    tipoMovimento:               "Pedido de Venda",
+    nroUnico:                    "100.961",
+    parcela:                     "2/2",
+    totalIBS:                    0,
+    totalCBS:                    0,
+    statusPagamentoAntecipado:   "Confirmado",
+    statusCalculo:               "Concluído",
+    statusGeracaoNota:           "Excluída",
+    statusDFe:                   "Não enviado",
+    nroNota:                     "NF-005006",
+    desdob:                      "002/002",
+    tipoOperacao:                "1.201 - Recebimento",
+    dtEntradaSaida:              "22/09/2026",
+    dtVencimento:                "22/11/2026",
+    vlrDesdobramento:            1000.0,
+    vlrDesconto:                 0,
+    vlrBaixa:                    1000.0,
+    dataBaixa:                   "26/09/2026",
+    documentoFiscal:             DOC_PV005,
+    baixaEstornada:              true,
+    pedidoRef: {
+      id:             "pv-005",
+      numero:         "PV-005",
+      dataNegociacao: "22/09/2026",
+      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
+      parceiroNome:   "Indústria Nova Ltda",
+      parceiroCNPJ:   "77.888.999/0001-66",
+      nroUnico:       "100.700",
+      valor:          2000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+  },
+
+  // ── pa-015 — ND de PA cancelada: a linha permanece e o PRT0005 continua aceso ─
+  {
+    id:                          "pa-015",
+    dataNegociacao:              "05/09/2026",
+    empresa:                     "002 - Sankhya São Paulo S.A.",
+    empresaCod:                  "002",
+    parceiroNome:                "Atacado Central Ltda",
+    parceiroCNPJ:                "88.999.111/0001-22",
+    tipo:                        "Receita",
+    tipoMovimento:               "Pedido de Venda",
+    nroUnico:                    "100.962",
+    parcela:                     "1/1",
+    totalIBS:                    140.0,
+    totalCBS:                    200.0,
+    statusPagamentoAntecipado:   "Confirmado",
+    statusCalculo:               "Concluído",
+    statusGeracaoNota:           "Confirmada",
+    statusDFe:                   "Cancelado",
+    nroNota:                     "NF-005007",
+    desdob:                      "001/001",
+    tipoOperacao:                "1.201 - Recebimento",
+    dtEntradaSaida:              "05/09/2026",
+    dtVencimento:                "05/10/2026",
+    vlrDesdobramento:            4000.0,
+    vlrDesconto:                 0,
+    vlrBaixa:                    4000.0,
+    dataBaixa:                   "10/09/2026",
+    documentoFiscal:             DOC_PV030,
+    pedidoRef: {
+      id:             "pv-031",
+      numero:         "PV-031",
+      dataNegociacao: "05/09/2026",
+      empresa:        "002 - Sankhya São Paulo S.A.",
+      parceiroNome:   "Atacado Central Ltda",
+      parceiroCNPJ:   "88.999.111/0001-22",
+      nroUnico:       "101.001",
+      valor:          8000.0,
+      tipoOperacao:   "1.001 - Pedido de Venda",
+    },
+    notaDebito: {
+      dataNegociacao: "11/09/2026",
+      nroUnico:       "101.015",
+      nroNota:        "ND-036",
+      chaveDFe:       "35260902899911100122550010000000361000000361",
+      statusDFe:      "Cancelado",
+    },
+  },
+
 ];
 
 export const MOCK_PAGAMENTO_ANTECIPADO = MOCK;
@@ -1403,7 +1552,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
               <SelectValue placeholder="Geração da Nota" />
             </SelectTrigger>
             <SelectContent>
-              {(["Não configurado", "Pendente", "Processando", "Pronta para revisão", "Confirmada", "Erro"] as StatusGeracaoNota[]).map((s) => (
+              {(["Não configurado", "Pendente", "Processando", "Pronta para revisão", "Confirmada", "Excluída", "Erro"] as StatusGeracaoNota[]).map((s) => (
                 <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
               ))}
             </SelectContent>
