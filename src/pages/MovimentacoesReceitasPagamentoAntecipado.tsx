@@ -573,7 +573,7 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     dtVencimento:              "05/09/2026",
     vlrDesdobramento:          5000.0,
     vlrDesconto:               0,
-    vlrBaixa:                  5000.0,
+    vlrBaixa:                  4850.0,   // cartão com taxa de R$ 150,00: base do PA continua R$ 5.000,00
     dataBaixa:                 "05/09/2026",
     documentoFiscal:           DOC_PV020,
     pedidoRef: {
@@ -601,8 +601,8 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     tipoMovimento:             "Venda",
     nroUnico:                  "100.903",
     parcela:                   "3/3",
-    totalIBS:                  140.0,
-    totalCBS:                  200.0,
+    totalIBS:                  126.0,
+    totalCBS:                  180.0,
     statusPagamentoAntecipado: "Confirmado",
     statusCalculo:             "Concluído",
     statusGeracaoNota:         "Confirmada",
@@ -613,8 +613,8 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     dtEntradaSaida:            "08/09/2026",
     dtVencimento:              "08/09/2026",
     vlrDesdobramento:          4000.0,
-    vlrDesconto:               0,
-    vlrBaixa:                  4000.0,
+    vlrDesconto:               400.0,   // desconto na baixa reduz a base: R$ 4.000,00 - R$ 400,00 = R$ 3.600,00
+    vlrBaixa:                  3600.0,
     dataBaixa:                 "08/09/2026",
     documentoFiscal:           DOC_PV025,
     pedidoRef: {
@@ -848,7 +848,7 @@ const MOCK: PagamentoAntecipadoReceita[] = [
     dtVencimento:                "20/10/2026",
     vlrDesdobramento:            2000.0,
     vlrDesconto:                 0,
-    vlrBaixa:                    2000.0,
+    vlrBaixa:                    2100.0,   // baixa com R$ 100,00 de juros: base do PA continua R$ 2.000,00
     dataBaixa:                   "22/09/2026",
     documentoFiscal:             DOC_PV005,
     pedidoRef: {
@@ -1053,7 +1053,7 @@ function BadgeDFe({ status }: { status: StatusDFe }) {
     status === "Denegado"               ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
     status === "Cancelado"              ? "border-gray-400 text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/40" :
                                           "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
-  return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
+  return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status === "Autorizado" ? "Aprovada" : status}</Badge>;
 }
 
 function BadgePagamentoAntecipado({ status }: { status: StatusPagamentoAntecipado }) {
@@ -1565,7 +1565,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
             </SelectTrigger>
             <SelectContent>
               {(["Não enviado", "Aguardando autorização", "Erro", "Autorizado", "Cancelado", "Denegado"] as StatusDFe[]).map((s) => (
-                <SelectItem key={s} value={s} className="text-[13px]">{s}</SelectItem>
+                <SelectItem key={s} value={s} className="text-[13px]">{s === "Autorizado" ? "Aprovada" : s}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -1735,7 +1735,7 @@ export default function MovimentacoesReceitasPagamentoAntecipado() {
                           {r.statusPagamentoAntecipado === "Confirmado" &&
                             r.statusCalculo !== "Não configurado" &&
                             !r.baixaEstornada &&
-                            !isDFeDefinitivo(r.statusDFe) && (
+                            (r.statusGeracaoNota === "Pronta para revisão" || r.statusCalculo === "Erro" || r.statusGeracaoNota === "Erro") && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1914,7 +1914,7 @@ function PagamentoAntecipadoDetailView({
                   }
                 />
                 <SummaryCard label="Geração da Nota" value={r.statusGeracaoNota} />
-                <SummaryCard label="Status DFe"      value={r.statusDFe}         />
+                <SummaryCard label="Status DFe"      value={r.statusDFe === "Autorizado" ? "Aprovada" : r.statusDFe} />
               </>
             )}
           </div>
@@ -1933,6 +1933,8 @@ function PagamentoAntecipadoDetailView({
               <DetailField label="Vlr Desdobramento"  value={brl(r.vlrDesdobramento)} mono />
               <DetailField label="Vlr Desconto"       value={brl(r.vlrDesconto)}      mono />
               <DetailField label="Vlr Baixa"          value={brl(r.vlrBaixa)}         mono />
+              <DetailField label="Valor da Parcela"   value={brl(r.vlrDesdobramento)} mono />
+              <DetailField label="Base do Pagamento Antecipado" value={brl(r.vlrDesdobramento - r.vlrDesconto)} mono />
               <DetailField label="Data Baixa"         value={r.dataBaixa}             mono />
             </div>
           </div>
@@ -2006,7 +2008,7 @@ function PagamentoAntecipadoDetailView({
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
-                    {r.notaDebito.statusDFe === "Autorizado" && (
+                    {(r.notaDebito.statusDFe === "Autorizado" || r.notaDebito.statusDFe === "Cancelado") && (
                       <TableHead className="text-[12px]">Chave DFe</TableHead>
                     )}
                     <TableHead className="text-[12px]">Status DFe</TableHead>
@@ -2019,7 +2021,7 @@ function PagamentoAntecipadoDetailView({
                     <TableCell className="font-mono text-[12px]">{r.notaDebito.dataNegociacao}</TableCell>
                     <TableCell className="font-mono">{r.notaDebito.nroUnico}</TableCell>
                     <TableCell className="font-mono">{r.notaDebito.nroNota}</TableCell>
-                    {r.notaDebito.statusDFe === "Autorizado" && (
+                    {(r.notaDebito.statusDFe === "Autorizado" || r.notaDebito.statusDFe === "Cancelado") && (
                       <TableCell className="max-w-[160px]">
                         <span
                           className="font-mono text-[11px] text-muted-foreground truncate block"

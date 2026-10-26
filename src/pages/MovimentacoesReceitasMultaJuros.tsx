@@ -24,7 +24,7 @@ import { format } from "date-fns";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StatusCalculo      = "Pendente" | "Processando" | "Concluído" | "Erro" | "Não configurado";
-type StatusGeracaoNota  = "Pendente" | "Processando" | "Pronta para revisão" | "Confirmada" | "Excluída" | "Erro" | "Não configurado";
+type StatusGeracaoNota  = "Pendente" | "Processando" | "Confirmada" | "Erro" | "Não configurado";
 type StatusDFe          = "Não enviado" | "Aguardando autorização" | "Erro" | "Autorizado" | "Cancelado" | "Denegado";
 
 interface NotaDebito {
@@ -34,19 +34,6 @@ interface NotaDebito {
   chaveDFe?:      string;   // somente quando Autorizado
   chaveDFeOrigem: string;
   statusDFe:      StatusDFe;
-}
-
-interface PedidoRef {
-  id:             string;
-  numero:         string;
-  dataNegociacao: string;
-  empresa:        string;
-  parceiroNome:   string;
-  parceiroCNPJ:   string;
-  nroUnico:       string;
-  valor:          number;
-  tipoOperacao:   string;
-  pendencia?:     boolean;
 }
 
 interface TituloDoc {
@@ -122,8 +109,6 @@ interface MultaJurosReceita {
   notaDebito?:        NotaDebito;
   baixaEstornada?:    boolean;
   vendaCancelada?:    boolean;
-  semDocumentoAutorizado?: boolean;
-  pedidoRef?:         PedidoRef;
 }
 
 // ─── Pendências ───────────────────────────────────────────────────────────────
@@ -138,15 +123,9 @@ export const PENDENCIAS_MJ: Record<string, { descricao: string; comoResolver?: s
   PRT0004: {
     descricao: "Venda cancelada. A venda deste título foi cancelada após a emissão da Nota de Débito. Verifique se o cancelamento da nota é necessário no Portal de Vendas.",
   },
-  PRT0005: {
-    descricao: "Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
-  },
-  PRT0008: {
-    descricao: "Baixa estornada. A baixa deste título foi estornada após a geração da Nota de Débito, mas o documento fiscal ainda não foi autorizado.",
-  },
 };
 
-export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004" | "PRT0005" | "PRT0008";
+export type CodigoPRT = "PRT0002" | "PRT0003" | "PRT0004";
 
 export interface PendenciaMJ {
   codigo:      CodigoPRT;
@@ -162,16 +141,12 @@ function isDFeDefinitivo(status: StatusDFe): boolean {
 
 export function getMultaJurosPendencias(r: MultaJurosReceita): PendenciaMJ[] {
   const p: PendenciaMJ[] = [];
-  if (r.semDocumentoAutorizado)
-    p.push({ codigo: "PRT0005", ...PENDENCIAS_MJ.PRT0005 });
-  if (!r.semDocumentoAutorizado && !r.notaDebito && !isDFeDefinitivo(r.statusDFe))
+  if (!r.notaDebito && !isDFeDefinitivo(r.statusDFe))
     p.push({ codigo: "PRT0002", ...PENDENCIAS_MJ.PRT0002 });
+  if (r.baixaEstornada)
+    p.push({ codigo: "PRT0003", ...PENDENCIAS_MJ.PRT0003 });
   if (r.vendaCancelada && r.statusDFe === "Autorizado")
     p.push({ codigo: "PRT0004", ...PENDENCIAS_MJ.PRT0004 });
-  else if (r.baixaEstornada && (r.statusGeracaoNota === "Pronta para revisão" || r.statusDFe === "Erro"))
-    p.push({ codigo: "PRT0008", ...PENDENCIAS_MJ.PRT0008 });
-  else if (r.baixaEstornada && r.statusGeracaoNota !== "Excluída" && r.statusDFe === "Autorizado")
-    p.push({ codigo: "PRT0003", ...PENDENCIAS_MJ.PRT0003 });
   return p;
 }
 
@@ -784,116 +759,6 @@ const MOCK: MultaJurosReceita[] = [
     },
   },
 
-  // ── mj-pv045 — Mercado Sul Ltda: título de pedido baixado com multa e juros; documento de origem = ND de PA autorizada (PRT0002: falta gerar a nota de Multa e Juros) ─
-  {
-    id: "mj-pv045",
-    dataNegociacao:    "10/01/2027",
-    empresa:           "001 - Sankhya Gestão de Negócios Ltda",
-    empresaCod:        "001",
-    parceiroNome:      "Mercado Sul Ltda",
-    parceiroCNPJ:      "55.888.000/0001-11",
-    tipo:              "Receita",
-    tipoMovimento:     "Pedido de Venda",
-    nroUnico:          "300.300",
-    multa: 300.0, juros: 150.0,
-    totalIBS: 0, totalCBS: 0,
-    statusCalculo: "Pendente", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
-    nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
-    dtEntradaSaida: "10/01/2027", dtVencimento: "05/01/2027",
-    vlrDesdobramento: 15000.0, vlrDesconto: 0, vlrBaixa: 15450.0, dataBaixa: "10/01/2027",
-    pedidoRef: {
-      id:             "pv-045",
-      numero:         "PV-045",
-      dataNegociacao: "20/11/2026",
-      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
-      parceiroNome:   "Mercado Sul Ltda",
-      parceiroCNPJ:   "55.888.000/0001-11",
-      nroUnico:       "600.200",
-      valor:          15000.0,
-      tipoOperacao:   "1.001 - Pedido de Venda",
-    },
-    documentoFiscal: {
-      dataNegociacao:     "08/01/2027",
-      empresa:            "001 - Sankhya Gestão de Negócios Ltda",
-      parceiroNome:       "Mercado Sul Ltda",
-      parceiroCNPJ:       "55.888.000/0001-11",
-      tipoMovimento:      "Venda",
-      numero:             "ND-045",
-      chaveDFe:           "35270101234567890001550010000004501000004501",
-      valor:              15000.0,
-      totalIBS:           525.0,
-      totalCBS:           750.0,
-      empresaNegociacao:  "001 - Sankhya Gestão de Negócios Ltda",
-      tipoOperacao:       "1.209 - Nota de Débito",
-      tipoNegociacao:     "Boleto",
-      dtEntradaSaida:     "08/01/2027",
-      dtFaturamento:      "08/01/2027",
-      dtMovimento:        "08/01/2027",
-      finalidadeOperacao: "Débito",
-      nroNFSe:            "—",
-      nroUnico:           "600.210",
-      serieNota:          "001",
-      statusNota:         "Autorizado",
-      notaModelo:         "55 - NF-e",
-    },
-  },
-
-  // ── mj-pv046 — Pedido baixado com multa e juros, ainda sem nota autorizada: PRT0005, rateio e geração Pendente (não iniciam) ─
-  {
-    id: "mj-pv046",
-    dataNegociacao:    "12/01/2027",
-    empresa:           "001 - Sankhya Gestão de Negócios Ltda",
-    empresaCod:        "001",
-    parceiroNome:      "Mercado Sul Ltda",
-    parceiroCNPJ:      "55.888.000/0001-11",
-    tipo:              "Receita",
-    tipoMovimento:     "Pedido de Venda",
-    nroUnico:          "300.301",
-    multa: 120.0, juros: 60.0,
-    totalIBS: 0, totalCBS: 0,
-    statusCalculo: "Pendente", statusGeracaoNota: "Pendente", statusDFe: "Não enviado",
-    nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
-    dtEntradaSaida: "12/01/2027", dtVencimento: "07/01/2027",
-    vlrDesdobramento: 6000.0, vlrDesconto: 0, vlrBaixa: 6180.0, dataBaixa: "12/01/2027",
-    semDocumentoAutorizado: true,
-    pedidoRef: {
-      id:             "pv-046",
-      numero:         "PV-046",
-      dataNegociacao: "22/11/2026",
-      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
-      parceiroNome:   "Mercado Sul Ltda",
-      parceiroCNPJ:   "55.888.000/0001-11",
-      nroUnico:       "600.201",
-      valor:          6000.0,
-      tipoOperacao:   "1.001 - Pedido de Venda",
-      pendencia:      true,
-    },
-    documentoFiscal: {
-      dataNegociacao:     "22/11/2026",
-      empresa:            "001 - Sankhya Gestão de Negócios Ltda",
-      parceiroNome:       "Mercado Sul Ltda",
-      parceiroCNPJ:       "55.888.000/0001-11",
-      tipoMovimento:      "Pedido de Venda",
-      numero:             "PV-046",
-      chaveDFe:           "—",
-      valor:              6000.0,
-      totalIBS:           0,
-      totalCBS:           0,
-      empresaNegociacao:  "001 - Sankhya Gestão de Negócios Ltda",
-      tipoOperacao:       "1.001 - Pedido de Venda",
-      tipoNegociacao:     "Boleto",
-      dtEntradaSaida:     "22/11/2026",
-      dtFaturamento:      "—",
-      dtMovimento:        "22/11/2026",
-      finalidadeOperacao: "Remessa",
-      nroNFSe:            "—",
-      nroUnico:           "600.201",
-      serieNota:          "—",
-      statusNota:         "—",
-      notaModelo:         "—",
-    },
-  },
-
   // ── Baixa estornada ──────────────────────────────────────────────────────────
   {
     id: "mj_est1",
@@ -933,46 +798,6 @@ const MOCK: MultaJurosReceita[] = [
       statusDFe: "Aguardando autorização",
     },
   },
-
-  // ── Baixa estornada com nota "Pronta para revisão" → PRT0008 ────────────────
-  {
-    id: "mj_est2",
-    dataNegociacao: "02/08/2026",
-    empresa: "003 - Distribuidora Norte Ltda",
-    empresaCod: "003",
-    parceiroNome: "Logística Oeste S.A.",
-    parceiroCNPJ: "66.777.888/0001-99",
-    tipo: "Receita",
-    tipoMovimento: "Venda",
-    nroUnico: "300.216",
-    multa: 100.0, juros: 50.0,
-    totalIBS: 5.25, totalCBS: 7.5,
-    statusCalculo: "Concluído", statusGeracaoNota: "Pronta para revisão", statusDFe: "Não enviado",
-    baixaEstornada: true,
-    nroNota: "NF-003201", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
-    dtEntradaSaida: "02/08/2026", dtVencimento: "20/06/2026",
-    vlrDesdobramento: 2000.0, vlrDesconto: 0, vlrBaixa: 2150.0, dataBaixa: "02/08/2026",
-    documentoFiscal: {
-      dataNegociacao: "20/06/2026",
-      empresa: "003 - Distribuidora Norte Ltda",
-      parceiroNome: "Logística Oeste S.A.", parceiroCNPJ: "66.777.888/0001-99",
-      tipoMovimento: "Venda", numero: "3201",
-      chaveDFe: "35260866777888000199550010000032011234567931",
-      valor: 2000.0, totalIBS: 70.0, totalCBS: 100.0,
-      empresaNegociacao: "003 - Distribuidora Norte Ltda",
-      tipoOperacao: "1.201 - Venda de Mercadoria", tipoNegociacao: "A Prazo",
-      dtEntradaSaida: "20/06/2026", dtFaturamento: "20/06/2026", dtMovimento: "20/06/2026",
-      finalidadeOperacao: "Normal", nroNFSe: "—", nroUnico: "300.211",
-      serieNota: "001", statusNota: "Autorizado", notaModelo: "55 - NF-e",
-    },
-    notaDebito: {
-      dataNegociacao: "03/08/2026",
-      nroUnico: "ND-300.216",
-      nroNota: "ND-000031",
-      chaveDFeOrigem: "35260866777888000199550010000032011234567931",
-      statusDFe: "Não enviado",
-    },
-  },
 ];
 
 export const MOCK_MULTA_JUROS = MOCK;
@@ -1006,7 +831,6 @@ function BadgeCalculo({ status }: { status: StatusCalculo }) {
 function BadgeGeracao({ status }: { status: StatusGeracaoNota }) {
   const cls =
     status === "Confirmada"          ? "border-green-300 text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/40" :
-    status === "Pronta para revisão" ? "border-indigo-300 text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40" :
     status === "Processando"         ? "border-blue-300 text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40" :
     status === "Erro"                ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
     status === "Não configurado"     ? "border-orange-300 text-orange-700 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/40" :
@@ -1022,7 +846,7 @@ function BadgeDFe({ status }: { status: StatusDFe }) {
     status === "Denegado"               ? "border-red-300 text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/40" :
     status === "Cancelado"              ? "border-gray-400 text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/40" :
                                           "border-gray-300 text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/40";
-  return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status}</Badge>;
+  return <Badge variant="outline" className={cn("text-[11px] whitespace-nowrap", cls)}>{status === "Autorizado" ? "Aprovada" : status}</Badge>;
 }
 
 function SummaryCard({
@@ -1110,7 +934,6 @@ export default function MovimentacoesReceitasMultaJuros() {
   const [filtroNegociacao, setFiltroNegociacao] = useState<DateRange | undefined>(undefined);
   const [filtroVencimento, setFiltroVencimento] = useState<DateRange | undefined>(undefined);
   const [filtroBaixa, setFiltroBaixa]           = useState<DateRange | undefined>(undefined);
-  const [filtroNroUnicoPedido, setFiltroNroUnicoPedido] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [mockOverrides, setMockOverrides] = useState<Record<string, Partial<MultaJurosReceita>>>({});
 
@@ -1157,7 +980,7 @@ export default function MovimentacoesReceitasMultaJuros() {
     }
   }, [location.state]);
 
-  const hasFilter = filtroEmpresa !== "" || filtroNroUnico !== "" || filtroPendencia !== "" || filtroNegociacao !== undefined || filtroVencimento !== undefined || filtroBaixa !== undefined || filtroNroUnicoPedido !== "";
+  const hasFilter = filtroEmpresa !== "" || filtroNroUnico !== "" || filtroPendencia !== "" || filtroNegociacao !== undefined || filtroVencimento !== undefined || filtroBaixa !== undefined;
 
   const rows = useMemo(() => {
     return MOCK.map((r) => ({ ...r, ...mockOverrides[r.id] } as MultaJurosReceita)).filter((r) => {
@@ -1174,7 +997,7 @@ export default function MovimentacoesReceitasMultaJuros() {
       const byBaixa = (!filtroBaixa?.from || dtBaixa >= filtroBaixa.from) && (!filtroBaixa?.to || dtBaixa <= filtroBaixa.to);
       return byEmpresa && byNroUnico && byPendencia && byNeg && byVenc && byBaixa;
     });
-  }, [filtroEmpresa, filtroNroUnico, filtroPendencia, filtroNegociacao, filtroVencimento, filtroBaixa, filtroNroUnicoPedido, mockOverrides]);
+  }, [filtroEmpresa, filtroNroUnico, filtroPendencia, filtroNegociacao, filtroVencimento, filtroBaixa, mockOverrides]);
 
   if (view === "doc-fiscal" && selected) {
     return (
@@ -1301,19 +1124,11 @@ export default function MovimentacoesReceitasMultaJuros() {
             className="w-[120px] h-8 text-[13px] font-mono"
           />
 
-          <Input
-            placeholder="Nro Único Pedido"
-            value={filtroNroUnicoPedido}
-            onChange={(e) => setFiltroNroUnicoPedido(e.target.value)}
-            className="w-[150px] h-8 text-[13px] font-mono"
-          />
-
           {hasFilter && (
             <button
               onClick={() => {
                 setFiltroEmpresa(""); setFiltroNroUnico(""); setFiltroPendencia("");
                 setFiltroNegociacao(undefined); setFiltroVencimento(undefined); setFiltroBaixa(undefined);
-                setFiltroNroUnicoPedido("");
               }}
               className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -1358,7 +1173,6 @@ export default function MovimentacoesReceitasMultaJuros() {
                     <TableHead className="text-[12px]">Parceiro</TableHead>
                     <TableHead className="text-[12px]">Tipo de Movimento</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
-                    <TableHead className="text-[12px]">Nro Único Pedido</TableHead>
                     <TableHead className="text-[12px] text-right">Multa</TableHead>
                     <TableHead className="text-[12px] text-right">Juros</TableHead>
                     <TableHead className="text-[12px] text-right">IBS Calculado</TableHead>
@@ -1389,7 +1203,6 @@ export default function MovimentacoesReceitasMultaJuros() {
                         {r.tipoMovimento}
                       </TableCell>
                       <TableCell className="font-mono">{r.nroUnico}</TableCell>
-                      <TableCell className="font-mono text-[12px]">—</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.multa)}</TableCell>
                       <TableCell className="text-right font-mono">{brl(r.juros)}</TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
@@ -1403,7 +1216,7 @@ export default function MovimentacoesReceitasMultaJuros() {
                       <TableCell><BadgeDFe status={r.statusDFe} /></TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          {r.statusCalculo !== "Não configurado" && !r.semDocumentoAutorizado && !isDFeDefinitivo(r.statusDFe) && (
+                          {r.statusCalculo !== "Não configurado" && !isDFeDefinitivo(r.statusDFe) && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1587,72 +1400,8 @@ function MultaJurosDetailView({
           </div>
         </CollapsibleSection>
 
-        {/* Pedido do Título — igual ao Detalhamento de Pagamento Antecipado */}
-        <CollapsibleSection title="Pedido do Título">
-          {r.pedidoRef ? (
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead className="text-[12px] text-center w-10">Pendências</TableHead>
-                    <TableHead className="text-[12px]">Número</TableHead>
-                    <TableHead className="text-[12px]">Dt. Negociação</TableHead>
-                    <TableHead className="text-[12px]">Empresa</TableHead>
-                    <TableHead className="text-[12px]">Parceiro</TableHead>
-                    <TableHead className="text-[12px]">Nro Único</TableHead>
-                    <TableHead className="text-[12px]">Tipo Operação</TableHead>
-                    <TableHead className="text-[12px] text-right">Valor</TableHead>
-                    <TableHead className="text-[12px] text-center">Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow className="text-[13px]">
-                    <TableCell className="text-center w-10">
-                      <div className="flex justify-center">
-                        {(getMultaJurosPendencias(r).length > 0 || r.pedidoRef.pendencia)
-                          ? <span title="PRT0001: Títulos com pendências"><AlertTriangle className="h-4 w-4 text-amber-500" /></span>
-                          : <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Sem pendências" />}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono font-medium">{r.pedidoRef.numero}</TableCell>
-                    <TableCell className="font-mono text-[12px]">{r.pedidoRef.dataNegociacao}</TableCell>
-                    <TableCell>{r.pedidoRef.empresa}</TableCell>
-                    <TableCell>
-                      <div>{r.pedidoRef.parceiroNome}</div>
-                      <div className="text-[11px] text-muted-foreground">{r.pedidoRef.parceiroCNPJ}</div>
-                    </TableCell>
-                    <TableCell className="font-mono">{r.pedidoRef.nroUnico}</TableCell>
-                    <TableCell>{r.pedidoRef.tipoOperacao}</TableCell>
-                    <TableCell className="text-right font-mono">{brl(r.pedidoRef.valor)}</TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[12px] gap-1"
-                        onClick={() =>
-                          navigate(ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO, {
-                            state: { openNroUnico: r.pedidoRef!.id },
-                          })
-                        }
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        Detalhar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-[13px] text-muted-foreground py-6 text-center">Não existem dados a serem exibidos</p>
-          )}
-        </CollapsibleSection>
-
         {/* Documento Fiscal Origem */}
         <CollapsibleSection title="Documento Fiscal de Origem">
-          {r.semDocumentoAutorizado ? (
-            <p className="text-[13px] text-muted-foreground py-6 text-center">Não existem dados a serem exibidos</p>
-          ) : (
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
@@ -1709,7 +1458,6 @@ function MultaJurosDetailView({
               </TableBody>
             </Table>
           </div>
-          )}
         </CollapsibleSection>
 
         {/* Nota de Débito */}
@@ -1723,7 +1471,7 @@ function MultaJurosDetailView({
                     <TableHead className="text-[12px]">Dt. Negociação</TableHead>
                     <TableHead className="text-[12px]">Nro Único</TableHead>
                     <TableHead className="text-[12px]">Nro Nota</TableHead>
-                    {r.notaDebito.statusDFe === "Autorizado" && (
+                    {(r.notaDebito.statusDFe === "Autorizado" || r.notaDebito.statusDFe === "Cancelado") && (
                       <TableHead className="text-[12px]">Chave DFe</TableHead>
                     )}
                     <TableHead className="text-[12px]">Chave DFe Origem</TableHead>
@@ -1737,7 +1485,7 @@ function MultaJurosDetailView({
                     <TableCell className="font-mono text-[12px]">{r.notaDebito.dataNegociacao}</TableCell>
                     <TableCell className="font-mono">{r.notaDebito.nroUnico}</TableCell>
                     <TableCell className="font-mono">{r.notaDebito.nroNota}</TableCell>
-                    {r.notaDebito.statusDFe === "Autorizado" && (
+                    {(r.notaDebito.statusDFe === "Autorizado" || r.notaDebito.statusDFe === "Cancelado") && (
                       <TableCell className="max-w-[160px]">
                         <span
                           className="font-mono text-[11px] text-muted-foreground truncate block"

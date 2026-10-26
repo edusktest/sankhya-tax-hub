@@ -1491,39 +1491,6 @@ const MOCK: ReceitaMovimento[] = [
     pendencia: "PRT0005 — Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
   },
 
-  // ── rm-pv045-mj — Mercado Sul Ltda / PRT0005: título de pedido baixado com multa e juros, sem nota autorizada ─
-  {
-    id: "rm-pv045-mj",
-    dataNegociacao:  "10/01/2027",
-    empresa:         "001 - Sankhya Gestão de Negócios Ltda",
-    empresaCod:      "001",
-    parceiroNome:    "Mercado Sul Ltda",
-    parceiroCNPJ:    "55.888.000/0001-11",
-    nroUnico:        "300.300",
-    tipo:            "Receita",
-    tipoMovimento:   "Pedido de Venda",
-    tipoTitulo:      "Boleto",
-    vlrDesdobramento: 15000.0,
-    totalIBS: 0, totalCBS: 0,
-    nroNota: "—", desdob: "001/001", tipoOperacao: "1.201 - Recebimento",
-    dtEntradaSaida: "10/01/2027", dtVencimento: "05/01/2027",
-    vlrDesconto: 0, vlrMulta: 300.0, vlrJuros: 150.0, vlrBaixa: 15450.0, dataBaixa: "10/01/2027",
-    tributos: [],
-    documentos: [],
-    pedidoRef: {
-      id:             "pv-045",
-      numero:         "PV-045",
-      dataNegociacao: "20/11/2026",
-      empresa:        "001 - Sankhya Gestão de Negócios Ltda",
-      parceiroNome:   "Mercado Sul Ltda",
-      parceiroCNPJ:   "55.888.000/0001-11",
-      nroUnico:       "600.200",
-      valor:          15000.0,
-      tipoOperacao:   "1.001 - Pedido de Venda",
-    },
-    pendencia: "PRT0005 — Título baixado com Pedido sem um documento fiscal autorizado referenciado.",
-  },
-
   // ── rm-pa031 — Atacado Central / Pagamento Antecipado de PV-031 ─────────────
   {
     id: "rm-pa031",
@@ -1555,6 +1522,7 @@ const MOCK: ReceitaMovimento[] = [
     ],
     documentos: [
       { nroUnico: "101.010", nroNota: "ND-031", chaveDFe: "35260902899911100122550010000000311000000311", statusDFe: "Autorizado", finalidade: "Débito" },
+      { nroUnico: "101.040", nroNota: "NF-005010", chaveDFe: "35260902899911100122550010000050101000050101", statusDFe: "Aguardando autorização", finalidade: "Normal" },
     ],
     pedidoRef: {
       id:             "pv-031",
