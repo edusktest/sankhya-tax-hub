@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Home from "./pages/Home";
 import ApuracaoCBS from "./pages/ApuracaoCBS";
 import ApuracaoDetalhe from "./pages/ApuracaoDetalhe";
+import DebitosAguardandoProcessamento from "./pages/DebitosAguardandoProcessamento";
 import ApuracaoDere from "./pages/ApuracaoDere";
 import ConfigEmpresasPage from "./pages/ConfigEmpresasPage";
 import TributacaoIntegralPage from "./pages/TributacaoIntegralPage";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path={ERoutes.HOME} element={<Home />} />
             <Route path={ERoutes.APURACAO_CBS} element={<ApuracaoCBS />} />
             <Route path={ERoutes.APURACAO_CBS_DETALHE} element={<ApuracaoDetalhe />} />
+            <Route path={ERoutes.APURACAO_CBS_DEBITOS_AGUARDANDO} element={<DebitosAguardandoProcessamento />} />
             <Route path={ERoutes.APURACAO_IBS} element={<PlaceholderPage />} />
             <Route path={ERoutes.APURACAO_IS} element={<PlaceholderPage />} />
             <Route path={ERoutes.APURACAO_DERE} element={<ApuracaoDere />} />

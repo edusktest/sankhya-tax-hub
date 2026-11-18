@@ -17,6 +17,11 @@ export interface ContaApuracao {
   status?: string;
   hasDetail?: boolean;
   hasAlert?: boolean;
+  level?: number;
+  expandable?: boolean;
+  total?: boolean;
+  enabled?: boolean;
+  tone?: "debito" | "credito";
 }
 
 export interface OutraInfo {
@@ -28,73 +33,28 @@ export interface OutraInfo {
 export const apuracoes: Apuracao[] = [
   {
     id: "1",
-    periodo: "JUN/2026",
+    periodo: "NOV/2026",
     cnpjRaiz: "12.345.678",
     razaoSocial: "Sankhya Tecnologia em Sistemas S.A.",
     situacao: "Em andamento",
     tipoResultado: "Devedor",
     resultadoApuracao: "R$ 750,00 D",
-    saldoPagarAtual: "R$ 350,00",
+    saldoPagarAtual: "R$ 750,00",
     alertas: 0,
-    ultimaConsulta: "14/04/2026 às 08:32",
-  },
-  {
-    id: "2",
-    periodo: "MAI/2026",
-    cnpjRaiz: "12.345.678",
-    razaoSocial: "Sankhya Tecnologia em Sistemas S.A.",
-    situacao: "Em andamento",
-    tipoResultado: "Credor",
-    resultadoApuracao: "R$ 1.500,00 C",
-    saldoPagarAtual: "R$ 0,00",
-    alertas: 2,
-    ultimaConsulta: "13/04/2026 às 14:15",
-  },
-  {
-    id: "3",
-    periodo: "ABR/2026",
-    cnpjRaiz: "98.765.432",
-    razaoSocial: "Distribuidora Nacional Ltda.",
-    situacao: "Concluído",
-    tipoResultado: "-",
-    resultadoApuracao: "R$ 0,00",
-    saldoPagarAtual: "R$ 0,00",
-    alertas: 0,
-    ultimaConsulta: "10/04/2026 às 09:00",
-  },
-  {
-    id: "4",
-    periodo: "MAR/2026",
-    cnpjRaiz: "12.345.678",
-    razaoSocial: "Sankhya Tecnologia em Sistemas S.A.",
-    situacao: "Concluído",
-    tipoResultado: "Devedor",
-    resultadoApuracao: "R$ 420,00 D",
-    saldoPagarAtual: "R$ 0,00",
-    alertas: 0,
-    ultimaConsulta: "05/03/2026 às 11:45",
-  },
-  {
-    id: "5",
-    periodo: "FEV/2026",
-    cnpjRaiz: "98.765.432",
-    razaoSocial: "Distribuidora Nacional Ltda.",
-    situacao: "Concluído",
-    tipoResultado: "Credor",
-    resultadoApuracao: "R$ 800,00 C",
-    saldoPagarAtual: "R$ 0,00",
-    alertas: 0,
-    ultimaConsulta: "02/02/2026 às 16:20",
+    ultimaConsulta: "17/11/2026 às 08:32",
   },
 ];
 
 export const contasApuracao: ContaApuracao[] = [
-  { conta: "Débitos processados", valorCBS: "R$ 750,00", status: "Processado", hasDetail: true },
-  { conta: "Créditos de CBS apropriados", valorCBS: "R$ 1.500,00 C", hasDetail: true, hasAlert: true },
-  { conta: "  Em apurações anteriores", valorCBS: "R$ 0,00" },
-  { conta: "  Na apuração corrente", valorCBS: "R$ 1.500,00 C", hasDetail: true },
-  { conta: "Pagamentos utilizados (PCONT)", valorCBS: "R$ 400,00", hasDetail: true },
-  { conta: "Resultado da apuração", valorCBS: "R$ 750,00 D" },
+  { conta: "Débitos", valorCBS: "R$ 750,00", expandable: true, enabled: true },
+  { conta: "Processados", valorCBS: "R$ 750,00", level: 1, hasDetail: true, enabled: true },
+  { conta: "Provenientes de cancelamento ou outros eventos", valorCBS: "R$ 0,00", level: 1, hasDetail: true, enabled: true },
+  { conta: "Redutores de débitos", valorCBS: "R$ 0,00", expandable: true, enabled: true },
+  { conta: "Créditos de CBS apropriados", valorCBS: "R$ 0,00", expandable: true, enabled: true },
+  { conta: "Redutores de créditos de CBS apropriados", valorCBS: "R$ 0,00", expandable: true, enabled: true },
+  { conta: "Créditos da apuração anterior utilizados para extinguir débitos dessa apuração", valorCBS: "R$ 0,00", hasDetail: true, enabled: true },
+  { conta: "Pagamentos utilizados", valorCBS: "R$ 0,00", expandable: true, hasDetail: true, enabled: true },
+  { conta: "Resultado da apuração", valorCBS: "R$ 750,00 D", total: true, enabled: true },
 ];
 
 export const outrasInfos: OutraInfo[] = [
@@ -117,4 +77,204 @@ export const eventosApuracao = [
   { data: "03/06/2026 10:00:01", tipo: "Compra (RAD)", documento: "...579131", fornecedor: "00.394.460/0058-87", valor: "R$ 1.500,00", status: "Processado" },
   { data: "07/06/2026 10:00:01", tipo: "Venda", documento: "...329791", adquirente: "00.022.542/0001-65", valor: "R$ 500,00", status: "Processado" },
   { data: "08/06/2026 10:00:01", tipo: "Venda", documento: "...448023", adquirente: "00.022.542/0001-65", valor: "R$ 250,00", status: "Processado" },
+];
+
+export type SituacaoAssistida =
+  | "Débito aguardando processamento"
+  | "Débito processado"
+  | "Crédito aguardando processamento"
+  | "Crédito apropriado"
+  | "Não encontrado";
+
+export interface DocumentoConciliacao {
+  dtNegociacao: string;
+  empresa: string;
+  parceiro: string;
+  cnpjParceiro: string;
+  tipoMovimento: string;
+  finalidade: string;
+  nroUnico: string;
+  numero: string;
+  chaveDFe: string;
+  valor: string;
+  totalCBS: string;
+  apuracaoAssistida: SituacaoAssistida;
+  existeNoEIP: boolean; // false = existe na Apuração Assistida mas não no ERP (só a Chave DFe é preenchida)
+}
+
+export const documentosConciliacao: DocumentoConciliacao[] = [
+  {
+    dtNegociacao: "01/11/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    parceiro: "Grupo Nexus S.A.",
+    cnpjParceiro: "23.456.789/0001-01",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "100.004",
+    numero: "1234",
+    chaveDFe: "35260123456789000100550010000012341234567890",
+    valor: "R$ 11.300,00",
+    totalCBS: "R$ 565,00",
+    apuracaoAssistida: "Débito aguardando processamento",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "02/11/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    parceiro: "Comércio Leste Ltda",
+    cnpjParceiro: "77.888.999/0001-55",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "200.020",
+    numero: "2200",
+    chaveDFe: "35260267890100000123550010000022001234567891",
+    valor: "R$ 29.800,00",
+    totalCBS: "R$ 1.490,00",
+    apuracaoAssistida: "Débito processado",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "02/11/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    parceiro: "Comércio Leste Ltda",
+    cnpjParceiro: "77.888.999/0001-55",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "200.021",
+    numero: "2200",
+    chaveDFe: "35260267890100000123550010000022001234567891",
+    valor: "R$ 29.800,00",
+    totalCBS: "R$ 1.490,00",
+    apuracaoAssistida: "Não encontrado",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "03/11/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    parceiro: "Transportes Delta S.A.",
+    cnpjParceiro: "22.333.444/0001-66",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "400.001",
+    numero: "1400",
+    chaveDFe: "35260123456789000100550010000014001234567901",
+    valor: "R$ 12.000,00",
+    totalCBS: "R$ 600,00",
+    apuracaoAssistida: "Débito processado",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "04/11/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    parceiro: "Tech Solutions Ltda",
+    cnpjParceiro: "11.222.333/0001-44",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "500.001",
+    numero: "5500",
+    chaveDFe: "35260123456789000100550010000055001234567800",
+    valor: "R$ 8.500,00",
+    totalCBS: "R$ 425,00",
+    apuracaoAssistida: "Débito aguardando processamento",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "05/11/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    parceiro: "Global Parts S.A.",
+    cnpjParceiro: "55.666.777/0001-88",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "600.001",
+    numero: "6601",
+    chaveDFe: "35260267890100000123550010000066011234567810",
+    valor: "R$ 15.000,00",
+    totalCBS: "R$ 750,00",
+    apuracaoAssistida: "Débito processado",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "06/11/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    parceiro: "Distribuidora Beta S.A.",
+    cnpjParceiro: "55.666.777/0001-88",
+    tipoMovimento: "Compra",
+    finalidade: "Normal",
+    nroUnico: "500.005",
+    numero: "5210",
+    chaveDFe: "35260255666777000188550010000052101234567893",
+    valor: "R$ 5.100,00",
+    totalCBS: "R$ 255,00",
+    apuracaoAssistida: "Crédito apropriado",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "07/11/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    parceiro: "Materiais Omega S.A.",
+    cnpjParceiro: "88.999.000/0001-33",
+    tipoMovimento: "Compra",
+    finalidade: "Normal",
+    nroUnico: "600.020",
+    numero: "6100",
+    chaveDFe: "35260288999000000133550010000061001234567892",
+    valor: "R$ 21.500,00",
+    totalCBS: "R$ 1.075,00",
+    apuracaoAssistida: "Crédito aguardando processamento",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "08/11/2026",
+    empresa: "003 - Distribuidora Norte Ltda",
+    parceiro: "Materiais Omega S.A.",
+    cnpjParceiro: "88.999.000/0001-33",
+    tipoMovimento: "Devolução de Compra",
+    finalidade: "Devolução",
+    nroUnico: "300.010",
+    numero: "180",
+    chaveDFe: "35260288999000000133550010000001801234567895",
+    valor: "R$ 8.400,00",
+    totalCBS: "R$ 420,00",
+    apuracaoAssistida: "Não encontrado",
+    existeNoEIP: true,
+  },
+  {
+    dtNegociacao: "",
+    empresa: "",
+    parceiro: "",
+    cnpjParceiro: "",
+    tipoMovimento: "",
+    finalidade: "",
+    nroUnico: "",
+    numero: "",
+    chaveDFe: "35261112345678000190550010000099011234567810",
+    valor: "",
+    totalCBS: "R$ 380,00",
+    apuracaoAssistida: "Débito processado",
+    existeNoEIP: false,
+  },
+  {
+    dtNegociacao: "",
+    empresa: "",
+    parceiro: "",
+    cnpjParceiro: "",
+    tipoMovimento: "",
+    finalidade: "",
+    nroUnico: "",
+    numero: "",
+    chaveDFe: "35261198765432000110550010000045671234567811",
+    valor: "",
+    totalCBS: "R$ 215,50",
+    apuracaoAssistida: "Crédito apropriado",
+    existeNoEIP: false,
+  },
+];
+
+export const contasEmProcessamento: ContaApuracao[] = [
+  { conta: "Débitos aguardando processamento", valorCBS: "R$ 371.030,09 D", hasDetail: true, enabled: true, tone: "debito" },
+  { conta: "Pendências de processamento", valorCBS: "", expandable: true, enabled: true },
+  { conta: "Documentos fiscais aguardando DFe referenciados", valorCBS: "R$ 0,00", level: 1, hasDetail: true, enabled: false },
+  { conta: "Documentos fiscais aguardando aceite", valorCBS: "R$ 0,00", level: 1, hasDetail: true, enabled: false },
+  { conta: "Débitos de fatos geradores futuros", valorCBS: "R$ 0,00", hasDetail: true, enabled: false },
+  { conta: "Créditos de fatos geradores futuros", valorCBS: "R$ 382,67 C", hasDetail: true, enabled: true, tone: "credito" },
 ];

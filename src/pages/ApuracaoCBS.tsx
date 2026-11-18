@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, FileDown, AlertTriangle, CheckCircle2, Filter, RefreshCw, ChevronRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
@@ -15,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export default function ApuracaoCBS() {
+function ApuracaoLista() {
   const navigate = useNavigate();
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>("todos");
   const [filtroEmpresa, setFiltroEmpresa] = useState<string>("todas");
@@ -41,30 +42,6 @@ export default function ApuracaoCBS() {
 
   return (
     <div>
-      {/* Page header */}
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1">
-            <span>Apuração</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground font-medium">CBS</span>
-          </div>
-          <h1 className="text-[20px] font-semibold text-foreground leading-tight">
-            Relação de Apurações – CBS
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 mt-1">
-          <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
-            <RefreshCw className="h-3.5 w-3.5" />
-            Atualizar
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
-            <FileDown className="h-3.5 w-3.5" />
-            Exportar
-          </Button>
-        </div>
-      </div>
-
       {/* Filter bar */}
       <div className="flex items-center gap-3 mb-4 px-3 py-2.5 bg-muted/40 rounded-lg border">
         <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -124,7 +101,7 @@ export default function ApuracaoCBS() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Situação</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de Resultado</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Resultado da Apuração</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Saldo a Pagar</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Saldo atualizado</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Alertas</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Consulta API</TableHead>
@@ -207,7 +184,8 @@ export default function ApuracaoCBS() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
+                        disabled
+                        className="h-7 text-xs text-muted-foreground gap-1 px-2"
                       >
                         <FileDown className="h-3.5 w-3.5" />
                         Gerar Guia
@@ -227,6 +205,45 @@ export default function ApuracaoCBS() {
           <span>Página 1 de 1</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function ApuracaoCBS() {
+  return (
+    <div>
+      {/* Page header */}
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1">
+            <span>Apuração</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground font-medium">CBS</span>
+          </div>
+          <h1 className="text-[20px] font-semibold text-foreground leading-tight">
+            Minhas Apurações da CBS
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Atualizar
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+            <FileDown className="h-3.5 w-3.5" />
+            Exportar
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="producao">
+        <TabsList className="bg-muted border mb-4">
+          <TabsTrigger value="producao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Produção</TabsTrigger>
+          <TabsTrigger value="restrita" className="data-[state=active]:bg-card data-[state=active]:text-primary">Produção Restrita</TabsTrigger>
+        </TabsList>
+        <TabsContent value="producao" className="mt-0"><ApuracaoLista /></TabsContent>
+        <TabsContent value="restrita" className="mt-0"><ApuracaoLista /></TabsContent>
+      </Tabs>
     </div>
   );
 }
