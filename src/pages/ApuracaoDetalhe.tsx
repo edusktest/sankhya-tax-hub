@@ -617,9 +617,9 @@ const colunasDebito: {
   { key: "emissao", label: "data_emissao", texto: d => d.dataEmissao },
   { key: "registro", label: "data_registro", texto: d => d.dataRegistro },
   { key: "atualizacao", label: "data_atualizacao", texto: d => d.dataAtualizacao },
-  { key: "apurado", label: "cbs_apurado", right: true, texto: d => String(d.cbsApurado), ordem: d => d.cbsApurado },
-  { key: "saldo", label: "cbs_saldo_corrente", right: true, texto: d => String(d.cbsSaldoCorrente), ordem: d => d.cbsSaldoCorrente },
-  { key: "extinto", label: "cbs_extinto", right: true, texto: d => String(d.cbsExtinto), ordem: d => d.cbsExtinto },
+  { key: "apurado", label: "cbs_apurado", right: true, texto: d => reais(d.cbsApurado), ordem: d => d.cbsApurado },
+  { key: "saldo", label: "cbs_saldo_corrente", right: true, texto: d => reais(d.cbsSaldoCorrente), ordem: d => d.cbsSaldoCorrente },
+  { key: "extinto", label: "cbs_extinto", right: true, texto: d => reais(d.cbsExtinto), ordem: d => d.cbsExtinto },
 ];
 
 // Grade dos débitos da Apuração Assistida, com o mesmo layout da planilha de referência.
@@ -723,9 +723,9 @@ function AssistidaGrade({
                 <td className={td}>{d.dataEmissao}</td>
                 <td className={td}>{d.dataRegistro}</td>
                 <td className={td}>{d.dataAtualizacao}</td>
-                <td className={`${td} text-right font-mono`}>{d.cbsApurado}</td>
-                <td className={`${td} text-right font-mono`}>{d.cbsSaldoCorrente}</td>
-                <td className={`${td} text-right font-mono`}>{d.cbsExtinto}</td>
+                <td className={`${td} text-right font-mono`}>{reais(d.cbsApurado)}</td>
+                <td className={`${td} text-right font-mono`}>{reais(d.cbsSaldoCorrente)}</td>
+                <td className={`${td} text-right font-mono`}>{reais(d.cbsExtinto)}</td>
               </tr>
             ))}
             {linhas.length === 0 && (
