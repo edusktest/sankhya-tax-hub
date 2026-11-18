@@ -1,6 +1,9 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apuracoes } from "@/data/mockData";
+import { debitosApuracaoAssistida, creditosApuracaoAssistida } from "@/data/debitosApuracaoAssistida";
+import { ANOS_DASHBOARD, EMPRESAS_DASHBOARD, apuracaoPorMes } from "@/data/apuracaoMensal";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip as GraficoTooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, FileDown, AlertTriangle, CheckCircle2, Filter, RefreshCw, ChevronRight } from "lucide-react";
@@ -14,6 +17,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+const MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+
+// "NOV/2026" -> "11/2026", como vem na Apuração Assistida
+const periodoNumerico = (periodo: string) => {
+  const [mes, ano] = periodo.split("/");
+  return `${String(MESES.indexOf(mes) + 1).padStart(2, "0")}/${ano}`;
+};
+
+const moeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// Total de CBS apurado nas abas Débito e Crédito da apuração (soma de cbs_apurado)
+const totalApurado = (linhas: typeof debitosApuracaoAssistida, periodo: string) =>
+  Math.round(
+    linhas
+      .filter(d => d.periodoApuracao === periodoNumerico(periodo))
+      .reduce((acc, d) => acc + d.cbsApurado * 100, 0),
+  ) / 100;
 
 function ApuracaoLista() {
   const navigate = useNavigate();
@@ -97,6 +118,8 @@ function ApuracaoLista() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Período</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">CNPJ Raiz</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Razão Social</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-right">Débito apurado</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-right">Crédito apurado</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Alertas</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Consulta API</TableHead>
@@ -109,6 +132,8 @@ function ApuracaoLista() {
                   <TableCell className="font-medium text-sm">{a.periodo}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{a.cnpjRaiz}</TableCell>
                   <TableCell className="text-sm max-w-[200px] truncate">{a.razaoSocial}</TableCell>
+                  <TableCell className="text-right font-mono text-sm tabular-nums">{moeda(totalApurado(debitosApuracaoAssistida, a.periodo))}</TableCell>
+                  <TableCell className="text-right font-mono text-sm tabular-nums">{moeda(totalApurado(creditosApuracaoAssistida, a.periodo))}</TableCell>
                   <TableCell className="text-center">
                     {a.alertas > 0 ? (
                       <Tooltip>
@@ -173,6 +198,125 @@ function ApuracaoLista() {
   );
 }
 
+function ApuracaoDashboard() {
+  const navigate = useNavigate();
+  const [mesHover, setMesHover] = useState<string | null>(null);
+  const [empresa, setEmpresa] = useState("");
+  const [ano, setAno] = useState("");
+  const [gerado, setGerado] = useState<{ empresa: string; ano: string } | null>(null);
+
+  const dados = useMemo(() => (gerado ? apuracaoPorMes(gerado.empresa, gerado.ano) : []), [gerado]);
+  const totalDebito = dados.reduce((acc, m) => acc + (m.debito ?? 0), 0);
+  const totalCredito = dados.reduce((acc, m) => acc + (m.credito ?? 0), 0);
+  const totalAlertas = dados.reduce((acc, m) => acc + m.alertas, 0);
+  const idDoMes = (mes: string | null | undefined) => dados.find(m => m.mes === mes)?.apuracaoId;
+
+  function abrirMes(mes: string | null | undefined) {
+    const id = idDoMes(mes);
+    if (id) navigate(`/apuracao-cbs/${id}`);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3 px-3 py-3 bg-muted/40 rounded-lg border">
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium text-muted-foreground">Empresa *</p>
+          <Select value={empresa} onValueChange={setEmpresa}>
+            <SelectTrigger className="w-[280px] h-8 text-sm">
+              <SelectValue placeholder="Selecione a empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              {EMPRESAS_DASHBOARD.map(e => (
+                <SelectItem key={e} value={e}>{e}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium text-muted-foreground">Ano *</p>
+          <Select value={ano} onValueChange={setAno}>
+            <SelectTrigger className="w-[120px] h-8 text-sm">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              {ANOS_DASHBOARD.map(a => (
+                <SelectItem key={a} value={a}>{a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button size="sm" className="h-8" disabled={!empresa || !ano} onClick={() => setGerado({ empresa, ano })}>
+          Gerar dashboard
+        </Button>
+      </div>
+
+      {!gerado ? (
+        <div className="bg-card rounded-lg card-shadow border p-10 text-center text-sm text-muted-foreground">
+          Informe a empresa e o ano para gerar o dashboard.
+        </div>
+      ) : (
+        <div className="bg-card rounded-lg card-shadow border">
+          <div className="px-4 py-3 border-b">
+            <h3 className="text-sm font-semibold text-foreground">Débito e crédito apurados por mês</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {gerado.empresa} · {gerado.ano}
+            </p>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-[960px]">
+              <div className="rounded-md border bg-muted/30 px-4 py-3">
+                <p className="text-xs text-muted-foreground">Total débito apurado no ano</p>
+                <p className="text-lg font-semibold font-mono mt-1">{moeda(totalDebito)}</p>
+              </div>
+              <div className="rounded-md border bg-muted/30 px-4 py-3">
+                <p className="text-xs text-muted-foreground">Total crédito apurado no ano</p>
+                <p className="text-lg font-semibold font-mono mt-1">{moeda(totalCredito)}</p>
+              </div>
+              <div className="rounded-md border bg-muted/30 px-4 py-3">
+                <p className="text-xs text-muted-foreground">Alertas</p>
+                <p className="text-lg font-semibold font-mono mt-1">{totalAlertas}</p>
+              </div>
+            </div>
+            <div className={`h-[340px] ${idDoMes(mesHover) ? "cursor-pointer" : ""}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={dados}
+                  margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
+                  onMouseMove={state => setMesHover(state?.activeLabel ?? null)}
+                  onMouseLeave={() => setMesHover(null)}
+                  onClick={state => abrirMes(state?.activeLabel)}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <YAxis
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={56}
+                    tickFormatter={(v: number) => v.toLocaleString("pt-BR", { notation: "compact" })}
+                  />
+                  <GraficoTooltip
+                    formatter={(v: number) => moeda(v)}
+                    cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="debito" name="Débito apurado" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="credito" name="Crédito apurado" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {dados.some(m => m.apuracaoId) && (
+              <p className="text-xs text-muted-foreground">
+                Clique no mês para abrir o detalhe da apuração (disponível para os meses com apuração cadastrada).
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ApuracaoCBS() {
   return (
     <div>
@@ -202,8 +346,10 @@ export default function ApuracaoCBS() {
 
       <Tabs defaultValue="producao">
         <TabsList className="bg-muted border mb-4">
-          <TabsTrigger value="producao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Produção</TabsTrigger>
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-card data-[state=active]:text-primary">Dashboard</TabsTrigger>
+          <TabsTrigger value="producao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Apurações</TabsTrigger>
         </TabsList>
+        <TabsContent value="dashboard" className="mt-0"><ApuracaoDashboard /></TabsContent>
         <TabsContent value="producao" className="mt-0"><ApuracaoLista /></TabsContent>
       </Tabs>
     </div>

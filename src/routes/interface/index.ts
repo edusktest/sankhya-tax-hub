@@ -2,6 +2,7 @@ export enum ERoutes {
    INDEX = "/",
    HOME = "/home",
    APURACAO_CBS = "/apuracao-cbs",
+   APURACAO_CBS_HISTORICO_CONSULTAS = "/apuracao-cbs/historico-consultas",
    APURACAO_CBS_DETALHE = "/apuracao-cbs/:id",
    APURACAO_CBS_DEBITOS_AGUARDANDO = "/apuracao-cbs/:id/debitos-aguardando-processamento",
    APURACAO_IBS = "/apuracao-ibs",

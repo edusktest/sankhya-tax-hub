@@ -1,8 +1,16 @@
 import type { Apuracao } from "@/data/mockData";
 
-export function ApuracaoHeaderCard({ apuracao, resumido = false }: { apuracao: Apuracao; resumido?: boolean }) {
+export function ApuracaoHeaderCard({
+  apuracao,
+  resumido = false,
+  className = "mb-6",
+}: {
+  apuracao: Apuracao;
+  resumido?: boolean;
+  className?: string;
+}) {
   return (
-    <div className="bg-card rounded-lg card-shadow border p-5 mb-6">
+    <div className={`bg-card rounded-lg card-shadow border p-5 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-muted-foreground mb-1">Período da apuração</p>

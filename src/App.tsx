@@ -14,6 +14,7 @@ import TributacaoIntegralPage from "./pages/TributacaoIntegralPage";
 import TributacaoPersonalizadaWizard from "./pages/TributacaoPersonalizadaWizard";
 import TabelaOficialPage from "./pages/TabelaOficialPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import HistoricoConsultas from "./pages/HistoricoConsultas";
 import AssistenteExcecoesPage from "./pages/AssistenteExcecoesPage";
 import AssistenteNfeDebitoPage from "./pages/AssistenteNfeDebitoPage";
 import AssistenteNfeCreditoPage from "./pages/AssistenteNfeCreditoPage";
@@ -51,6 +52,7 @@ const App = () => (
             <Route path={ERoutes.INDEX} element={<Navigate to={ERoutes.HOME} replace />} />
             <Route path={ERoutes.HOME} element={<Home />} />
             <Route path={ERoutes.APURACAO_CBS} element={<ApuracaoCBS />} />
+            <Route path={ERoutes.APURACAO_CBS_HISTORICO_CONSULTAS} element={<HistoricoConsultas />} />
             <Route path={ERoutes.APURACAO_CBS_DETALHE} element={<ApuracaoDetalhe />} />
             <Route path={ERoutes.APURACAO_CBS_DEBITOS_AGUARDANDO} element={<DebitosAguardandoProcessamento />} />
             <Route path={ERoutes.APURACAO_IBS} element={<PlaceholderPage />} />

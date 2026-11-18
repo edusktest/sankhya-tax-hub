@@ -54,6 +54,7 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
         icon: Calculator,
         subItems: [
           { title: "Apurações",          url: ERoutes.APURACAO_CBS                    },
+          { title: "Histórico de consultas", url: ERoutes.APURACAO_CBS_HISTORICO_CONSULTAS },
         ],
       },
       {

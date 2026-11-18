@@ -1,14 +1,16 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { apuracoes, contasApuracao, outrasInfos, eventosApuracao, documentosConciliacao, contasEmProcessamento } from "@/data/mockData";
-import { debitosApuracaoAssistida, NAO_ENCONTRADO } from "@/data/debitosApuracaoAssistida";
+import { debitosApuracaoAssistida, creditosApuracaoAssistida, NAO_ENCONTRADO } from "@/data/debitosApuracaoAssistida";
 import { Badge } from "@/components/ui/badge";
 import { ERoutes } from "@/routes/interface";
 import { ApuracaoHeaderCard } from "@/components/ApuracaoHeaderCard";
+import type { Apuracao } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, Filter, Search, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Filter, Search, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip as GraficoTooltip, XAxis, YAxis } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -168,7 +170,8 @@ function EmConstrucao() {
 type FiltroConciliacao =
   | { tipo: "encontrados" }
   | { tipo: "naoEncontradosAA" }
-  | { tipo: "tipoMovimento"; nome: string }
+  | { tipo: "cbsIguais" }
+  | { tipo: "cbsDiferentes" }
   | null;
 
 const rotuloFiltro = (f: NonNullable<FiltroConciliacao>) =>
@@ -176,11 +179,16 @@ const rotuloFiltro = (f: NonNullable<FiltroConciliacao>) =>
     ? "Documentos encontrados"
     : f.tipo === "naoEncontradosAA"
     ? "Documentos não encontrados na Apuração Assistida"
-    : `Documentos no EIP — ${f.nome}`;
+    : f.tipo === "cbsIguais"
+    ? "Documentos com CBS iguais"
+    : "Documentos com CBS diferentes";
+
+// Documentos encontrados na Apuração Assistida cujo CBS do EIP é igual (ou diferente) ao CBS apurado
+const cbsConfere = (d: (typeof documentosConciliacao)[number]) => paraCentavos(d.totalCBS) === paraCentavos(cbsApuradoDoc(d));
 
 type DocConciliacao = (typeof documentosConciliacao)[number];
 type ColKey =
-  | "apuracaoAssistida" | "dt" | "empresa" | "parceiro" | "tipoMovimento"
+  | "alertas" | "apuracaoAssistida" | "dt" | "empresa" | "parceiro" | "tipoMovimento"
   | "finalidade" | "nroUnico" | "numero" | "chaveDFe" | "valor" | "totalCBS" | "cbsApurado";
 
 const dataParaTs = (v: string) => {
@@ -199,12 +207,22 @@ interface ColunaConciliacao {
 // CBS apurado: valor que vem da Apuração Assistida para o documento (vazio quando não foi encontrado nela).
 function cbsApuradoDoc(d: DocConciliacao): string {
   if (d.apuracaoAssistida === "Não encontrado") return "";
-  const debito = debitosApuracaoAssistida.find(x => x.nroUnicoEIP === d.nroUnico);
-  if (debito) return moedaBR(Math.round(debito.cbsApurado * 100));
-  return d.totalCBS; // crédito: ainda sem base própria na Apuração Assistida, usa o valor do documento
+  const linha = [...debitosApuracaoAssistida, ...creditosApuracaoAssistida].find(x => x.nroUnicoEIP === d.nroUnico);
+  if (linha) return moedaBR(Math.round(linha.cbsApurado * 100));
+  return d.totalCBS;
+}
+
+const SEM_ALERTA = "Sem alerta";
+
+// Motivo do alerta do documento (ou "Sem alerta")
+function alertaDoc(d: DocConciliacao): string {
+  if (d.apuracaoAssistida === "Não encontrado") return "Documento não encontrado na Apuração Assistida";
+  if (!cbsConfere(d)) return "CBS do EIP diferente do CBS apurado";
+  return SEM_ALERTA;
 }
 
 const colunasConciliacao: ColunaConciliacao[] = [
+  { key: "alertas", label: "Alertas", texto: d => alertaDoc(d) },
   { key: "apuracaoAssistida", label: "Apuração Assistida", texto: d => d.apuracaoAssistida },
   { key: "dt", label: "Dt. Negociação", texto: d => d.dtNegociacao, ordem: d => dataParaTs(d.dtNegociacao) },
   { key: "empresa", label: "Empresa", texto: d => d.empresa },
@@ -349,7 +367,8 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
       if (!filtro) return true;
       if (filtro.tipo === "encontrados") return d.apuracaoAssistida !== "Não encontrado";
       if (filtro.tipo === "naoEncontradosAA") return d.apuracaoAssistida === "Não encontrado";
-      return d.tipoMovimento === filtro.nome;
+      if (d.apuracaoAssistida === "Não encontrado") return false;
+      return filtro.tipo === "cbsIguais" ? cbsConfere(d) : !cbsConfere(d);
     })
     .filter(d =>
       colunasConciliacao.every(col => {
@@ -432,6 +451,17 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
               key={d.chaveDFe + d.nroUnico + i}
               className="hover:bg-muted/20"
             >
+              <TableCell className="text-sm">
+                {alertaDoc(d) !== SEM_ALERTA ? (
+                  <span title={alertaDoc(d)} className="inline-flex text-warning" aria-label={alertaDoc(d)}>
+                    <AlertTriangle className="h-4 w-4" />
+                  </span>
+                ) : (
+                  <span title={SEM_ALERTA} className="inline-flex text-success" aria-label={SEM_ALERTA}>
+                    <CheckCircle2 className="h-4 w-4" />
+                  </span>
+                )}
+              </TableCell>
               <TableCell className="text-sm whitespace-nowrap">{d.apuracaoAssistida}</TableCell>
               <TableCell className="text-sm whitespace-nowrap">{d.dtNegociacao}</TableCell>
               <TableCell className="text-sm">{d.empresa}</TableCell>
@@ -493,21 +523,24 @@ function ConciliacaoDashboard({
   const naoEncontradosAA = noEIP.length - encontrados;
   const naoEncontradosEIP = debitosApuracaoAssistida.filter(d => d.nroUnicoEIP === NAO_ENCONTRADO).length;
 
-  const somaCbs = (docs: typeof todos) => docs.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
-  const tipos = Array.from(new Set(noEIP.map(d => d.tipoMovimento)))
-    .map(tipo => {
-      const docs = noEIP.filter(d => d.tipoMovimento === tipo);
-      return {
-        tipo,
-        qtd: docs.length,
-        valor: docs.reduce((acc, d) => acc + paraCentavos(d.valor), 0),
-        cbsEIP: somaCbs(docs),
-        cbsAA: somaCbs(docs.filter(d => d.apuracaoAssistida !== "Não encontrado")),
-      };
-    })
-    .sort((a, b) => b.qtd - a.qtd || a.tipo.localeCompare(b.tipo, "pt-BR"));
+  const encontradosAA = noEIP.filter(d => d.apuracaoAssistida !== "Não encontrado");
+  const cbsIguais = encontradosAA.filter(cbsConfere).length;
+  const docsDiferentes = encontradosAA.filter(d => !cbsConfere(d));
+  const cbsDiferentes = docsDiferentes.length;
 
-  const linha = "w-full text-left rounded px-2 py-1.5 -mx-2 hover:bg-accent text-sm flex flex-wrap items-center gap-x-4 gap-y-1";
+  // Valores de CBS (em centavos) exibidos abaixo de cada item
+  const docsNaoEncontradosAA = noEIP.filter(d => d.apuracaoAssistida === "Não encontrado");
+  const cbsNaoEncontradosAA = docsNaoEncontradosAA.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
+  const cbsNaoEncontradosEIP = Math.round(
+    [...debitosApuracaoAssistida, ...creditosApuracaoAssistida]
+      .filter(d => d.nroUnicoEIP === NAO_ENCONTRADO)
+      .reduce((acc, d) => acc + d.cbsApurado * 100, 0),
+  );
+  const cbsDiferentesApurado = docsDiferentes.reduce((acc, d) => acc + paraCentavos(cbsApuradoDoc(d)), 0);
+  const cbsDiferentesEIP = docsDiferentes.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
+
+  const linha = "w-full text-left rounded px-2 py-1.5 -mx-2 hover:bg-accent text-sm flex flex-wrap items-center gap-x-2 gap-y-1";
+  const sub = "pl-8 -mt-0.5 mb-1 text-xs text-muted-foreground";
   return (
     <div className="bg-card rounded-lg card-shadow border">
       <div className="px-4 py-3 border-b">
@@ -521,18 +554,23 @@ function ConciliacaoDashboard({
         <ul className="pl-4 space-y-0.5">
           <li>
             <button type="button" className={linha} onClick={() => onFiltro({ tipo: "encontrados" })}>
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
               {plural(encontrados, "documento encontrado", "documentos encontrados")}
             </button>
           </li>
           <li>
             <button type="button" className={linha} onClick={() => onFiltro({ tipo: "naoEncontradosAA" })}>
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
               {plural(naoEncontradosAA, "documento não encontrado", "documentos não encontrados")} na Apuração Assistida
             </button>
+            <p className={sub}>Valor total de CBS: <span className="font-mono">{moedaBR(cbsNaoEncontradosAA)}</span></p>
           </li>
           <li>
             <button type="button" className={linha} onClick={onVerNaoEncontradosEIP}>
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
               {plural(naoEncontradosEIP, "documento não encontrado", "documentos não encontrados")} no EIP
             </button>
+            <p className={sub}>Valor total de CBS: <span className="font-mono">{moedaBR(cbsNaoEncontradosEIP)}</span></p>
           </li>
         </ul>
       </section>
@@ -540,16 +578,20 @@ function ConciliacaoDashboard({
       <section>
         <h3 className="text-sm font-semibold text-foreground mb-2">Conciliação de valores</h3>
         <ul className="pl-4 space-y-0.5">
-          {tipos.map(t => (
-            <li key={t.tipo}>
-              <button type="button" className={linha} onClick={() => onFiltro({ tipo: "tipoMovimento", nome: t.tipo })}>
-                <span className="font-medium">{t.tipo} - {t.qtd}</span>
-                <span>Valor total: <span className="font-mono">{moedaBR(t.valor)}</span></span>
-                <span>Valor total CBS EIP: <span className="font-mono">{moedaBR(t.cbsEIP)}</span></span>
-                <span>Valor total CBS Apuração Assistida: <span className="font-mono">{moedaBR(t.cbsAA)}</span></span>
-              </button>
-            </li>
-          ))}
+          <li>
+            <button type="button" className={linha} onClick={() => onFiltro({ tipo: "cbsIguais" })}>
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+              {plural(cbsIguais, "documento com CBS igual", "documentos com CBS iguais")}
+            </button>
+          </li>
+          <li>
+            <button type="button" className={linha} onClick={() => onFiltro({ tipo: "cbsDiferentes" })}>
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
+              {plural(cbsDiferentes, "documento com CBS diferente", "documentos com CBS diferentes")}
+            </button>
+            <p className={sub}>Total CBS apurado: <span className="font-mono">{moedaBR(cbsDiferentesApurado)}</span></p>
+            <p className={sub}>Total CBS EIP: <span className="font-mono">{moedaBR(cbsDiferentesEIP)}</span></p>
+          </li>
         </ul>
       </section>
       </div>
@@ -581,19 +623,23 @@ const colunasDebito: {
 ];
 
 // Grade dos débitos da Apuração Assistida, com o mesmo layout da planilha de referência.
-function DebitoAssistidaGrade({
-  somenteNaoEncontradosEIP,
-  onLimpar,
+function AssistidaGrade({
+  dados,
+  descricao,
+  somenteNaoEncontradosEIP = false,
+  onLimpar = () => {},
 }: {
-  somenteNaoEncontradosEIP: boolean;
-  onLimpar: () => void;
+  dados: DebitoAA[];
+  descricao: string;
+  somenteNaoEncontradosEIP?: boolean;
+  onLimpar?: () => void;
 }) {
   const [filtros, setFiltros] = useState<Partial<Record<ColDebito, string[]>>>({});
   const [ordem, setOrdem] = useState<{ key: ColDebito; dir: "asc" | "desc" } | null>(null);
 
   const valoresColuna = (col: (typeof colunasDebito)[number]) => {
-    const valores = Array.from(new Set(debitosApuracaoAssistida.map(col.texto)));
-    const doc = (v: string) => debitosApuracaoAssistida.find(d => col.texto(d) === v)!;
+    const valores = Array.from(new Set(dados.map(col.texto)));
+    const doc = (v: string) => dados.find(d => col.texto(d) === v)!;
     return valores.sort((a, b) =>
       col.ordem ? col.ordem(doc(a)) - col.ordem(doc(b)) : a.localeCompare(b, "pt-BR", { numeric: true }),
     );
@@ -608,7 +654,7 @@ function DebitoAssistidaGrade({
     });
   }
 
-  const filtrados = debitosApuracaoAssistida
+  const filtrados = dados
     .filter(d => !somenteNaoEncontradosEIP || d.nroUnicoEIP === NAO_ENCONTRADO)
     .filter(d =>
     colunasDebito.every(col => {
@@ -634,7 +680,7 @@ function DebitoAssistidaGrade({
     <div className="bg-card rounded-lg card-shadow border">
       <div className="px-4 py-3 border-b">
         <p className="text-xs text-muted-foreground">
-          Débitos da Apuração Assistida na competência e o documento correspondente no EIP.
+          {descricao}
         </p>
         {somenteNaoEncontradosEIP && (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -694,25 +740,153 @@ function DebitoAssistidaGrade({
       </div>
       <div className="px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20">
         Exibindo <span className="font-medium text-foreground">{linhas.length}</span> de{" "}
-        <span className="font-medium text-foreground">{debitosApuracaoAssistida.length}</span> registros
+        <span className="font-medium text-foreground">{dados.length}</span> registros
       </div>
     </div>
   );
 }
 
-function EmDesenvolvimento({ descricao }: { descricao: string }) {
+const somaReais = (valores: number[]) => Math.round(valores.reduce((a, b) => a + b * 100, 0)) / 100;
+const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function IndicadorTile({ titulo, valor, qtd, percentual }: { titulo: string; valor: number; qtd: number; percentual?: number }) {
+  return (
+    <div className="rounded-md border bg-muted/30 px-4 py-3 min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{titulo}</p>
+        {percentual !== undefined && <span className="text-xs font-semibold text-foreground">{percentual}%</span>}
+      </div>
+      <p className="text-lg font-semibold font-mono mt-1 whitespace-nowrap">{reais(valor)}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{plural(qtd, "documento", "documentos")}</p>
+    </div>
+  );
+}
+
+function IndicadoresSecao({
+  titulo,
+  dados,
+  rotuloSaldo,
+  rotuloBaixado,
+}: {
+  titulo: string;
+  dados: DebitoAA[];
+  rotuloSaldo: string;
+  rotuloBaixado: string;
+}) {
+  const apurado = somaReais(dados.map(d => d.cbsApurado));
+  const saldoLinhas = dados.filter(d => d.cbsSaldoCorrente > 0);
+  const baixadoLinhas = dados.filter(d => d.cbsExtinto > 0);
+  const saldo = somaReais(dados.map(d => d.cbsSaldoCorrente));
+  const baixado = somaReais(dados.map(d => d.cbsExtinto));
+  const pctBaixado = apurado > 0 ? Math.round((baixado / apurado) * 100) : 0;
+  const pctSaldo = 100 - pctBaixado;
+
   return (
     <div className="bg-card rounded-lg card-shadow border">
       <div className="px-4 py-3 border-b">
-        <p className="text-xs text-muted-foreground">{descricao}</p>
+        <h3 className="text-sm font-semibold text-foreground">{titulo}</h3>
       </div>
-      <div className="p-10 text-center text-sm text-muted-foreground">🚧 Em desenvolvimento</div>
+      <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <IndicadorTile titulo="Apurado" valor={apurado} qtd={dados.length} />
+        <IndicadorTile titulo={rotuloSaldo} valor={saldo} qtd={saldoLinhas.length} percentual={pctSaldo} />
+        <IndicadorTile titulo={rotuloBaixado} valor={baixado} qtd={baixadoLinhas.length} percentual={pctBaixado} />
+      </div>
     </div>
   );
 }
 
-function ConciliacaoTab({ onVerNaoEncontradosEIP }: { onVerNaoEncontradosEIP: () => void }) {
-  const [aba, setAba] = useState("resumo");
+function GraficoComparativo({ titulo, apurado, eip }: { titulo: string; apurado: number; eip: number }) {
+  const dados = [
+    { nome: "Apurado (Apuração Assistida)", valor: apurado, cor: "hsl(var(--primary))" },
+    { nome: "EIP", valor: eip, cor: "hsl(var(--muted-foreground))" },
+  ];
+  const diferenca = Math.round((apurado - eip) * 100) / 100;
+
+  return (
+    <div className="rounded-md border bg-muted/20 p-4 min-w-0">
+      <p className="text-sm font-semibold text-foreground">{titulo}</p>
+      <p className="text-xs text-muted-foreground mb-2">
+        Diferença (Apuração Assistida − EIP): <span className="font-mono">{reais(diferenca)}</span>
+      </p>
+      <div className="h-[240px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={dados} margin={{ top: 24, right: 16, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+            <XAxis dataKey="nome" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+            <YAxis
+              tick={{ fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+              width={56}
+              tickFormatter={(v: number) => v.toLocaleString("pt-BR", { notation: "compact" })}
+            />
+            <GraficoTooltip formatter={(v: number) => reais(v)} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+            <Bar dataKey="valor" radius={[4, 4, 0, 0]} maxBarSize={72}>
+              {dados.map(d => (
+                <Cell key={d.nome} fill={d.cor} />
+              ))}
+              <LabelList dataKey="valor" position="top" formatter={(v: number) => reais(v)} style={{ fontSize: 11 }} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function DashboardTab() {
+  const ehEntrada = (tipo: string) => tipo === "Compra" || tipo === "Devolução de Venda";
+  const cbsEIP = (entrada: boolean) =>
+    somaReais(
+      documentosConciliacao
+        .filter(d => ehEntrada(d.tipoMovimento) === entrada)
+        .map(d => paraCentavos(d.totalCBS) / 100),
+    );
+
+  return (
+    <div className="space-y-4">
+      <IndicadoresSecao
+        titulo="Débito"
+        dados={debitosApuracaoAssistida}
+        rotuloSaldo="Saldo devedor"
+        rotuloBaixado="Extinto"
+      />
+      <IndicadoresSecao
+        titulo="Crédito"
+        dados={creditosApuracaoAssistida}
+        rotuloSaldo="A apropriar"
+        rotuloBaixado="Apropriado"
+      />
+      <div className="bg-card rounded-lg card-shadow border">
+        <div className="px-4 py-3 border-b">
+          <h3 className="text-sm font-semibold text-foreground">Apuração Assistida x EIP</h3>
+        </div>
+        <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <GraficoComparativo
+            titulo="Débito apurado x Débito EIP"
+            apurado={somaReais(debitosApuracaoAssistida.map(d => d.cbsApurado))}
+            eip={cbsEIP(false)}
+          />
+          <GraficoComparativo
+            titulo="Crédito apurado x Crédito EIP"
+            apurado={somaReais(creditosApuracaoAssistida.map(d => d.cbsApurado))}
+            eip={cbsEIP(true)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConciliacaoTab({
+  aba,
+  setAba,
+  onVerNaoEncontradosEIP,
+}: {
+  aba: string;
+  setAba: (aba: string) => void;
+  onVerNaoEncontradosEIP: () => void;
+}) {
   const [filtro, setFiltro] = useState<FiltroConciliacao>(null);
 
   function aplicarFiltro(f: NonNullable<FiltroConciliacao>) {
@@ -801,15 +975,60 @@ function OutrasInfosTab() {
   );
 }
 
+// Total de alertas da conciliação: documentos não encontrados (na Apuração Assistida e no EIP) e com CBS diferente
+function totalAlertasConciliacao(): number {
+  const noAA = documentosConciliacao.filter(d => d.apuracaoAssistida !== "Não encontrado");
+  const naoEncontradosAA = documentosConciliacao.length - noAA.length;
+  const naoEncontradosEIP = [...debitosApuracaoAssistida, ...creditosApuracaoAssistida].filter(
+    d => d.nroUnicoEIP === NAO_ENCONTRADO,
+  ).length;
+  const cbsDiferentes = noAA.filter(d => !cbsConfere(d)).length;
+  return naoEncontradosAA + naoEncontradosEIP + cbsDiferentes;
+}
+
+function ApuracaoTopo({ apuracao, onAlertas }: { apuracao: Apuracao; onAlertas: () => void }) {
+  const total = totalAlertasConciliacao();
+  const temAlerta = total > 0;
+  return (
+    <div className="flex flex-wrap items-stretch gap-4 mb-6">
+      <ApuracaoHeaderCard apuracao={apuracao} resumido className="flex-1 min-w-[260px]" />
+      <button
+        type="button"
+        onClick={onAlertas}
+        title={temAlerta ? "Ver o Resumo da conciliação" : "Sem alertas na conciliação"}
+        className="bg-card rounded-lg card-shadow border p-5 min-w-[180px] text-left hover:bg-accent transition-colors"
+      >
+        <p className="text-xs text-muted-foreground mb-1">Total de alertas</p>
+        <div className="flex items-center gap-2">
+          {temAlerta ? (
+            <AlertTriangle className="h-6 w-6 text-warning shrink-0" />
+          ) : (
+            <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
+          )}
+          <span className="text-lg font-semibold text-foreground">{total}</span>
+        </div>
+        {temAlerta && <p className="text-xs text-primary mt-1">Ver resumo da conciliação</p>}
+      </button>
+    </div>
+  );
+}
+
 export default function ApuracaoDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const abaState = (location.state as { tab?: string } | null)?.tab;
-  const [abaPrincipal, setAbaPrincipal] = useState(abaState === "conciliacao" ? "conciliacao" : "apuracao");
+  const [abaPrincipal, setAbaPrincipal] = useState(abaState === "conciliacao" ? "conciliacao" : abaState === "apuracao" ? "apuracao" : "dashboard");
   const [abaAssistida, setAbaAssistida] = useState("debito");
   const [somenteNaoEncontradosEIP, setSomenteNaoEncontradosEIP] = useState(false);
   const apuracao = apuracoes.find((a) => a.id === id) || apuracoes[0];
+
+  const [abaConciliacao, setAbaConciliacao] = useState("resumo");
+
+  function verResumoConciliacao() {
+    setAbaConciliacao("resumo");
+    setAbaPrincipal("conciliacao");
+  }
 
   function verNaoEncontradosEIP() {
     setSomenteNaoEncontradosEIP(true);
@@ -831,12 +1050,18 @@ export default function ApuracaoDetalhe() {
 
       <Tabs value={abaPrincipal} onValueChange={setAbaPrincipal}>
         <TabsList className="bg-muted border mb-4">
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-card data-[state=active]:text-primary">Dashboard</TabsTrigger>
           <TabsTrigger value="apuracao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Apuração Assistida</TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Conciliação EIP</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="dashboard" className="mt-0">
+          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} />
+          <DashboardTab />
+        </TabsContent>
+
         <TabsContent value="apuracao" className="mt-0">
-          <ApuracaoHeaderCard apuracao={apuracao} resumido />
+          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} />
 
           {/* Alert Banner */}
           <AlertBanner alertas={apuracao.alertas} />
@@ -847,14 +1072,22 @@ export default function ApuracaoDetalhe() {
               <TabsTrigger value="credito" className="data-[state=active]:bg-card data-[state=active]:text-primary">Crédito</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="debito" className="mt-4"><DebitoAssistidaGrade somenteNaoEncontradosEIP={somenteNaoEncontradosEIP} onLimpar={() => setSomenteNaoEncontradosEIP(false)} /></TabsContent>
-            <TabsContent value="credito" className="mt-4"><EmDesenvolvimento descricao="Créditos da Apuração Assistida na competência e o documento correspondente no EIP." /></TabsContent>
+            <TabsContent value="debito" className="mt-4"><AssistidaGrade
+                dados={debitosApuracaoAssistida}
+                descricao="Débitos da Apuração Assistida na competência e o documento correspondente no EIP."
+                somenteNaoEncontradosEIP={somenteNaoEncontradosEIP}
+                onLimpar={() => setSomenteNaoEncontradosEIP(false)}
+              /></TabsContent>
+            <TabsContent value="credito" className="mt-4"><AssistidaGrade
+                dados={creditosApuracaoAssistida}
+                descricao="Créditos da Apuração Assistida na competência e o documento correspondente no EIP."
+              /></TabsContent>
           </Tabs>
         </TabsContent>
 
         <TabsContent value="conciliacao" className="mt-0">
-          <ApuracaoHeaderCard apuracao={apuracao} resumido />
-          <ConciliacaoTab onVerNaoEncontradosEIP={verNaoEncontradosEIP} />
+          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} />
+          <ConciliacaoTab aba={abaConciliacao} setAba={setAbaConciliacao} onVerNaoEncontradosEIP={verNaoEncontradosEIP} />
         </TabsContent>
       </Tabs>
     </div>
