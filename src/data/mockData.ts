@@ -79,12 +79,7 @@ export const eventosApuracao = [
   { data: "08/06/2026 10:00:01", tipo: "Venda", documento: "...448023", adquirente: "00.022.542/0001-65", valor: "R$ 250,00", status: "Processado" },
 ];
 
-export type SituacaoAssistida =
-  | "Débito aguardando processamento"
-  | "Débito processado"
-  | "Crédito aguardando processamento"
-  | "Crédito apropriado"
-  | "Não encontrado";
+export type SituacaoAssistida = "Débito" | "Crédito" | "Não encontrado";
 
 export interface DocumentoConciliacao {
   dtNegociacao: string;
@@ -99,7 +94,6 @@ export interface DocumentoConciliacao {
   valor: string;
   totalCBS: string;
   apuracaoAssistida: SituacaoAssistida;
-  existeNoEIP: boolean; // false = existe na Apuração Assistida mas não no ERP (só a Chave DFe é preenchida)
 }
 
 export const documentosConciliacao: DocumentoConciliacao[] = [
@@ -115,8 +109,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260123456789000100550010000012341234567890",
     valor: "R$ 11.300,00",
     totalCBS: "R$ 565,00",
-    apuracaoAssistida: "Débito aguardando processamento",
-    existeNoEIP: true,
+    apuracaoAssistida: "Débito",
   },
   {
     dtNegociacao: "02/11/2026",
@@ -130,8 +123,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260267890100000123550010000022001234567891",
     valor: "R$ 29.800,00",
     totalCBS: "R$ 1.490,00",
-    apuracaoAssistida: "Débito processado",
-    existeNoEIP: true,
+    apuracaoAssistida: "Débito",
   },
   {
     dtNegociacao: "02/11/2026",
@@ -146,7 +138,6 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     valor: "R$ 29.800,00",
     totalCBS: "R$ 1.490,00",
     apuracaoAssistida: "Não encontrado",
-    existeNoEIP: true,
   },
   {
     dtNegociacao: "03/11/2026",
@@ -160,8 +151,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260123456789000100550010000014001234567901",
     valor: "R$ 12.000,00",
     totalCBS: "R$ 600,00",
-    apuracaoAssistida: "Débito processado",
-    existeNoEIP: true,
+    apuracaoAssistida: "Débito",
   },
   {
     dtNegociacao: "04/11/2026",
@@ -175,8 +165,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260123456789000100550010000055001234567800",
     valor: "R$ 8.500,00",
     totalCBS: "R$ 425,00",
-    apuracaoAssistida: "Débito aguardando processamento",
-    existeNoEIP: true,
+    apuracaoAssistida: "Débito",
   },
   {
     dtNegociacao: "05/11/2026",
@@ -190,8 +179,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260267890100000123550010000066011234567810",
     valor: "R$ 15.000,00",
     totalCBS: "R$ 750,00",
-    apuracaoAssistida: "Débito processado",
-    existeNoEIP: true,
+    apuracaoAssistida: "Débito",
   },
   {
     dtNegociacao: "06/11/2026",
@@ -205,8 +193,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260255666777000188550010000052101234567893",
     valor: "R$ 5.100,00",
     totalCBS: "R$ 255,00",
-    apuracaoAssistida: "Crédito apropriado",
-    existeNoEIP: true,
+    apuracaoAssistida: "Crédito",
   },
   {
     dtNegociacao: "07/11/2026",
@@ -220,8 +207,7 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     chaveDFe: "35260288999000000133550010000061001234567892",
     valor: "R$ 21.500,00",
     totalCBS: "R$ 1.075,00",
-    apuracaoAssistida: "Crédito aguardando processamento",
-    existeNoEIP: true,
+    apuracaoAssistida: "Crédito",
   },
   {
     dtNegociacao: "08/11/2026",
@@ -236,37 +222,6 @@ export const documentosConciliacao: DocumentoConciliacao[] = [
     valor: "R$ 8.400,00",
     totalCBS: "R$ 420,00",
     apuracaoAssistida: "Não encontrado",
-    existeNoEIP: true,
-  },
-  {
-    dtNegociacao: "",
-    empresa: "",
-    parceiro: "",
-    cnpjParceiro: "",
-    tipoMovimento: "",
-    finalidade: "",
-    nroUnico: "",
-    numero: "",
-    chaveDFe: "35261112345678000190550010000099011234567810",
-    valor: "",
-    totalCBS: "R$ 380,00",
-    apuracaoAssistida: "Débito processado",
-    existeNoEIP: false,
-  },
-  {
-    dtNegociacao: "",
-    empresa: "",
-    parceiro: "",
-    cnpjParceiro: "",
-    tipoMovimento: "",
-    finalidade: "",
-    nroUnico: "",
-    numero: "",
-    chaveDFe: "35261198765432000110550010000045671234567811",
-    valor: "",
-    totalCBS: "R$ 215,50",
-    apuracaoAssistida: "Crédito apropriado",
-    existeNoEIP: false,
   },
 ];
 

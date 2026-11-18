@@ -22,7 +22,6 @@ import MovimentacoesReceitasMultaJuros from "./pages/MovimentacoesReceitasMultaJ
 import MovimentacoesReceitasPagamentoAntecipado from "./pages/MovimentacoesReceitasPagamentoAntecipado";
 import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
 import MovimentacoesDocumentosMovimento from "./pages/MovimentacoesDocumentosMovimento";
-import ConciliacaoFiscal from "./pages/ConciliacaoFiscal";
 import AlertasPendentes from "./pages/AlertasPendentes";
 import DereCredenciais from "./pages/DereCredenciais";
 import NotFound from "./pages/NotFound";
@@ -85,7 +84,6 @@ const App = () => (
             <Route path={ERoutes.MOVIMENTACOES_RECEITAS_PAGAMENTO_ANTECIPADO} element={<MovimentacoesReceitasPagamentoAntecipado />} />
             <Route path={ERoutes.MOVIMENTACOES_DESPESAS_MOVIMENTO} element={<MovimentacoesDespedasMovimento />} />
             <Route path={ERoutes.MOVIMENTACOES_DOCUMENTOS_MOVIMENTO} element={<MovimentacoesDocumentosMovimento />} />
-            <Route path={ERoutes.APURACAO_CONCILIACAO_FISCAL} element={<ConciliacaoFiscal />} />
             <Route path={ERoutes.ALERTAS_PENDENTES} element={<AlertasPendentes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

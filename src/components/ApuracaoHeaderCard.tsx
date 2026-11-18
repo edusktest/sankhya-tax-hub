@@ -1,7 +1,6 @@
-import { Badge } from "@/components/ui/badge";
 import type { Apuracao } from "@/data/mockData";
 
-export function ApuracaoHeaderCard({ apuracao }: { apuracao: Apuracao }) {
+export function ApuracaoHeaderCard({ apuracao, resumido = false }: { apuracao: Apuracao; resumido?: boolean }) {
   return (
     <div className="bg-card rounded-lg card-shadow border p-5 mb-6">
       <div className="flex items-center justify-between">
@@ -10,17 +9,8 @@ export function ApuracaoHeaderCard({ apuracao }: { apuracao: Apuracao }) {
           <h1 className="text-lg font-semibold text-foreground">{apuracao.periodo}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">{apuracao.razaoSocial}</p>
         </div>
-        <Badge
-          variant="outline"
-          className={
-            apuracao.situacao === "Em andamento"
-              ? "border-warning text-warning bg-warning/10"
-              : "bg-success text-success-foreground"
-          }
-        >
-          {apuracao.situacao}
-        </Badge>
       </div>
+      {!resumido && (
       <div className="mt-3 flex gap-8">
         <div>
           <p className="text-xs text-muted-foreground">Resultado da apuração</p>
@@ -38,6 +28,7 @@ export function ApuracaoHeaderCard({ apuracao }: { apuracao: Apuracao }) {
           }`}>{apuracao.tipoResultado}</p>
         </div>
       </div>
+      )}
     </div>
   );
 }

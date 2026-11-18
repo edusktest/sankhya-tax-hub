@@ -54,7 +54,6 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
         icon: Calculator,
         subItems: [
           { title: "Apurações",          url: ERoutes.APURACAO_CBS                    },
-          { title: "Conciliação Fiscal", url: ERoutes.APURACAO_CONCILIACAO_FISCAL     },
         ],
       },
       {

@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { apuracoes, contasApuracao, outrasInfos, eventosApuracao, documentosConciliacao, contasEmProcessamento } from "@/data/mockData";
+import { debitosApuracaoAssistida, NAO_ENCONTRADO } from "@/data/debitosApuracaoAssistida";
 import { Badge } from "@/components/ui/badge";
 import { ERoutes } from "@/routes/interface";
 import { ApuracaoHeaderCard } from "@/components/ApuracaoHeaderCard";
@@ -164,15 +165,23 @@ function EmConstrucao() {
   );
 }
 
-type FiltroConciliacao = { tipo: "situacao"; nome: string } | { tipo: "foraEIP" } | null;
+type FiltroConciliacao =
+  | { tipo: "encontrados" }
+  | { tipo: "naoEncontradosAA" }
+  | { tipo: "tipoMovimento"; nome: string }
+  | null;
 
-const mesmoFiltro = (a: FiltroConciliacao, b: FiltroConciliacao) =>
-  !!a && !!b && a.tipo === b.tipo && (a.tipo !== "situacao" || (b.tipo === "situacao" && a.nome === b.nome));
+const rotuloFiltro = (f: NonNullable<FiltroConciliacao>) =>
+  f.tipo === "encontrados"
+    ? "Documentos encontrados"
+    : f.tipo === "naoEncontradosAA"
+    ? "Documentos não encontrados na Apuração Assistida"
+    : `Documentos no EIP — ${f.nome}`;
 
 type DocConciliacao = (typeof documentosConciliacao)[number];
 type ColKey =
-  | "apuracaoAssistida" | "existe" | "dt" | "empresa" | "parceiro" | "tipoMovimento"
-  | "finalidade" | "nroUnico" | "numero" | "chaveDFe" | "valor" | "totalCBS";
+  | "apuracaoAssistida" | "dt" | "empresa" | "parceiro" | "tipoMovimento"
+  | "finalidade" | "nroUnico" | "numero" | "chaveDFe" | "valor" | "totalCBS" | "cbsApurado";
 
 const dataParaTs = (v: string) => {
   const [dd, mm, yyyy] = v.split("/").map(Number);
@@ -187,9 +196,16 @@ interface ColunaConciliacao {
   ordem?: (d: DocConciliacao) => number;
 }
 
+// CBS apurado: valor que vem da Apuração Assistida para o documento (vazio quando não foi encontrado nela).
+function cbsApuradoDoc(d: DocConciliacao): string {
+  if (d.apuracaoAssistida === "Não encontrado") return "";
+  const debito = debitosApuracaoAssistida.find(x => x.nroUnicoEIP === d.nroUnico);
+  if (debito) return moedaBR(Math.round(debito.cbsApurado * 100));
+  return d.totalCBS; // crédito: ainda sem base própria na Apuração Assistida, usa o valor do documento
+}
+
 const colunasConciliacao: ColunaConciliacao[] = [
   { key: "apuracaoAssistida", label: "Apuração Assistida", texto: d => d.apuracaoAssistida },
-  { key: "existe", label: "Existe no EIP", texto: d => (d.existeNoEIP ? "Sim" : "Não") },
   { key: "dt", label: "Dt. Negociação", texto: d => d.dtNegociacao, ordem: d => dataParaTs(d.dtNegociacao) },
   { key: "empresa", label: "Empresa", texto: d => d.empresa },
   { key: "parceiro", label: "Parceiro", texto: d => (d.parceiro ? `${d.parceiro} - ${d.cnpjParceiro}` : "") },
@@ -200,6 +216,7 @@ const colunasConciliacao: ColunaConciliacao[] = [
   { key: "chaveDFe", label: "Chave DFe", texto: d => d.chaveDFe },
   { key: "valor", label: "Valor", right: true, texto: d => d.valor, ordem: d => paraCentavos(d.valor) },
   { key: "totalCBS", label: "Total CBS", right: true, texto: d => d.totalCBS, ordem: d => paraCentavos(d.totalCBS) },
+  { key: "cbsApurado", label: "CBS Apurado", right: true, texto: d => cbsApuradoDoc(d), ordem: d => paraCentavos(cbsApuradoDoc(d)) },
 ];
 
 const rotuloValor = (v: string) => (v === "" ? "(Em branco)" : v);
@@ -207,13 +224,15 @@ const rotuloValor = (v: string) => (v === "" ? "(Em branco)" : v);
 // Cabeçalho de coluna com menu de filtro e ordenação, no estilo do Excel.
 function CabecalhoFiltro({
   col,
+  maiusculas = true,
   valores,
   selecionados,
   onSelecionados,
   dirOrdem,
   onOrdem,
 }: {
-  col: ColunaConciliacao;
+  col: { label: string; right?: boolean };
+  maiusculas?: boolean;
   valores: string[];
   selecionados: string[] | undefined;
   onSelecionados: (v: string[] | undefined) => void;
@@ -250,7 +269,7 @@ function CabecalhoFiltro({
         <button
           type="button"
           aria-label={`Filtrar e ordenar ${col.label}`}
-          className={`inline-flex items-center gap-1 uppercase hover:text-foreground ${col.right ? "flex-row-reverse" : ""} ${filtrada || dirOrdem ? "text-primary" : ""}`}
+          className={`inline-flex items-center gap-1 ${maiusculas ? "uppercase" : ""} hover:text-foreground ${col.right ? "flex-row-reverse" : ""} ${filtrada || dirOrdem ? "text-primary" : ""}`}
         >
           {col.label}
           {IconeOrdem && <IconeOrdem className="h-3 w-3" />}
@@ -327,9 +346,10 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
 
   const documentos = documentosConciliacao
     .filter(d => {
-      if (filtro?.tipo === "foraEIP") return !d.existeNoEIP;
-      if (filtro?.tipo === "situacao") return d.existeNoEIP && d.apuracaoAssistida === filtro.nome;
-      return true;
+      if (!filtro) return true;
+      if (filtro.tipo === "encontrados") return d.apuracaoAssistida !== "Não encontrado";
+      if (filtro.tipo === "naoEncontradosAA") return d.apuracaoAssistida === "Não encontrado";
+      return d.tipoMovimento === filtro.nome;
     })
     .filter(d =>
       colunasConciliacao.every(col => {
@@ -358,7 +378,7 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
     <div className="bg-card rounded-lg card-shadow border">
       <div className="px-4 py-3 border-b">
         <p className="text-xs text-muted-foreground">
-          Documentos do ERP (Documentos — Movimento) na competência e a situação de cada um na Apuração Assistida.
+          Documentos do EIP (Documentos — Movimento) na competência e a situação de cada um na Apuração Assistida.
         </p>
         {(filtro || temFiltroColuna) && (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -366,7 +386,7 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
               <>
                 <span className="rounded-full border bg-muted px-2.5 py-0.5 text-foreground">
                   Filtrando por:{" "}
-                  <strong>{filtro.tipo === "foraEIP" ? "Documentos não localizados no EIP" : filtro.nome}</strong>
+                  <strong>{rotuloFiltro(filtro)}</strong>
                 </span>
                 <button type="button" onClick={onLimpar} className="text-primary hover:underline font-medium">
                   Limpar filtro
@@ -410,10 +430,9 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
           {ordenados.map((d, i) => (
             <TableRow
               key={d.chaveDFe + d.nroUnico + i}
-              className={d.existeNoEIP ? "hover:bg-muted/20" : "bg-destructive/10 text-destructive hover:bg-destructive/15"}
+              className="hover:bg-muted/20"
             >
               <TableCell className="text-sm whitespace-nowrap">{d.apuracaoAssistida}</TableCell>
-              <TableCell className="text-sm">{d.existeNoEIP ? "Sim" : "Não"}</TableCell>
               <TableCell className="text-sm whitespace-nowrap">{d.dtNegociacao}</TableCell>
               <TableCell className="text-sm">{d.empresa}</TableCell>
               <TableCell className="text-sm">
@@ -427,12 +446,12 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
               <TableCell className="text-xs font-mono break-all min-w-[200px]">{d.chaveDFe}</TableCell>
               <TableCell className="text-right font-mono text-sm whitespace-nowrap">{d.valor}</TableCell>
               <TableCell className="text-right font-mono text-sm whitespace-nowrap">{d.totalCBS}</TableCell>
+              <TableCell className="text-right font-mono text-sm whitespace-nowrap">{cbsApuradoDoc(d)}</TableCell>
               <TableCell className="text-center">
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={!d.existeNoEIP}
-                  title={d.existeNoEIP ? "Detalhar documento" : "Documento não existe no EIP"}
+                  title="Detalhar documento"
                   aria-label="Detalhar documento"
                   className="text-primary hover:bg-accent"
                   onClick={() =>
@@ -459,108 +478,244 @@ const paraCentavos = (v: string) =>
 const moedaBR = (centavos: number) =>
   (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const plural = (n: number, singular: string, pluralTxt: string) => `${n} ${n === 1 ? singular : pluralTxt}`;
+
 function ConciliacaoDashboard({
-  filtro,
   onFiltro,
+  onVerNaoEncontradosEIP,
 }: {
-  filtro: FiltroConciliacao;
-  onFiltro: (f: FiltroConciliacao) => void;
+  onFiltro: (f: NonNullable<FiltroConciliacao>) => void;
+  onVerNaoEncontradosEIP: () => void;
 }) {
   const todos = documentosConciliacao;
-  const docs = todos.filter(d => d.existeNoEIP);
-  const foraDoEIP = todos.filter(d => !d.existeNoEIP);
-  const foraDoEIPCbs = foraDoEIP.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
-  const total = docs.length;
-  const valorTotal = docs.reduce((acc, d) => acc + paraCentavos(d.valor), 0);
-  const ehEntrada = (tipo: string) => tipo === "Compra" || tipo === "Devolução de Venda";
-  const cbsSaida = docs.filter(d => !ehEntrada(d.tipoMovimento)).reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
-  const cbsEntrada = docs.filter(d => ehEntrada(d.tipoMovimento)).reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
+  const noEIP = todos;
+  const encontrados = noEIP.filter(d => d.apuracaoAssistida !== "Não encontrado").length;
+  const naoEncontradosAA = noEIP.length - encontrados;
+  const naoEncontradosEIP = debitosApuracaoAssistida.filter(d => d.nroUnicoEIP === NAO_ENCONTRADO).length;
 
-  const situacoes = Array.from(new Set(docs.map(d => d.apuracaoAssistida))).map(nome => {
-    const grupo = docs.filter(d => d.apuracaoAssistida === nome);
-    return {
-      nome,
-      qtd: grupo.length,
-      cbs: grupo.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0),
-    };
-  });
+  const somaCbs = (docs: typeof todos) => docs.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
+  const tipos = Array.from(new Set(noEIP.map(d => d.tipoMovimento)))
+    .map(tipo => {
+      const docs = noEIP.filter(d => d.tipoMovimento === tipo);
+      return {
+        tipo,
+        qtd: docs.length,
+        valor: docs.reduce((acc, d) => acc + paraCentavos(d.valor), 0),
+        cbsEIP: somaCbs(docs),
+        cbsAA: somaCbs(docs.filter(d => d.apuracaoAssistida !== "Não encontrado")),
+      };
+    })
+    .sort((a, b) => b.qtd - a.qtd || a.tipo.localeCompare(b.tipo, "pt-BR"));
 
-  const kpis = [
-    { label: "Documentos no EIP", valor: String(total) },
-    { label: "Valor total", valor: moedaBR(valorTotal) },
-    { label: "Total CBS saída", valor: moedaBR(cbsSaida) },
-    { label: "Total CBS entrada", valor: moedaBR(cbsEntrada) },
-  ];
-
+  const linha = "w-full text-left rounded px-2 py-1.5 -mx-2 hover:bg-accent text-sm flex flex-wrap items-center gap-x-4 gap-y-1";
   return (
-    <div className="bg-card rounded-lg card-shadow border p-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        {kpis.map(k => (
-          <div key={k.label} className="rounded-md border bg-muted/30 px-3 py-2.5 min-w-0">
-            <p className="text-[11px] leading-tight text-muted-foreground min-h-[28px]">{k.label}</p>
-            <p className="text-sm font-semibold font-mono mt-1 whitespace-nowrap">{k.valor}</p>
-          </div>
-        ))}
+    <div className="bg-card rounded-lg card-shadow border">
+      <div className="px-4 py-3 border-b">
+        <p className="text-xs text-muted-foreground">
+          Resumo da conciliação entre os documentos do EIP (Documentos — Movimento) na competência e a Apuração Assistida.
+        </p>
       </div>
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-        Documentos no EIP por situação na Apuração Assistida
-      </p>
-      <div className="space-y-2 pl-6">
-        {situacoes.map(sit => {
-          const vermelho = sit.nome === "Não encontrado";
-          const f: FiltroConciliacao = { tipo: "situacao", nome: sit.nome };
-          const ativo = mesmoFiltro(filtro, f);
-          return (
-            <button
-              type="button"
-              key={sit.nome}
-              onClick={() => onFiltro(ativo ? null : f)}
-              aria-pressed={ativo}
-              className={`w-full text-left grid grid-cols-[minmax(0,240px)_1fr_auto] items-center gap-3 text-sm rounded px-2 py-1 -mx-2 hover:bg-muted/60 ${ativo ? "bg-accent" : ""} ${vermelho ? "text-destructive font-medium" : ""}`}
-            >
-              <span className="truncate">{sit.nome}</span>
-              <div className={`h-2 rounded-full overflow-hidden ${vermelho ? "bg-destructive/10" : "bg-muted"}`}>
-                <div
-                  className={`h-full ${vermelho ? "bg-destructive" : "bg-primary"}`}
-                  style={{ width: `${(sit.qtd / todos.length) * 100}%` }}
-                />
-              </div>
-              <span className={`font-mono text-xs whitespace-nowrap ${vermelho ? "" : "text-muted-foreground"}`}>
-                {sit.qtd} doc. · {moedaBR(sit.cbs)}
-              </span>
+      <div className="p-4 space-y-6">
+      <section>
+        <h3 className="text-sm font-semibold text-foreground mb-2">Conciliação de documentos</h3>
+        <ul className="pl-4 space-y-0.5">
+          <li>
+            <button type="button" className={linha} onClick={() => onFiltro({ tipo: "encontrados" })}>
+              {plural(encontrados, "documento encontrado", "documentos encontrados")}
             </button>
-          );
-        })}
-      </div>
+          </li>
+          <li>
+            <button type="button" className={linha} onClick={() => onFiltro({ tipo: "naoEncontradosAA" })}>
+              {plural(naoEncontradosAA, "documento não encontrado", "documentos não encontrados")} na Apuração Assistida
+            </button>
+          </li>
+          <li>
+            <button type="button" className={linha} onClick={onVerNaoEncontradosEIP}>
+              {plural(naoEncontradosEIP, "documento não encontrado", "documentos não encontrados")} no EIP
+            </button>
+          </li>
+        </ul>
+      </section>
 
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-5 mb-2">
-        Documentos na Apuração Assistida não localizados no EIP
-      </p>
-      <div className="pl-6">
-        <button
-          type="button"
-          onClick={() => onFiltro(filtro?.tipo === "foraEIP" ? null : { tipo: "foraEIP" })}
-          aria-pressed={filtro?.tipo === "foraEIP"}
-          className={`w-full text-left grid grid-cols-[minmax(0,240px)_1fr_auto] items-center gap-3 text-sm text-destructive font-medium rounded px-2 py-1 -mx-2 hover:bg-muted/60 ${filtro?.tipo === "foraEIP" ? "bg-accent" : ""}`}
-        >
-          <span className="truncate">Não encontrado</span>
-          <div className="h-2 rounded-full bg-destructive/10 overflow-hidden">
-            <div className="h-full bg-destructive" style={{ width: `${(foraDoEIP.length / todos.length) * 100}%` }} />
-          </div>
-          <span className="font-mono text-xs whitespace-nowrap">
-            {foraDoEIP.length} doc. · {moedaBR(foraDoEIPCbs)}
-          </span>
-        </button>
+      <section>
+        <h3 className="text-sm font-semibold text-foreground mb-2">Conciliação de valores</h3>
+        <ul className="pl-4 space-y-0.5">
+          {tipos.map(t => (
+            <li key={t.tipo}>
+              <button type="button" className={linha} onClick={() => onFiltro({ tipo: "tipoMovimento", nome: t.tipo })}>
+                <span className="font-medium">{t.tipo} - {t.qtd}</span>
+                <span>Valor total: <span className="font-mono">{moedaBR(t.valor)}</span></span>
+                <span>Valor total CBS EIP: <span className="font-mono">{moedaBR(t.cbsEIP)}</span></span>
+                <span>Valor total CBS Apuração Assistida: <span className="font-mono">{moedaBR(t.cbsAA)}</span></span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
       </div>
     </div>
   );
 }
 
-function ConciliacaoTab() {
-  const [filtro, setFiltro] = useState<FiltroConciliacao>(null);
-  const [aba, setAba] = useState("resumo");
+type DebitoAA = (typeof debitosApuracaoAssistida)[number];
+type ColDebito = "periodo" | "origem" | "documento" | "chave" | "emissao" | "registro" | "atualizacao" | "apurado" | "saldo" | "extinto" | "nroEIP";
 
-  function aplicarFiltro(f: FiltroConciliacao) {
+const colunasDebito: {
+  key: ColDebito;
+  label: string;
+  right?: boolean;
+  texto: (d: DebitoAA) => string;
+  ordem?: (d: DebitoAA) => number;
+}[] = [
+  { key: "nroEIP", label: "nro_unico_eip", texto: d => d.nroUnicoEIP },
+  { key: "periodo", label: "periodo_apuracao", texto: d => d.periodoApuracao },
+  { key: "origem", label: "origem", right: true, texto: d => String(d.origem), ordem: d => d.origem },
+  { key: "documento", label: "documento", texto: d => d.documento },
+  { key: "chave", label: "chave_documento", texto: d => d.chaveDocumento },
+  { key: "emissao", label: "data_emissao", texto: d => d.dataEmissao },
+  { key: "registro", label: "data_registro", texto: d => d.dataRegistro },
+  { key: "atualizacao", label: "data_atualizacao", texto: d => d.dataAtualizacao },
+  { key: "apurado", label: "cbs_apurado", right: true, texto: d => String(d.cbsApurado), ordem: d => d.cbsApurado },
+  { key: "saldo", label: "cbs_saldo_corrente", right: true, texto: d => String(d.cbsSaldoCorrente), ordem: d => d.cbsSaldoCorrente },
+  { key: "extinto", label: "cbs_extinto", right: true, texto: d => String(d.cbsExtinto), ordem: d => d.cbsExtinto },
+];
+
+// Grade dos débitos da Apuração Assistida, com o mesmo layout da planilha de referência.
+function DebitoAssistidaGrade({
+  somenteNaoEncontradosEIP,
+  onLimpar,
+}: {
+  somenteNaoEncontradosEIP: boolean;
+  onLimpar: () => void;
+}) {
+  const [filtros, setFiltros] = useState<Partial<Record<ColDebito, string[]>>>({});
+  const [ordem, setOrdem] = useState<{ key: ColDebito; dir: "asc" | "desc" } | null>(null);
+
+  const valoresColuna = (col: (typeof colunasDebito)[number]) => {
+    const valores = Array.from(new Set(debitosApuracaoAssistida.map(col.texto)));
+    const doc = (v: string) => debitosApuracaoAssistida.find(d => col.texto(d) === v)!;
+    return valores.sort((a, b) =>
+      col.ordem ? col.ordem(doc(a)) - col.ordem(doc(b)) : a.localeCompare(b, "pt-BR", { numeric: true }),
+    );
+  };
+
+  function definirFiltro(key: ColDebito, v: string[] | undefined) {
+    setFiltros(prev => {
+      const next = { ...prev };
+      if (v === undefined) delete next[key];
+      else next[key] = v;
+      return next;
+    });
+  }
+
+  const filtrados = debitosApuracaoAssistida
+    .filter(d => !somenteNaoEncontradosEIP || d.nroUnicoEIP === NAO_ENCONTRADO)
+    .filter(d =>
+    colunasDebito.every(col => {
+      const sel = filtros[col.key];
+      return !sel || sel.includes(col.texto(d));
+    }),
+  );
+
+  const linhas = (() => {
+    if (!ordem) return filtrados;
+    const col = colunasDebito.find(c => c.key === ordem.key)!;
+    const mult = ordem.dir === "asc" ? 1 : -1;
+    return [...filtrados].sort((a, b) =>
+      col.ordem
+        ? (col.ordem(a) - col.ordem(b)) * mult
+        : col.texto(a).localeCompare(col.texto(b), "pt-BR", { numeric: true }) * mult,
+    );
+  })();
+
+  const th = "text-[11px] font-semibold tracking-wide text-muted-foreground whitespace-nowrap";
+  const td = "px-4 py-3 text-sm whitespace-nowrap";
+  return (
+    <div className="bg-card rounded-lg card-shadow border">
+      <div className="px-4 py-3 border-b">
+        <p className="text-xs text-muted-foreground">
+          Débitos da Apuração Assistida na competência e o documento correspondente no EIP.
+        </p>
+        {somenteNaoEncontradosEIP && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full border bg-muted px-2.5 py-0.5 text-foreground">
+              Filtrando por: <strong>Documentos não encontrados no EIP</strong>
+            </span>
+            <button type="button" onClick={onLimpar} className="text-primary hover:underline font-medium">
+              Limpar filtro
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="max-h-[560px] overflow-auto">
+        <table className="w-full caption-bottom text-sm">
+          <thead className="sticky top-0 z-10 bg-muted [&_tr]:border-b">
+            <tr className="border-b">
+              {colunasDebito.map(col => (
+                <th key={col.key} className={`h-12 px-4 align-middle ${col.right ? "text-right" : "text-left"} ${th}`}>
+                  <CabecalhoFiltro
+                    col={col}
+                    maiusculas={false}
+                    valores={valoresColuna(col)}
+                    selecionados={filtros[col.key]}
+                    onSelecionados={v => definirFiltro(col.key, v)}
+                    dirOrdem={ordem?.key === col.key ? ordem.dir : null}
+                    onOrdem={dir => setOrdem(dir ? { key: col.key, dir } : null)}
+                  />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="[&_tr:last-child]:border-0">
+            {linhas.map((d, i) => (
+              <tr key={d.chaveDocumento + i} className="border-b transition-colors hover:bg-muted/20">
+                <td className={td}>{d.nroUnicoEIP}</td>
+                <td className={td}>{d.periodoApuracao}</td>
+                <td className={`${td} text-right`}>{d.origem}</td>
+                <td className={td}>{d.documento}</td>
+                <td className={`${td} text-xs font-mono`}>{d.chaveDocumento}</td>
+                <td className={td}>{d.dataEmissao}</td>
+                <td className={td}>{d.dataRegistro}</td>
+                <td className={td}>{d.dataAtualizacao}</td>
+                <td className={`${td} text-right font-mono`}>{d.cbsApurado}</td>
+                <td className={`${td} text-right font-mono`}>{d.cbsSaldoCorrente}</td>
+                <td className={`${td} text-right font-mono`}>{d.cbsExtinto}</td>
+              </tr>
+            ))}
+            {linhas.length === 0 && (
+              <tr>
+                <td colSpan={colunasDebito.length} className="text-center text-sm text-muted-foreground py-8">
+                  Nenhum registro encontrado.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20">
+        Exibindo <span className="font-medium text-foreground">{linhas.length}</span> de{" "}
+        <span className="font-medium text-foreground">{debitosApuracaoAssistida.length}</span> registros
+      </div>
+    </div>
+  );
+}
+
+function EmDesenvolvimento({ descricao }: { descricao: string }) {
+  return (
+    <div className="bg-card rounded-lg card-shadow border">
+      <div className="px-4 py-3 border-b">
+        <p className="text-xs text-muted-foreground">{descricao}</p>
+      </div>
+      <div className="p-10 text-center text-sm text-muted-foreground">🚧 Em desenvolvimento</div>
+    </div>
+  );
+}
+
+function ConciliacaoTab({ onVerNaoEncontradosEIP }: { onVerNaoEncontradosEIP: () => void }) {
+  const [aba, setAba] = useState("resumo");
+  const [filtro, setFiltro] = useState<FiltroConciliacao>(null);
+
+  function aplicarFiltro(f: NonNullable<FiltroConciliacao>) {
     setFiltro(f);
     setAba("documentos");
   }
@@ -571,15 +726,13 @@ function ConciliacaoTab() {
         <TabsList className="bg-muted border">
           <TabsTrigger value="resumo" className="data-[state=active]:bg-card data-[state=active]:text-primary">Resumo da conciliação</TabsTrigger>
           <TabsTrigger value="documentos" className="data-[state=active]:bg-card data-[state=active]:text-primary">Documentos</TabsTrigger>
-          <TabsTrigger value="eventos" className="data-[state=active]:bg-card data-[state=active]:text-primary">Eventos</TabsTrigger>
         </TabsList>
         <TabsContent value="resumo" className="mt-4">
-          <ConciliacaoDashboard filtro={filtro} onFiltro={aplicarFiltro} />
+          <ConciliacaoDashboard onFiltro={aplicarFiltro} onVerNaoEncontradosEIP={onVerNaoEncontradosEIP} />
         </TabsContent>
         <TabsContent value="documentos" className="mt-4">
           <ConciliacaoDocumentos filtro={filtro} onLimpar={() => setFiltro(null)} />
         </TabsContent>
-        <TabsContent value="eventos" className="mt-4"><EmConstrucao /></TabsContent>
       </Tabs>
     </div>
   );
@@ -653,9 +806,16 @@ export default function ApuracaoDetalhe() {
   const navigate = useNavigate();
   const location = useLocation();
   const abaState = (location.state as { tab?: string } | null)?.tab;
-  const abaPrincipal = abaState === "conciliacao" ? "conciliacao" : "apuracao";
-  const abaInicial = abaState && abaState !== "conciliacao" ? abaState : "resultado";
+  const [abaPrincipal, setAbaPrincipal] = useState(abaState === "conciliacao" ? "conciliacao" : "apuracao");
+  const [abaAssistida, setAbaAssistida] = useState("debito");
+  const [somenteNaoEncontradosEIP, setSomenteNaoEncontradosEIP] = useState(false);
   const apuracao = apuracoes.find((a) => a.id === id) || apuracoes[0];
+
+  function verNaoEncontradosEIP() {
+    setSomenteNaoEncontradosEIP(true);
+    setAbaAssistida("debito");
+    setAbaPrincipal("apuracao");
+  }
 
   return (
     <div>
@@ -669,38 +829,33 @@ export default function ApuracaoDetalhe() {
         Voltar
       </Button>
 
-      <Tabs defaultValue={abaPrincipal}>
+      <Tabs value={abaPrincipal} onValueChange={setAbaPrincipal}>
         <TabsList className="bg-muted border mb-4">
           <TabsTrigger value="apuracao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Apuração Assistida</TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Conciliação EIP</TabsTrigger>
         </TabsList>
 
         <TabsContent value="apuracao" className="mt-0">
-          <ApuracaoHeaderCard apuracao={apuracao} />
+          <ApuracaoHeaderCard apuracao={apuracao} resumido />
 
           {/* Alert Banner */}
           <AlertBanner alertas={apuracao.alertas} />
 
-          <Tabs defaultValue={abaInicial}>
+          <Tabs value={abaAssistida} onValueChange={setAbaAssistida}>
             <TabsList className="bg-muted border">
-              <TabsTrigger value="resultado" className="data-[state=active]:bg-card data-[state=active]:text-primary">Resultado</TabsTrigger>
-              <TabsTrigger value="saldo" className="data-[state=active]:bg-card data-[state=active]:text-primary">Saldo Atualizado</TabsTrigger>
-              <TabsTrigger value="eventos" className="data-[state=active]:bg-card data-[state=active]:text-primary">Eventos</TabsTrigger>
-              <TabsTrigger value="processamento" className="data-[state=active]:bg-card data-[state=active]:text-primary">Em Processamento</TabsTrigger>
-              <TabsTrigger value="outras" className="data-[state=active]:bg-card data-[state=active]:text-primary">Outras Informações</TabsTrigger>
-              <TabsTrigger value="naoaproveitados" className="data-[state=active]:bg-card data-[state=active]:text-primary">Não Aproveitados</TabsTrigger>
+              <TabsTrigger value="debito" className="data-[state=active]:bg-card data-[state=active]:text-primary">Débito</TabsTrigger>
+              <TabsTrigger value="credito" className="data-[state=active]:bg-card data-[state=active]:text-primary">Crédito</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="resultado" className="mt-4"><ContasTab /></TabsContent>
-            <TabsContent value="saldo" className="mt-4"><EmConstrucao /></TabsContent>
-            <TabsContent value="eventos" className="mt-4"><EmConstrucao /></TabsContent>
-            <TabsContent value="processamento" className="mt-4"><EmProcessamentoTab apuracaoId={apuracao.id} /></TabsContent>
-            <TabsContent value="outras" className="mt-4"><OutrasInfosTab /></TabsContent>
-            <TabsContent value="naoaproveitados" className="mt-4"><EmConstrucao /></TabsContent>
+            <TabsContent value="debito" className="mt-4"><DebitoAssistidaGrade somenteNaoEncontradosEIP={somenteNaoEncontradosEIP} onLimpar={() => setSomenteNaoEncontradosEIP(false)} /></TabsContent>
+            <TabsContent value="credito" className="mt-4"><EmDesenvolvimento descricao="Créditos da Apuração Assistida na competência e o documento correspondente no EIP." /></TabsContent>
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="conciliacao" className="mt-0"><ConciliacaoTab /></TabsContent>
+        <TabsContent value="conciliacao" className="mt-0">
+          <ApuracaoHeaderCard apuracao={apuracao} resumido />
+          <ConciliacaoTab onVerNaoEncontradosEIP={verNaoEncontradosEIP} />
+        </TabsContent>
       </Tabs>
     </div>
   );

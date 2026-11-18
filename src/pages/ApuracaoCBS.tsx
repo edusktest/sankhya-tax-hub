@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apuracoes } from "@/data/mockData";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, FileDown, AlertTriangle, CheckCircle2, Filter, RefreshCw, ChevronRight } from "lucide-react";
@@ -98,10 +97,6 @@ function ApuracaoLista() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Período</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">CNPJ Raiz</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Razão Social</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Situação</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de Resultado</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Resultado da Apuração</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Saldo atualizado</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Alertas</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Consulta API</TableHead>
@@ -114,37 +109,6 @@ function ApuracaoLista() {
                   <TableCell className="font-medium text-sm">{a.periodo}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{a.cnpjRaiz}</TableCell>
                   <TableCell className="text-sm max-w-[200px] truncate">{a.razaoSocial}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        a.situacao === "Em andamento"
-                          ? "border-warning/60 text-warning bg-warning/10 text-xs font-medium"
-                          : "border-success/50 text-success bg-success/10 text-xs font-medium"
-                      }
-                    >
-                      {a.situacao}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={
-                        a.tipoResultado === "Credor"
-                          ? "text-success font-medium text-sm"
-                          : a.tipoResultado === "Devedor"
-                          ? "text-destructive font-medium text-sm"
-                          : "text-muted-foreground text-sm"
-                      }
-                    >
-                      {a.tipoResultado}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm tabular-nums">
-                    {a.resultadoApuracao}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm font-semibold tabular-nums">
-                    {a.saldoPagarAtual}
-                  </TableCell>
                   <TableCell className="text-center">
                     {a.alertas > 0 ? (
                       <Tooltip>
@@ -239,10 +203,8 @@ export default function ApuracaoCBS() {
       <Tabs defaultValue="producao">
         <TabsList className="bg-muted border mb-4">
           <TabsTrigger value="producao" className="data-[state=active]:bg-card data-[state=active]:text-primary">Produção</TabsTrigger>
-          <TabsTrigger value="restrita" className="data-[state=active]:bg-card data-[state=active]:text-primary">Produção Restrita</TabsTrigger>
         </TabsList>
         <TabsContent value="producao" className="mt-0"><ApuracaoLista /></TabsContent>
-        <TabsContent value="restrita" className="mt-0"><ApuracaoLista /></TabsContent>
       </Tabs>
     </div>
   );
