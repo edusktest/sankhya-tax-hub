@@ -8,12 +8,21 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, CheckCircle2, ChevronRight, Search } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Loader2, Plug, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────
 type Screen = "list" | "wizard";
 type Ambiente = "1" | "2" | null;
+type ServicoKey = "dere" | "assistida";
+type StatusServico = "nao-habilitado" | "nao-configurado" | "configurado";
+
+interface ServicoCredencial {
+  habilitado: boolean; // serviço habilitado para a empresa
+  ambiente: Ambiente;
+  clientId: string | null;
+  clientSecret: string | null;
+}
 
 interface EmpresaCredencial {
   cod: string;
@@ -22,10 +31,24 @@ interface EmpresaCredencial {
   logradouro: string;
   municipio: string;
   cep: string;
-  ambiente: Ambiente;
-  clientId: string | null;
-  clientSecret: string | null;
+  servicos: Record<ServicoKey, ServicoCredencial>;
 }
+
+interface FormServico {
+  ambiente: string;
+  clientId: string;
+  clientSecret: string;
+}
+
+type ResultadoTeste = { estado: "idle" } | { estado: "testando" } | { estado: "ok" } | { estado: "erro"; mensagem: string };
+
+const SERVICOS: { key: ServicoKey; label: string; feminino: boolean; origem: string }[] = [
+  { key: "dere", label: "DeRE", feminino: false, origem: "no portal de acesso ao DeRE" },
+  { key: "assistida", label: "Apuração Assistida", feminino: true, origem: "no portal da Apuração Assistida" },
+];
+
+const naoHabilitado: ServicoCredencial = { habilitado: false, ambiente: null, clientId: null, clientSecret: null };
+const semCredencial: ServicoCredencial = { habilitado: true, ambiente: null, clientId: null, clientSecret: null };
 
 // ── Mock Data ─────────────────────────────────────────────────────
 const MOCK_EMPRESAS: EmpresaCredencial[] = [
@@ -36,9 +59,7 @@ const MOCK_EMPRESAS: EmpresaCredencial[] = [
     logradouro: "Av. Paulista, 1000",
     municipio: "São Paulo – SP",
     cep: "01310-100",
-    ambiente: null,
-    clientId: null,
-    clientSecret: null,
+    servicos: { dere: semCredencial, assistida: semCredencial },
   },
   {
     cod: "002",
@@ -47,9 +68,7 @@ const MOCK_EMPRESAS: EmpresaCredencial[] = [
     logradouro: "Rua da Consolação, 300",
     municipio: "São Paulo – SP",
     cep: "01302-000",
-    ambiente: null,
-    clientId: null,
-    clientSecret: null,
+    servicos: { dere: naoHabilitado, assistida: semCredencial },
   },
   {
     cod: "003",
@@ -58,58 +77,58 @@ const MOCK_EMPRESAS: EmpresaCredencial[] = [
     logradouro: "Av. Brigadeiro Faria Lima, 2500",
     municipio: "São Paulo – SP",
     cep: "01452-000",
-    ambiente: null,
-    clientId: null,
-    clientSecret: null,
+    servicos: {
+      dere: { habilitado: true, ambiente: "1", clientId: "dere-gamma-0003", clientSecret: "segredo-dere-0003" },
+      assistida: { habilitado: true, ambiente: "1", clientId: "aa-gamma-0003", clientSecret: "segredo-aa-0003" },
+    },
+  },
+  {
+    cod: "004",
+    razao: "Delta Capital S.A.",
+    cnpj: "33.222.111/0001-44",
+    logradouro: "Rua Funchal, 411",
+    municipio: "São Paulo – SP",
+    cep: "04551-060",
+    servicos: {
+      dere: { habilitado: true, ambiente: "2", clientId: "dere-delta-0004", clientSecret: "segredo-dere-0004" },
+      assistida: { habilitado: true, ambiente: "1", clientId: "aa-delta-0004", clientSecret: "segredo-aa-0004" },
+    },
   },
 ];
 
-// ── Filter options ─────────────────────────────────────────────────
-const AMBIENTE_OPTS = [
-  { value: "todos",   label: "Todos"              },
-  { value: "nc",      label: "Não configurado"    },
-  { value: "1",       label: "1 – Produção"       },
-  { value: "2",       label: "2 – Prod. Restrita" },
-];
-
-const CREDENCIAL_OPTS = [
-  { value: "todos", label: "Todos"           },
-  { value: "nc",    label: "Não configurada" },
-  { value: "ok",    label: "Configurada"     },
-];
-
-// ── Badges ─────────────────────────────────────────────────────────
-function AmbienteBadge({ ambiente }: { ambiente: Ambiente }) {
-  if (!ambiente) {
-    return (
-      <Badge variant="outline" className="text-xs font-medium border-border text-muted-foreground bg-muted/50">
-        Não configurado
-      </Badge>
-    );
-  }
-  const label = ambiente === "1" ? "1 – Produção" : "2 – Produção Restrita";
-  const cls =
-    ambiente === "1"
-      ? "border-success/50 text-success bg-success/10"
-      : "border-warning/60 text-warning bg-warning/10";
-  return (
-    <Badge variant="outline" className={cn("text-xs font-medium", cls)}>
-      {label}
-    </Badge>
-  );
+// ── Status ────────────────────────────────────────────────────────
+function statusServico(s: ServicoCredencial): StatusServico {
+  if (!s.habilitado) return "nao-habilitado";
+  return s.ambiente && s.clientId && s.clientSecret ? "configurado" : "nao-configurado";
 }
 
-function CredencialBadge({ configurada }: { configurada: boolean }) {
-  if (!configurada) {
-    return (
-      <Badge variant="outline" className="text-xs font-medium border-border text-muted-foreground bg-muted/50">
-        Não configurada
-      </Badge>
-    );
-  }
+function rotuloStatus(s: ServicoCredencial, feminino: boolean): string {
+  const status = statusServico(s);
+  if (status === "nao-habilitado") return feminino ? "Não habilitada" : "Não habilitado";
+  if (status === "nao-configurado") return feminino ? "Não configurada" : "Não configurado";
+  return `Configurado (${s.ambiente === "1" ? "produção" : "produção restrita"})`;
+}
+
+const FILTRO_STATUS_OPTS: { value: string; label: string }[] = [
+  { value: "todos", label: "Todos" },
+  { value: "configurado", label: "Configurado" },
+  { value: "nao-configurado", label: "Não configurado" },
+  { value: "nao-habilitado", label: "Não habilitado" },
+];
+
+function StatusBadge({ servico, feminino }: { servico: ServicoCredencial; feminino: boolean }) {
+  const status = statusServico(servico);
+  const cls =
+    status === "configurado"
+      ? servico.ambiente === "1"
+        ? "border-success/50 text-success bg-success/10"
+        : "border-warning/60 text-warning bg-warning/10"
+      : status === "nao-configurado"
+      ? "border-border text-muted-foreground bg-muted/50"
+      : "border-dashed border-border text-muted-foreground/70 bg-transparent";
   return (
-    <Badge variant="outline" className="text-xs font-medium border-success/50 text-success bg-success/10">
-      Configurada
+    <Badge variant="outline" className={cn("text-xs font-medium whitespace-nowrap", cls)}>
+      {rotuloStatus(servico, feminino)}
     </Badge>
   );
 }
@@ -270,8 +289,11 @@ function InputField({
   );
 }
 
+const formVazio = (): FormServico => ({ ambiente: "", clientId: "", clientSecret: "" });
+const formCompleto = (f: FormServico) => f.ambiente !== "" && f.clientId.trim() !== "" && f.clientSecret.trim() !== "";
+
 // ── Main component ─────────────────────────────────────────────────
-export default function DereCredenciais() {
+export default function Credenciais() {
   const [screen, setScreen] = useState<Screen>("list");
   const [empresas, setEmpresas] = useState<EmpresaCredencial[]>(MOCK_EMPRESAS);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -279,13 +301,14 @@ export default function DereCredenciais() {
 
   // Filters
   const [search, setSearch] = useState("");
-  const [filtroAmbiente, setFiltroAmbiente] = useState("todos");
-  const [filtroCredencial, setFiltroCredencial] = useState("todos");
+  const [filtros, setFiltros] = useState<Record<ServicoKey, string>>({ dere: "todos", assistida: "todos" });
 
-  // Wizard form state
-  const [formAmbiente, setFormAmbiente] = useState<string>("");
-  const [formClientId, setFormClientId] = useState("");
-  const [formClientSecret, setFormClientSecret] = useState("");
+  // Wizard form state (um bloco por serviço)
+  const [forms, setForms] = useState<Record<ServicoKey, FormServico>>({ dere: formVazio(), assistida: formVazio() });
+  const [testes, setTestes] = useState<Record<ServicoKey, ResultadoTeste>>({
+    dere: { estado: "idle" },
+    assistida: { estado: "idle" },
+  });
 
   const filtered = useMemo(() => {
     return empresas.filter((e) => {
@@ -293,26 +316,26 @@ export default function DereCredenciais() {
       if (q && !e.razao.toLowerCase().includes(q) && !e.cnpj.includes(q) && !e.cod.includes(q)) {
         return false;
       }
-      if (filtroAmbiente !== "todos") {
-        if (filtroAmbiente === "nc" && e.ambiente !== null) return false;
-        if (filtroAmbiente === "1" && e.ambiente !== "1") return false;
-        if (filtroAmbiente === "2" && e.ambiente !== "2") return false;
-      }
-      if (filtroCredencial !== "todos") {
-        const cfg = e.clientId !== null && e.clientSecret !== null;
-        if (filtroCredencial === "nc" && cfg) return false;
-        if (filtroCredencial === "ok" && !cfg) return false;
-      }
-      return true;
+      return SERVICOS.every((s) => filtros[s.key] === "todos" || statusServico(e.servicos[s.key]) === filtros[s.key]);
     });
-  }, [empresas, search, filtroAmbiente, filtroCredencial]);
+  }, [empresas, search, filtros]);
+
+  const empresa = selectedIdx !== null ? empresas[selectedIdx] : null;
+  // Etapas: Revisão + um passo por serviço habilitado (2 etapas com 1 serviço, 3 com DeRE e Apuração Assistida)
+  const servicosAtivos = empresa ? SERVICOS.filter((s) => empresa.servicos[s.key].habilitado) : [];
+  const etapas = ["Revisão", ...servicosAtivos.map((s) => s.label)];
+  const servicoAtual = step > 1 ? servicosAtivos[step - 2] : null;
 
   function openWizard(originalIdx: number) {
     const e = empresas[originalIdx];
+    const next = { dere: formVazio(), assistida: formVazio() };
+    SERVICOS.forEach((s) => {
+      const sv = e.servicos[s.key];
+      next[s.key] = { ambiente: sv.ambiente ?? "", clientId: sv.clientId ?? "", clientSecret: sv.clientSecret ?? "" };
+    });
+    setForms(next);
+    setTestes({ dere: { estado: "idle" }, assistida: { estado: "idle" } });
     setSelectedIdx(originalIdx);
-    setFormAmbiente(e.ambiente ?? "");
-    setFormClientId(e.clientId ?? "");
-    setFormClientSecret(e.clientSecret ?? "");
     setStep(1);
     setScreen("wizard");
   }
@@ -326,34 +349,52 @@ export default function DereCredenciais() {
   function handleSave() {
     if (selectedIdx === null) return;
     setEmpresas((prev) =>
-      prev.map((e, i) =>
-        i === selectedIdx
-          ? {
-              ...e,
-              ambiente: (formAmbiente as Ambiente) || null,
-              clientId: formClientId.trim() || null,
-              clientSecret: formClientSecret.trim() || null,
-            }
-          : e
-      )
+      prev.map((e, i) => {
+        if (i !== selectedIdx) return e;
+        const servicos = { ...e.servicos };
+        servicosAtivos.forEach((s) => {
+          const f = forms[s.key];
+          servicos[s.key] = {
+            ...servicos[s.key],
+            ambiente: (f.ambiente as Ambiente) || null,
+            clientId: f.clientId.trim() || null,
+            clientSecret: f.clientSecret.trim() || null,
+          };
+        });
+        return { ...e, servicos };
+      })
     );
-    setScreen("list");
-    setSelectedIdx(null);
-    setStep(1);
+    handleCancel();
   }
 
-  const canSave = formAmbiente !== "";
+  function atualizarForm(key: ServicoKey, campo: keyof FormServico, valor: string) {
+    setForms((prev) => ({ ...prev, [key]: { ...prev[key], [campo]: valor } }));
+    setTestes((prev) => ({ ...prev, [key]: { estado: "idle" } })); // dados mudaram: o teste anterior deixa de valer
+  }
 
-  const empresa = selectedIdx !== null ? empresas[selectedIdx] : null;
+  // Simula a chamada de teste de conexão com as credenciais informadas
+  function testarConexao(key: ServicoKey) {
+    const f = forms[key];
+    setTestes((prev) => ({ ...prev, [key]: { estado: "testando" } }));
+    window.setTimeout(() => {
+      const validas = f.clientId.trim().length >= 8 && f.clientSecret.trim().length >= 8;
+      setTestes((prev) => ({
+        ...prev,
+        [key]: validas
+          ? { estado: "ok" }
+          : { estado: "erro", mensagem: "Falha na autenticação: Client_ID ou Client_Secret inválidos." },
+      }));
+    }, 1200);
+  }
 
   // ── List ──────────────────────────────────────────────────────
   if (screen === "list") {
     return (
       <div className="p-6 space-y-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Credenciais DeRE</h1>
+          <h1 className="text-xl font-semibold text-foreground">Credenciais</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Configure o ambiente e as credenciais para cada empresa habilitada no módulo DeRE.
+            Configure o ambiente e as credenciais de cada empresa para os serviços habilitados (DeRE e Apuração Assistida).
           </p>
         </div>
 
@@ -369,44 +410,27 @@ export default function DereCredenciais() {
             />
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Ambiente:
-              </span>
-              {AMBIENTE_OPTS.map((o) => (
-                <button
-                  key={o.value}
-                  onClick={() => setFiltroAmbiente(o.value)}
-                  className={cn(
-                    "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
-                    filtroAmbiente === o.value
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Credencial:
-              </span>
-              {CREDENCIAL_OPTS.map((o) => (
-                <button
-                  key={o.value}
-                  onClick={() => setFiltroCredencial(o.value)}
-                  className={cn(
-                    "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
-                    filtroCredencial === o.value
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
+            {SERVICOS.map((s) => (
+              <div key={s.key} className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {s.label}:
+                </span>
+                {FILTRO_STATUS_OPTS.map((o) => (
+                  <button
+                    key={o.value}
+                    onClick={() => setFiltros((prev) => ({ ...prev, [s.key]: o.value }))}
+                    className={cn(
+                      "px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors",
+                      filtros[s.key] === o.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background text-muted-foreground border-border hover:bg-muted"
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -415,7 +439,7 @@ export default function DereCredenciais() {
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground w-24">
-                  Cód. Empresa
+                  Empresa
                 </TableHead>
                 <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Razão Social
@@ -424,10 +448,10 @@ export default function DereCredenciais() {
                   CNPJ
                 </TableHead>
                 <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Ambiente
+                  Dere
                 </TableHead>
                 <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Credencial
+                  Apuração Assistida
                 </TableHead>
                 <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Ações
@@ -444,25 +468,27 @@ export default function DereCredenciais() {
               ) : (
                 filtered.map((e) => {
                   const originalIdx = empresas.indexOf(e);
-                  const configurada = e.clientId !== null && e.clientSecret !== null;
+                  const habilitados = SERVICOS.filter((s) => e.servicos[s.key].habilitado);
+                  const algumConfigurado = habilitados.some((s) => statusServico(e.servicos[s.key]) === "configurado");
                   return (
                     <TableRow key={e.cod} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-mono text-sm">{e.cod}</TableCell>
                       <TableCell className="text-sm">{e.razao}</TableCell>
                       <TableCell className="font-mono text-sm text-muted-foreground">{e.cnpj}</TableCell>
-                      <TableCell>
-                        <AmbienteBadge ambiente={e.ambiente} />
-                      </TableCell>
-                      <TableCell>
-                        <CredencialBadge configurada={configurada} />
-                      </TableCell>
+                      {SERVICOS.map((s) => (
+                        <TableCell key={s.key}>
+                          <StatusBadge servico={e.servicos[s.key]} feminino={s.feminino} />
+                        </TableCell>
+                      ))}
                       <TableCell>
                         <Button
                           size="sm"
                           className="h-7 text-xs px-3"
+                          disabled={habilitados.length === 0}
+                          title={habilitados.length === 0 ? "Nenhum serviço habilitado para a empresa" : undefined}
                           onClick={() => openWizard(originalIdx)}
                         >
-                          {configurada ? "Editar" : "Iniciar"}
+                          {algumConfigurado ? "Editar" : "Iniciar"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -479,25 +505,30 @@ export default function DereCredenciais() {
   // ── Wizard ────────────────────────────────────────────────────
   if (!empresa) return null;
 
+  const ultimaEtapa = step === etapas.length;
+  const formAtual = servicoAtual ? forms[servicoAtual.key] : null;
+  const testeAtual = servicoAtual ? testes[servicoAtual.key] : null;
+  const podeAvancar = servicoAtual ? formCompleto(forms[servicoAtual.key]) : true;
+
   return (
     <div className="p-6">
       <WizardHeader
-        breadcrumb={["DeRE", "Credenciais", empresa.razao]}
-        title={step === 1 ? "Revisão dos Dados da Empresa" : "Ambiente e Credenciais"}
+        breadcrumb={["Configurações", "Empresas", "Credenciais", empresa.razao]}
+        title={servicoAtual ? `${servicoAtual.label} — Ambiente e Credenciais` : "Revisão dos Dados da Empresa"}
         onCancel={handleCancel}
-        onBack={step === 2 ? () => setStep(1) : undefined}
-        onNext={step === 1 ? () => setStep(2) : handleSave}
-        nextLabel={step === 1 ? "Avançar" : "Salvar"}
-        nextDisabled={step === 2 && !canSave}
+        onBack={step > 1 ? () => setStep(step - 1) : undefined}
+        onNext={ultimaEtapa ? handleSave : () => setStep(step + 1)}
+        nextLabel={ultimaEtapa ? "Salvar" : "Avançar"}
+        nextDisabled={!podeAvancar}
       />
 
       <div className="max-w-2xl mx-auto">
-        <StepsBar steps={["Revisão", "Ambiente e Credenciais"]} current={step} />
+        <StepsBar steps={etapas} current={step} />
 
         {step === 1 && (
           <div className="space-y-6">
             <p className="text-sm text-muted-foreground">
-              Confirme os dados cadastrais da empresa antes de configurar o acesso ao DeRE.
+              Confirme os dados cadastrais da empresa antes de configurar o acesso aos serviços.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -512,10 +543,22 @@ export default function DereCredenciais() {
                 <Field label="Município" value={empresa.municipio} />
               </div>
             </div>
+            <div className="space-y-2">
+              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                Serviços habilitados
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {servicosAtivos.map((s) => (
+                  <Badge key={s.key} variant="outline" className="text-xs border-success/50 text-success bg-success/10">
+                    {s.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {step === 2 && (
+        {servicoAtual && formAtual && testeAtual && (
           <div className="space-y-8">
             {/* Ambiente */}
             <div className="space-y-4">
@@ -524,9 +567,12 @@ export default function DereCredenciais() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                  Ambiente DeRE<span className="text-destructive ml-0.5">*</span>
+                  Ambiente {servicoAtual.label}<span className="text-destructive ml-0.5">*</span>
                 </label>
-                <Select value={formAmbiente} onValueChange={setFormAmbiente}>
+                <Select
+                  value={formAtual.ambiente}
+                  onValueChange={(v) => atualizarForm(servicoAtual.key, "ambiente", v)}
+                >
                   <SelectTrigger className="h-9 text-sm">
                     <SelectValue placeholder="Selecione o ambiente..." />
                   </SelectTrigger>
@@ -545,21 +591,54 @@ export default function DereCredenciais() {
               </div>
               <InputField
                 label="Client_ID"
-                value={formClientId}
-                onChange={setFormClientId}
+                required
+                value={formAtual.clientId}
+                onChange={(v) => atualizarForm(servicoAtual.key, "clientId", v)}
                 placeholder="Informe o Client ID fornecido pela Receita Federal"
               />
               <InputField
                 label="Client_Secret"
-                value={formClientSecret}
-                onChange={setFormClientSecret}
+                required
+                value={formAtual.clientSecret}
+                onChange={(v) => atualizarForm(servicoAtual.key, "clientSecret", v)}
                 placeholder="Informe o Client Secret fornecido pela Receita Federal"
                 type="password"
               />
               <p className="text-[11px] text-muted-foreground">
-                As credenciais são fornecidas pela Receita Federal no portal de acesso ao DeRE.
+                As credenciais são fornecidas pela Receita Federal {servicoAtual.origem}.
                 Mantenha-as seguras e não as compartilhe.
               </p>
+
+              {/* Testar conexão */}
+              <div className="space-y-3 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!podeAvancar || testeAtual.estado === "testando"}
+                  onClick={() => testarConexao(servicoAtual.key)}
+                >
+                  {testeAtual.estado === "testando" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plug className="h-4 w-4" />
+                  )}
+                  {testeAtual.estado === "testando" ? "Testando conexão..." : "Testar conexão"}
+                </Button>
+
+                {testeAtual.estado === "ok" && (
+                  <div className="flex items-center gap-2 rounded-md border border-success/50 bg-success/10 px-3 py-2 text-sm text-success">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    Conexão realizada com sucesso. As credenciais estão funcionando.
+                  </div>
+                )}
+                {testeAtual.estado === "erro" && (
+                  <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    {testeAtual.mensagem}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

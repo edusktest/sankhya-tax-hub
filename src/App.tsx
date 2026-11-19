@@ -24,7 +24,7 @@ import MovimentacoesReceitasPagamentoAntecipado from "./pages/MovimentacoesRecei
 import MovimentacoesDespedasMovimento from "./pages/MovimentacoesDespedasMovimento";
 import MovimentacoesDocumentosMovimento from "./pages/MovimentacoesDocumentosMovimento";
 import AlertasPendentes from "./pages/AlertasPendentes";
-import DereCredenciais from "./pages/DereCredenciais";
+import Credenciais from "./pages/Credenciais";
 import NotFound from "./pages/NotFound";
 import { ERoutes } from "@/routes/interface";
 
@@ -62,7 +62,6 @@ const App = () => (
             <Route path={ERoutes.APURACAO_DERE_D1001} element={<ApuracaoDere initialScreen="d1001-list" />} />
             <Route path={ERoutes.APURACAO_DERE_D1011} element={<ApuracaoDere initialScreen="d1011-list" />} />
             <Route path={ERoutes.APURACAO_DERE_HISTORICO} element={<ApuracaoDere initialScreen="historico" />} />
-            <Route path={ERoutes.APURACAO_DERE_CREDENCIAIS} element={<DereCredenciais />} />
             <Route path={ERoutes.GESTAO_EVENTOS} element={<PlaceholderPage />} />
             <Route path={ERoutes.PROCESSOS} element={<PlaceholderPage />} />
             <Route path={ERoutes.FINANCEIRO} element={<PlaceholderPage />} />
@@ -72,6 +71,7 @@ const App = () => (
             <Route path={ERoutes.CONFIG_ASSISTENTE_NFE_DEBITO}  element={<AssistenteNfeDebitoPage />}   />
             <Route path={ERoutes.CONFIG_ASSISTENTE_NFE_CREDITO} element={<AssistenteNfeCreditoPage />}  />
             <Route path={ERoutes.CONFIG_EMPRESAS} element={<ConfigEmpresasPage />} />
+            <Route path={ERoutes.CONFIG_EMPRESAS_CREDENCIAIS} element={<Credenciais />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_CBS} element={<PlaceholderPage />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_IBS} element={<PlaceholderPage />} />
             <Route path={ERoutes.CONFIG_ALIQUOTAS_IS} element={<PlaceholderPage />} />

@@ -65,7 +65,6 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
         subItems: [
           { title: "D1001 – Inf. Contribuinte", url: ERoutes.APURACAO_DERE_D1001      },
           { title: "Histórico de Eventos",       url: ERoutes.APURACAO_DERE_HISTORICO  },
-          { title: "Credenciais",                url: ERoutes.APURACAO_DERE_CREDENCIAIS },
         ],
       },
     ],
@@ -73,7 +72,15 @@ const menuGroups: { group: string; items: MenuItem[] }[] = [
   {
     group: "Configurações",
     items: [
-      { title: "Empresas", url: ERoutes.CONFIG_EMPRESAS, icon: Building2 },
+      {
+        title: "Empresas",
+        url: ERoutes.CONFIG_EMPRESAS,
+        icon: Building2,
+        subItems: [
+          { title: "Empresas",    url: ERoutes.CONFIG_EMPRESAS },
+          { title: "Credenciais", url: ERoutes.CONFIG_EMPRESAS_CREDENCIAIS },
+        ],
+      },
       {
         title: "Assistentes",
         url: ERoutes.TRIBUTACAO_INTEGRAL,
