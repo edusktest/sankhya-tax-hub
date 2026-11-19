@@ -9,6 +9,8 @@ export interface Apuracao {
   saldoPagarAtual: string;
   alertas: number;
   ultimaConsulta: string;
+  ultimaDataApi: string; // data do último documento disponível na API
+  consultaRealizada?: boolean; // false = não houve consulta na Apuração Assistida
 }
 
 export interface ContaApuracao {
@@ -41,7 +43,22 @@ export const apuracoes: Apuracao[] = [
     resultadoApuracao: "R$ 750,00 D",
     saldoPagarAtual: "R$ 750,00",
     alertas: 0,
-    ultimaConsulta: "17/11/2026 às 08:32",
+    ultimaConsulta: "2026-11-17T08:32:07.418-03:00",
+    ultimaDataApi: "2026-11-16T16:23:54.732-03:00",
+  },
+  {
+    id: "2",
+    periodo: "OUT/2026",
+    cnpjRaiz: "12.345.678",
+    razaoSocial: "Sankhya Tecnologia em Sistemas S.A.",
+    situacao: "Concluído",
+    tipoResultado: "-",
+    resultadoApuracao: "R$ 0,00",
+    saldoPagarAtual: "R$ 0,00",
+    alertas: 0,
+    ultimaConsulta: "",
+    ultimaDataApi: "",
+    consultaRealizada: false,
   },
 ];
 
@@ -79,7 +96,7 @@ export const eventosApuracao = [
   { data: "08/06/2026 10:00:01", tipo: "Venda", documento: "...448023", adquirente: "00.022.542/0001-65", valor: "R$ 250,00", status: "Processado" },
 ];
 
-export type SituacaoAssistida = "Débito" | "Crédito" | "Não encontrado";
+export type SituacaoAssistida = "Débito" | "Crédito" | "Não encontrado" | "Consulta não realizada";
 
 export interface DocumentoConciliacao {
   dtNegociacao: string;
@@ -232,4 +249,78 @@ export const contasEmProcessamento: ContaApuracao[] = [
   { conta: "Documentos fiscais aguardando aceite", valorCBS: "R$ 0,00", level: 1, hasDetail: true, enabled: false },
   { conta: "Débitos de fatos geradores futuros", valorCBS: "R$ 0,00", hasDetail: true, enabled: false },
   { conta: "Créditos de fatos geradores futuros", valorCBS: "R$ 382,67 C", hasDetail: true, enabled: true, tone: "credito" },
+];
+
+// Documentos do EIP em OUT/2026: não houve consulta na Apuração Assistida nessa competência.
+export const documentosConciliacaoOutubro: DocumentoConciliacao[] = [
+  {
+    dtNegociacao: "05/10/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    parceiro: "Indústria Central Ltda",
+    cnpjParceiro: "44.555.666/0001-22",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "700.001",
+    numero: "3050",
+    chaveDFe: "35260244555666000122550010000030501234567896",
+    valor: "R$ 18.600,00",
+    totalCBS: "R$ 930,00",
+    apuracaoAssistida: "Consulta não realizada",
+  },
+  {
+    dtNegociacao: "08/10/2026",
+    empresa: "003 - Distribuidora Norte Ltda",
+    parceiro: "Atacado Regional Ltda",
+    cnpjParceiro: "33.444.555/0001-99",
+    tipoMovimento: "Venda",
+    finalidade: "Normal",
+    nroUnico: "900.001",
+    numero: "3200",
+    chaveDFe: "35260233444555000199550010000032001234567898",
+    valor: "R$ 8.400,00",
+    totalCBS: "R$ 420,00",
+    apuracaoAssistida: "Consulta não realizada",
+  },
+  {
+    dtNegociacao: "12/10/2026",
+    empresa: "001 - Sankhya Gestão de Negócios Ltda",
+    parceiro: "Grupo Nexus S.A.",
+    cnpjParceiro: "23.456.789/0001-01",
+    tipoMovimento: "Devolução de Venda",
+    finalidade: "Devolução",
+    nroUnico: "100.009",
+    numero: "1310",
+    chaveDFe: "35260123456789000100550010000013101234567894",
+    valor: "R$ 5.650,00",
+    totalCBS: "R$ 282,50",
+    apuracaoAssistida: "Consulta não realizada",
+  },
+  {
+    dtNegociacao: "19/10/2026",
+    empresa: "002 - Sankhya São Paulo S.A.",
+    parceiro: "Indústria Central Ltda",
+    cnpjParceiro: "44.555.666/0001-22",
+    tipoMovimento: "Devolução de Venda",
+    finalidade: "Devolução",
+    nroUnico: "800.001",
+    numero: "3100",
+    chaveDFe: "35260244555666000122550010000031001234567897",
+    valor: "R$ 18.600,00",
+    totalCBS: "R$ 930,00",
+    apuracaoAssistida: "Consulta não realizada",
+  },
+  {
+    dtNegociacao: "26/10/2026",
+    empresa: "003 - Distribuidora Norte Ltda",
+    parceiro: "Atacado Regional Ltda",
+    cnpjParceiro: "33.444.555/0001-99",
+    tipoMovimento: "Devolução de Venda",
+    finalidade: "Devolução",
+    nroUnico: "950.001",
+    numero: "3250",
+    chaveDFe: "35260233444555000199550010000032501234567899",
+    valor: "R$ 3.360,00",
+    totalCBS: "R$ 168,00",
+    apuracaoAssistida: "Consulta não realizada",
+  },
 ];

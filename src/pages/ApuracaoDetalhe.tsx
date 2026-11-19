@@ -1,18 +1,21 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { apuracoes, contasApuracao, outrasInfos, eventosApuracao, documentosConciliacao, contasEmProcessamento } from "@/data/mockData";
+import { apuracoes, contasApuracao, outrasInfos, eventosApuracao, documentosConciliacao, documentosConciliacaoOutubro, contasEmProcessamento } from "@/data/mockData";
 import { debitosApuracaoAssistida, creditosApuracaoAssistida, NAO_ENCONTRADO } from "@/data/debitosApuracaoAssistida";
 import { Badge } from "@/components/ui/badge";
 import { ERoutes } from "@/routes/interface";
+import { totalAlertasConciliacao } from "@/data/alertasConciliacao";
 import { ApuracaoHeaderCard } from "@/components/ApuracaoHeaderCard";
 import type { Apuracao } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Filter, Search, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Download, Filter, Search, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip as GraficoTooltip, XAxis, YAxis } from "recharts";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -206,16 +209,19 @@ interface ColunaConciliacao {
 
 // CBS apurado: valor que vem da Apuração Assistida para o documento (vazio quando não foi encontrado nela).
 function cbsApuradoDoc(d: DocConciliacao): string {
-  if (d.apuracaoAssistida === "Não encontrado") return "";
+  if (semConsulta(d) || d.apuracaoAssistida === "Não encontrado") return "";
   const linha = [...debitosApuracaoAssistida, ...creditosApuracaoAssistida].find(x => x.nroUnicoEIP === d.nroUnico);
   if (linha) return moedaBR(Math.round(linha.cbsApurado * 100));
   return d.totalCBS;
 }
 
 const SEM_ALERTA = "Sem alerta";
+const CONSULTA_NAO_REALIZADA = "Consulta não realizada";
+const semConsulta = (d: DocConciliacao) => d.apuracaoAssistida === CONSULTA_NAO_REALIZADA;
 
 // Motivo do alerta do documento (ou "Sem alerta")
 function alertaDoc(d: DocConciliacao): string {
+  if (semConsulta(d)) return "";
   if (d.apuracaoAssistida === "Não encontrado") return "Documento não encontrado na Apuração Assistida";
   if (!cbsConfere(d)) return "CBS do EIP diferente do CBS apurado";
   return SEM_ALERTA;
@@ -223,7 +229,7 @@ function alertaDoc(d: DocConciliacao): string {
 
 const colunasConciliacao: ColunaConciliacao[] = [
   { key: "alertas", label: "Alertas", texto: d => alertaDoc(d) },
-  { key: "apuracaoAssistida", label: "Apuração Assistida", texto: d => d.apuracaoAssistida },
+  { key: "apuracaoAssistida", label: "Apuração Assistida", texto: d => (semConsulta(d) ? "" : d.apuracaoAssistida) },
   { key: "dt", label: "Dt. Negociação", texto: d => d.dtNegociacao, ordem: d => dataParaTs(d.dtNegociacao) },
   { key: "empresa", label: "Empresa", texto: d => d.empresa },
   { key: "parceiro", label: "Parceiro", texto: d => (d.parceiro ? `${d.parceiro} - ${d.cnpjParceiro}` : "") },
@@ -335,16 +341,72 @@ function CabecalhoFiltro({
   );
 }
 
-function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao; onLimpar: () => void }) {
+const chaveLinha = (d: DocConciliacao) => `${d.nroUnico}|${d.chaveDFe}`;
+
+const csvTexto = (v: string) => `"${v.replace(/"/g, '""')}"`;
+// Excel converte números longos em notação científica; ="..." força texto
+const csvTextoExcel = (v: string) => (v ? `="${v}"` : "");
+const csvNumero = (v: string) => (v ? (paraCentavos(v) / 100).toFixed(2).replace(".", ",") : "");
+
+function gerarCsvDocumentos(docs: DocConciliacao[]): string {
+  const cabecalho = [
+    "Alertas", "Apuração Assistida", "Dt. Negociação", "Empresa", "Parceiro", "CNPJ Parceiro",
+    "Tipo de Movimento", "Finalidade", "Nro Único", "Número", "Chave DFe", "Valor", "Total CBS", "CBS Apurado",
+  ];
+  const linhas = docs.map(d => [
+    csvTexto(alertaDoc(d)),
+    csvTexto(semConsulta(d) ? "" : d.apuracaoAssistida),
+    csvTexto(d.dtNegociacao),
+    csvTexto(d.empresa),
+    csvTexto(d.parceiro),
+    csvTexto(d.cnpjParceiro),
+    csvTexto(d.tipoMovimento),
+    csvTexto(d.finalidade),
+    csvTextoExcel(d.nroUnico),
+    csvTexto(d.numero),
+    csvTextoExcel(d.chaveDFe),
+    csvNumero(d.valor),
+    csvNumero(d.totalCBS),
+    csvNumero(cbsApuradoDoc(d)),
+  ]);
+  return [cabecalho.map(csvTexto), ...linhas].map(l => l.join(";")).join("\r\n");
+}
+
+function baixarCsv(nomeArquivo: string, conteudo: string) {
+  const blob = new Blob(["\uFEFF" + conteudo], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function ConciliacaoDocumentos({
+  base,
+  filtro,
+  onLimpar,
+  competencia,
+}: {
+  base: DocConciliacao[];
+  filtro: FiltroConciliacao;
+  onLimpar: () => void;
+  competencia: string;
+}) {
   const navigate = useNavigate();
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [exportarAberto, setExportarAberto] = useState(false);
+  const [modoExportacao, setModoExportacao] = useState<"selecionados" | "competencia">("competencia");
   const [filtrosColuna, setFiltrosColuna] = useState<Partial<Record<ColKey, string[]>>>({});
   const [ordem, setOrdem] = useState<{ key: ColKey; dir: "asc" | "desc" } | null>(null);
 
   const temFiltroColuna = Object.values(filtrosColuna).some(v => v !== undefined);
 
   const valoresColuna = (col: ColunaConciliacao) => {
-    const valores = Array.from(new Set(documentosConciliacao.map(col.texto)));
-    const doc = (v: string) => documentosConciliacao.find(d => col.texto(d) === v)!;
+    const valores = Array.from(new Set(base.map(col.texto)));
+    const doc = (v: string) => base.find(d => col.texto(d) === v)!;
     return valores.sort((a, b) => {
       if (a === "") return 1; // "(Em branco)" por último
       if (b === "") return -1;
@@ -362,7 +424,7 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
     });
   }
 
-  const documentos = documentosConciliacao
+  const documentos = base
     .filter(d => {
       if (!filtro) return true;
       if (filtro.tipo === "encontrados") return d.apuracaoAssistida !== "Não encontrado";
@@ -392,13 +454,66 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
     });
   })();
 
+  // Totais dos documentos exibidos (respeitam os filtros aplicados)
+  const totalCbs = ordenados.reduce((acc, d) => acc + paraCentavos(d.totalCBS), 0);
+  const totalCbsApurado = ordenados.reduce((acc, d) => acc + paraCentavos(cbsApuradoDoc(d)), 0);
+
+  const todosMarcados = ordenados.length > 0 && ordenados.every(d => selecionados.has(chaveLinha(d)));
+  const algunsMarcados = ordenados.some(d => selecionados.has(chaveLinha(d)));
+
+  function alternarLinha(d: DocConciliacao) {
+    setSelecionados(prev => {
+      const next = new Set(prev);
+      const k = chaveLinha(d);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  }
+
+  function alternarTodos() {
+    setSelecionados(prev => {
+      const next = new Set(prev);
+      if (todosMarcados) ordenados.forEach(d => next.delete(chaveLinha(d)));
+      else ordenados.forEach(d => next.add(chaveLinha(d)));
+      return next;
+    });
+  }
+
+  function abrirExportacao() {
+    setModoExportacao(selecionados.size > 0 ? "selecionados" : "competencia");
+    setExportarAberto(true);
+  }
+
+  function exportar() {
+    const docs =
+      modoExportacao === "selecionados"
+        ? base.filter(d => selecionados.has(chaveLinha(d)))
+        : base;
+    baixarCsv(`documentos-conciliacao-${competencia.replace("/", "-")}.csv`, gerarCsvDocumentos(docs));
+    setExportarAberto(false);
+  }
+
   const th = "text-[11px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap";
   return (
     <div className="bg-card rounded-lg card-shadow border">
       <div className="px-4 py-3 border-b">
-        <p className="text-xs text-muted-foreground">
-          Documentos do EIP (Documentos — Movimento) na competência e a situação de cada um na Apuração Assistida.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            Documentos do EIP (Documentos — Movimento) na competência e a situação de cada um na Apuração Assistida.
+          </p>
+          <div className="flex items-center gap-3">
+            {selecionados.size > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {plural(selecionados.size, "selecionado", "selecionados")}
+              </span>
+            )}
+            <Button variant="outline" size="sm" className="gap-1.5 text-primary border-primary hover:bg-accent" onClick={abrirExportacao}>
+              <Download className="h-3.5 w-3.5" />
+              Exportar
+            </Button>
+          </div>
+        </div>
         {(filtro || temFiltroColuna) && (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             {filtro && (
@@ -423,6 +538,13 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
+            <TableHead className="w-10">
+              <Checkbox
+                checked={todosMarcados ? true : algunsMarcados ? "indeterminate" : false}
+                onCheckedChange={alternarTodos}
+                aria-label="Selecionar todos os documentos exibidos"
+              />
+            </TableHead>
             {colunasConciliacao.map(col => (
               <TableHead key={col.key} className={`${th} ${col.right ? "text-right" : ""}`}>
                 <CabecalhoFiltro
@@ -441,7 +563,7 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
         <TableBody>
           {ordenados.length === 0 && (
             <TableRow>
-              <TableCell colSpan={colunasConciliacao.length + 1} className="text-center text-sm text-muted-foreground py-8">
+              <TableCell colSpan={colunasConciliacao.length + 2} className="text-center text-sm text-muted-foreground py-8">
                 Nenhum documento encontrado.
               </TableCell>
             </TableRow>
@@ -451,8 +573,15 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
               key={d.chaveDFe + d.nroUnico + i}
               className="hover:bg-muted/20"
             >
+              <TableCell className="w-10">
+                <Checkbox
+                  checked={selecionados.has(chaveLinha(d))}
+                  onCheckedChange={() => alternarLinha(d)}
+                  aria-label={`Selecionar documento ${d.nroUnico}`}
+                />
+              </TableCell>
               <TableCell className="text-sm">
-                {alertaDoc(d) !== SEM_ALERTA ? (
+                {semConsulta(d) ? null : alertaDoc(d) !== SEM_ALERTA ? (
                   <span title={alertaDoc(d)} className="inline-flex text-warning" aria-label={alertaDoc(d)}>
                     <AlertTriangle className="h-4 w-4" />
                   </span>
@@ -462,7 +591,7 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
                   </span>
                 )}
               </TableCell>
-              <TableCell className="text-sm whitespace-nowrap">{d.apuracaoAssistida}</TableCell>
+              <TableCell className="text-sm whitespace-nowrap">{semConsulta(d) ? "" : d.apuracaoAssistida}</TableCell>
               <TableCell className="text-sm whitespace-nowrap">{d.dtNegociacao}</TableCell>
               <TableCell className="text-sm">{d.empresa}</TableCell>
               <TableCell className="text-sm">
@@ -495,10 +624,59 @@ function ConciliacaoDocumentos({ filtro, onLimpar }: { filtro: FiltroConciliacao
           ))}
         </TableBody>
       </Table>
-      <div className="px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20">
-        Exibindo <span className="font-medium text-foreground">{ordenados.length}</span> de{" "}
-        <span className="font-medium text-foreground">{documentosConciliacao.length}</span> documentos
+      <div className="px-4 py-2.5 border-t text-[11px] text-muted-foreground bg-muted/20 flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+        <span>
+          Exibindo <span className="font-medium text-foreground">{ordenados.length}</span> de{" "}
+          <span className="font-medium text-foreground">{base.length}</span> documentos
+        </span>
+        <span className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span>
+            Total CBS: <span className="font-mono font-medium text-foreground">{moedaBR(totalCbs)}</span>
+          </span>
+          {!(ordenados.length > 0 && ordenados.every(semConsulta)) && (
+            <span>
+              CBS Apurado: <span className="font-mono font-medium text-foreground">{moedaBR(totalCbsApurado)}</span>
+            </span>
+          )}
+        </span>
       </div>
+      <Dialog open={exportarAberto} onOpenChange={setExportarAberto}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar documentos</DialogTitle>
+            <DialogDescription>Gera um arquivo CSV com os documentos. Escolha o que exportar:</DialogDescription>
+          </DialogHeader>
+          <RadioGroup value={modoExportacao} onValueChange={v => setModoExportacao(v as "selecionados" | "competencia")} className="gap-3">
+            <label className={`flex items-start gap-3 rounded-md border p-3 ${selecionados.size === 0 ? "opacity-50" : "cursor-pointer"}`}>
+              <RadioGroupItem value="selecionados" disabled={selecionados.size === 0} className="mt-0.5" />
+              <span className="text-sm">
+                <span className="font-medium">Apenas selecionados</span>
+                <span className="block text-xs text-muted-foreground">
+                  {selecionados.size === 0
+                    ? "Nenhum documento selecionado na grade."
+                    : plural(selecionados.size, "documento selecionado", "documentos selecionados")}
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
+              <RadioGroupItem value="competencia" className="mt-0.5" />
+              <span className="text-sm">
+                <span className="font-medium">Competência</span>
+                <span className="block text-xs text-muted-foreground">
+                  Todos os documentos de {competencia} ({base.length})
+                </span>
+              </span>
+            </label>
+          </RadioGroup>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportarAberto(false)}>Cancelar</Button>
+            <Button onClick={exportar} disabled={modoExportacao === "selecionados" && selecionados.size === 0}>
+              <Download className="h-4 w-4 mr-1.5" />
+              Exportar CSV
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -618,7 +796,7 @@ const colunasDebito: {
   { key: "registro", label: "data_registro", texto: d => d.dataRegistro },
   { key: "atualizacao", label: "data_atualizacao", texto: d => d.dataAtualizacao },
   { key: "apurado", label: "cbs_apurado", right: true, texto: d => reais(d.cbsApurado), ordem: d => d.cbsApurado },
-  { key: "saldo", label: "cbs_saldo_corrente", right: true, texto: d => reais(d.cbsSaldoCorrente), ordem: d => d.cbsSaldoCorrente },
+  { key: "saldo", label: "cbs_saldo_devedor", right: true, texto: d => reais(d.cbsSaldoCorrente), ordem: d => d.cbsSaldoCorrente },
   { key: "extinto", label: "cbs_extinto", right: true, texto: d => reais(d.cbsExtinto), ordem: d => d.cbsExtinto },
 ];
 
@@ -878,14 +1056,31 @@ function DashboardTab() {
   );
 }
 
+function SemConsulta({ descricao }: { descricao: string }) {
+  return (
+    <div className="bg-card rounded-lg card-shadow border">
+      <div className="px-4 py-3 border-b">
+        <p className="text-xs text-muted-foreground">{descricao}</p>
+      </div>
+      <div className="p-10 text-center text-sm text-muted-foreground">{CONSULTA_NAO_REALIZADA}</div>
+    </div>
+  );
+}
+
 function ConciliacaoTab({
   aba,
   setAba,
   onVerNaoEncontradosEIP,
+  competencia,
+  base,
+  consultaRealizada = true,
 }: {
   aba: string;
   setAba: (aba: string) => void;
   onVerNaoEncontradosEIP: () => void;
+  competencia: string;
+  base: DocConciliacao[];
+  consultaRealizada?: boolean;
 }) {
   const [filtro, setFiltro] = useState<FiltroConciliacao>(null);
 
@@ -902,10 +1097,14 @@ function ConciliacaoTab({
           <TabsTrigger value="documentos" className="data-[state=active]:bg-card data-[state=active]:text-primary">Documentos</TabsTrigger>
         </TabsList>
         <TabsContent value="resumo" className="mt-4">
-          <ConciliacaoDashboard onFiltro={aplicarFiltro} onVerNaoEncontradosEIP={onVerNaoEncontradosEIP} />
+          {consultaRealizada ? (
+            <ConciliacaoDashboard onFiltro={aplicarFiltro} onVerNaoEncontradosEIP={onVerNaoEncontradosEIP} />
+          ) : (
+            <SemConsulta descricao="Resumo da conciliação entre os documentos do EIP (Documentos — Movimento) na competência e a Apuração Assistida." />
+          )}
         </TabsContent>
         <TabsContent value="documentos" className="mt-4">
-          <ConciliacaoDocumentos filtro={filtro} onLimpar={() => setFiltro(null)} />
+          <ConciliacaoDocumentos base={base} filtro={filtro} onLimpar={() => setFiltro(null)} competencia={competencia} />
         </TabsContent>
       </Tabs>
     </div>
@@ -975,20 +1174,31 @@ function OutrasInfosTab() {
   );
 }
 
-// Total de alertas da conciliação: documentos não encontrados (na Apuração Assistida e no EIP) e com CBS diferente
-function totalAlertasConciliacao(): number {
-  const noAA = documentosConciliacao.filter(d => d.apuracaoAssistida !== "Não encontrado");
-  const naoEncontradosAA = documentosConciliacao.length - noAA.length;
-  const naoEncontradosEIP = [...debitosApuracaoAssistida, ...creditosApuracaoAssistida].filter(
-    d => d.nroUnicoEIP === NAO_ENCONTRADO,
-  ).length;
-  const cbsDiferentes = noAA.filter(d => !cbsConfere(d)).length;
-  return naoEncontradosAA + naoEncontradosEIP + cbsDiferentes;
-}
-
-function ApuracaoTopo({ apuracao, onAlertas }: { apuracao: Apuracao; onAlertas: () => void }) {
+function ApuracaoTopo({
+  apuracao,
+  onAlertas,
+  consultaRealizada = true,
+}: {
+  apuracao: Apuracao;
+  onAlertas: () => void;
+  consultaRealizada?: boolean;
+}) {
   const total = totalAlertasConciliacao();
   const temAlerta = total > 0;
+  if (!consultaRealizada) {
+    return (
+      <div className="flex flex-wrap items-stretch gap-4 mb-6">
+        <ApuracaoHeaderCard apuracao={apuracao} resumido className="flex-1 min-w-[260px]" />
+        <div className="bg-card rounded-lg card-shadow border p-5 min-w-[180px]">
+          <p className="text-xs text-muted-foreground mb-1">Total de alertas</p>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
+            <span className="text-lg font-semibold text-foreground">0</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-wrap items-stretch gap-4 mb-6">
       <ApuracaoHeaderCard apuracao={apuracao} resumido className="flex-1 min-w-[260px]" />
@@ -1036,6 +1246,9 @@ export default function ApuracaoDetalhe() {
     setAbaPrincipal("apuracao");
   }
 
+  const consultaRealizada = apuracao.consultaRealizada !== false;
+  const baseDocumentos = consultaRealizada ? documentosConciliacao : documentosConciliacaoOutubro;
+
   return (
     <div>
       <Button
@@ -1056,12 +1269,12 @@ export default function ApuracaoDetalhe() {
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-0">
-          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} />
-          <DashboardTab />
+          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} consultaRealizada={consultaRealizada} />
+          {consultaRealizada ? <DashboardTab /> : <SemConsulta descricao="Indicadores da Apuração Assistida (débito e crédito) e comparação com o EIP." />}
         </TabsContent>
 
         <TabsContent value="apuracao" className="mt-0">
-          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} />
+          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} consultaRealizada={consultaRealizada} />
 
           {/* Alert Banner */}
           <AlertBanner alertas={apuracao.alertas} />
@@ -1072,22 +1285,41 @@ export default function ApuracaoDetalhe() {
               <TabsTrigger value="credito" className="data-[state=active]:bg-card data-[state=active]:text-primary">Crédito</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="debito" className="mt-4"><AssistidaGrade
-                dados={debitosApuracaoAssistida}
-                descricao="Débitos da Apuração Assistida na competência e o documento correspondente no EIP."
-                somenteNaoEncontradosEIP={somenteNaoEncontradosEIP}
-                onLimpar={() => setSomenteNaoEncontradosEIP(false)}
-              /></TabsContent>
-            <TabsContent value="credito" className="mt-4"><AssistidaGrade
-                dados={creditosApuracaoAssistida}
-                descricao="Créditos da Apuração Assistida na competência e o documento correspondente no EIP."
-              /></TabsContent>
+            <TabsContent value="debito" className="mt-4">
+              {consultaRealizada ? (
+                <AssistidaGrade
+                  dados={debitosApuracaoAssistida}
+                  descricao="Débitos da Apuração Assistida na competência e o documento correspondente no EIP."
+                  somenteNaoEncontradosEIP={somenteNaoEncontradosEIP}
+                  onLimpar={() => setSomenteNaoEncontradosEIP(false)}
+                />
+              ) : (
+                <SemConsulta descricao="Débitos da Apuração Assistida na competência e o documento correspondente no EIP." />
+              )}
+            </TabsContent>
+            <TabsContent value="credito" className="mt-4">
+              {consultaRealizada ? (
+                <AssistidaGrade
+                  dados={creditosApuracaoAssistida}
+                  descricao="Créditos da Apuração Assistida na competência e o documento correspondente no EIP."
+                />
+              ) : (
+                <SemConsulta descricao="Créditos da Apuração Assistida na competência e o documento correspondente no EIP." />
+              )}
+            </TabsContent>
           </Tabs>
         </TabsContent>
 
         <TabsContent value="conciliacao" className="mt-0">
-          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} />
-          <ConciliacaoTab aba={abaConciliacao} setAba={setAbaConciliacao} onVerNaoEncontradosEIP={verNaoEncontradosEIP} />
+          <ApuracaoTopo apuracao={apuracao} onAlertas={verResumoConciliacao} consultaRealizada={consultaRealizada} />
+          <ConciliacaoTab
+            aba={abaConciliacao}
+            setAba={setAbaConciliacao}
+            onVerNaoEncontradosEIP={verNaoEncontradosEIP}
+            competencia={apuracao.periodo}
+            base={baseDocumentos}
+            consultaRealizada={consultaRealizada}
+          />
         </TabsContent>
       </Tabs>
     </div>

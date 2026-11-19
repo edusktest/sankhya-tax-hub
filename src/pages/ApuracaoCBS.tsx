@@ -2,11 +2,12 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apuracoes } from "@/data/mockData";
 import { debitosApuracaoAssistida, creditosApuracaoAssistida } from "@/data/debitosApuracaoAssistida";
+import { totalAlertasConciliacao } from "@/data/alertasConciliacao";
 import { ANOS_DASHBOARD, EMPRESAS_DASHBOARD, apuracaoPorMes } from "@/data/apuracaoMensal";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip as GraficoTooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, FileDown, AlertTriangle, CheckCircle2, Filter, RefreshCw, ChevronRight } from "lucide-react";
+import { Eye, FileDown, AlertTriangle, CheckCircle2, Filter, Info, RefreshCw, ChevronRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -27,6 +28,12 @@ const periodoNumerico = (periodo: string) => {
 };
 
 const moeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const consultaNaoRealizada = (a: (typeof apuracoes)[number]) => a.consultaRealizada === false;
+const textoSemConsulta = <span className="text-xs text-muted-foreground whitespace-nowrap">Consulta não realizada</span>;
+
+// Alertas da apuração: os da conciliação (a apuração de NOV/2026 é a que tem conciliação cadastrada)
+const alertasDaApuracao = (a: (typeof apuracoes)[number]) => a.alertas + (a.id === "1" ? totalAlertasConciliacao() : 0);
 
 // Total de CBS apurado nas abas Débito e Crédito da apuração (soma de cbs_apurado)
 const totalApurado = (linhas: typeof debitosApuracaoAssistida, periodo: string) =>
@@ -122,7 +129,22 @@ function ApuracaoLista() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-right">Crédito apurado</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Alertas</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Consulta API</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Última consulta API</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 cursor-help">
+                        Data do último registro
+                        <Info className="h-3 w-3" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[280px] normal-case font-normal tracking-normal">
+                      Essa é a data do último documento disponível na API. Observamos que existe um delay de 2 dias entre API e Apuração Assistida.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -132,21 +154,25 @@ function ApuracaoLista() {
                   <TableCell className="font-medium text-sm">{a.periodo}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{a.cnpjRaiz}</TableCell>
                   <TableCell className="text-sm max-w-[200px] truncate">{a.razaoSocial}</TableCell>
-                  <TableCell className="text-right font-mono text-sm tabular-nums">{moeda(totalApurado(debitosApuracaoAssistida, a.periodo))}</TableCell>
-                  <TableCell className="text-right font-mono text-sm tabular-nums">{moeda(totalApurado(creditosApuracaoAssistida, a.periodo))}</TableCell>
+                  <TableCell className="text-right font-mono text-sm tabular-nums">
+                    {moeda(consultaNaoRealizada(a) ? 0 : totalApurado(debitosApuracaoAssistida, a.periodo))}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm tabular-nums">
+                    {moeda(consultaNaoRealizada(a) ? 0 : totalApurado(creditosApuracaoAssistida, a.periodo))}
+                  </TableCell>
                   <TableCell className="text-center">
-                    {a.alertas > 0 ? (
+                    {alertasDaApuracao(a) > 0 ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
                             className="inline-flex items-center gap-1 text-warning hover:opacity-80 transition-opacity"
-                            onClick={() => navigate(`/apuracao-cbs/${a.id}`)}
+                            onClick={() => navigate(`/apuracao-cbs/${a.id}`, { state: { tab: "conciliacao" } })}
                           >
                             <AlertTriangle className="h-4 w-4" />
-                            <span className="text-xs font-semibold">{a.alertas}</span>
+                            <span className="text-xs font-semibold">{alertasDaApuracao(a)}</span>
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent>{a.alertas} alerta(s) neste período</TooltipContent>
+                        <TooltipContent>{alertasDaApuracao(a)} alerta(s) neste período</TooltipContent>
                       </Tooltip>
                     ) : (
                       <Tooltip>
@@ -181,9 +207,8 @@ function ApuracaoLista() {
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap">
-                    Última consulta:<br />{a.ultimaConsulta}
-                  </TableCell>
+                  <TableCell className="font-mono text-xs whitespace-nowrap">{consultaNaoRealizada(a) ? textoSemConsulta : a.ultimaConsulta}</TableCell>
+                  <TableCell className="font-mono text-xs whitespace-nowrap">{consultaNaoRealizada(a) ? textoSemConsulta : a.ultimaDataApi}</TableCell>
                 </TableRow>
               ))}
             </TooltipProvider>

@@ -1,3 +1,4 @@
+import { totalAlertasConciliacao } from "./alertasConciliacao";
 import { apuracoes } from "./mockData";
 import { debitosApuracaoAssistida, creditosApuracaoAssistida } from "./debitosApuracaoAssistida";
 
@@ -50,9 +51,13 @@ export function apuracaoPorMes(empresa: string, ano: string): ApuracaoMes[] {
         mes,
         debito: somaReais(debitosApuracaoAssistida.map(d => d.cbsApurado)),
         credito: somaReais(creditosApuracaoAssistida.map(d => d.cbsApurado)),
-        alertas: apuracoes[0].alertas,
+        alertas: totalAlertasConciliacao(),
         apuracaoId: apuracoes[0].id,
       };
+    }
+    // OUT/2026 da primeira empresa: sem consulta na Apuração Assistida (só há conciliação dos documentos).
+    if (empresa === EMPRESAS_DASHBOARD[0] && ano === "2026" && i === 9) {
+      return { mes, debito: 0, credito: 0, alertas: 0, apuracaoId: "2" };
     }
     const debito = Math.round((6000 + rnd() * 6000) * escala * 100) / 100;
     const credito = Math.round((3000 + rnd() * 4500) * escala * 100) / 100;
